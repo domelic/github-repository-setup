@@ -1,0 +1,36 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "coverage/**",
+    "*.min.js",
+    "package-lock.json",
+    "yarn.lock"
+  ],
+  "words": [
+    "commitlint",
+    "dependabot",
+    "markdownlint",
+    "cspell",
+    "lychee",
+    "softprops",
+    "workflow",
+    "workflows",
+    "changelog",
+    "codeowners",
+    "noreply"
+  ],
+  "flagWords": [],
+  "dictionaries": [
+    "en_US",
+    "softwareTerms",
+    "typescript",
+    "node",
+    "npm",
+    "bash"
+  ]
+}

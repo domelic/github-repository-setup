@@ -1,0 +1,45 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run Release Please
+        uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
+          package-name: your-project-name
+
+  # Optional: Post-release tasks (e.g., update CITATION.cff, upload assets)
+  post-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # Add your post-release steps here, such as:
+      # - Update CITATION.cff
+      # - Upload additional release assets
+      # - Trigger deployment
+      - name: Post-release notification
+        run: echo "Release ${{ needs.release-please.outputs.tag_name }} created!"

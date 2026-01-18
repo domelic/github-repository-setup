@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/OWNER/REPO/discussions
+    about: Ask questions and discuss ideas
+  - name: Documentation
+    url: https://github.com/OWNER/REPO#readme
+    about: Read the documentation

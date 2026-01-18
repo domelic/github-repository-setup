@@ -1,0 +1,42 @@
+version: 2
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
+    groups:
+      # Group all action updates into a single PR
+      actions:
+        patterns:
+          - "*"
+
+  # Uncomment for npm projects
+  # - package-ecosystem: "npm"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   commit-message:
+  #     prefix: "chore"
+  #   labels:
+  #     - "dependencies"
+  #   groups:
+  #     minor-and-patch:
+  #       update-types:
+  #         - "minor"
+  #         - "patch"
+
+  # Uncomment for Python projects
+  # - package-ecosystem: "pip"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   commit-message:
+  #     prefix: "chore"
