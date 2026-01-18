@@ -63,7 +63,7 @@ Create essential documentation files:
 
 ## Mode: Branch Protection (`/github-setup protection`)
 
-Configure branch protection and code ownership:
+Configure branch protection, code ownership, and repository settings:
 
 ### Branch Protection
 
@@ -81,6 +81,29 @@ gh api repos/OWNER/REPO/branches/main/protection -X PUT --input - <<'EOF'
 }
 EOF
 ```
+
+### Auto-Delete Merged Branches
+
+Enable automatic deletion of branches after PR merge:
+
+```bash
+gh api repos/OWNER/REPO -X PATCH -f delete_branch_on_merge=true
+```
+
+### Branch Naming Convention
+
+When creating branches, use prefixes matching conventional commit types:
+
+| Type | Branch Prefix | Example |
+|------|---------------|---------|
+| `feat` | `feat/` | `feat/user-authentication` |
+| `fix` | `fix/` | `fix/memory-leak` |
+| `docs` | `docs/` | `docs/api-guide` |
+| `chore` | `chore/` | `chore/update-deps` |
+| `ci` | `ci/` | `ci/add-workflow` |
+| `refactor` | `refactor/` | `refactor/parser-logic` |
+
+**Rules:** lowercase, hyphens between words, concise but descriptive
 
 ### CODEOWNERS
 
@@ -270,9 +293,11 @@ Audit the repository and report what's missing:
 - [ ] LICENSE exists
 - [ ] CONTRIBUTING.md exists
 - [ ] CHANGELOG.md exists
+- [ ] CLAUDE.md exists (for Claude Code users)
 
 **Protection:**
 - [ ] Branch protection enabled
+- [ ] Auto-delete merged branches enabled
 - [ ] CODEOWNERS file exists
 
 **Issues:**
@@ -318,5 +343,5 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | Workflows | `workflows/*.yml` |
 | Configs | `.cspell.json`, `.markdownlint.json`, `commitlint.config.js` |
 | Issue Templates | `ISSUE_TEMPLATE/*.md` |
-| Docs | `CONTRIBUTING.md`, `RELEASING.md`, `CITATION.cff` |
+| Docs | `CONTRIBUTING.md`, `RELEASING.md`, `CITATION.cff`, `CLAUDE.md` |
 | Release Please | `release-please-config.json`, `.release-please-manifest.json` |
