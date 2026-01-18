@@ -13,11 +13,33 @@ Thank you for your interest in contributing!
 ### Submitting Changes
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
+2. Create a branch following the naming convention (see below)
 3. Make your changes
 4. Commit with conventional format (see below)
 5. Push to your fork
 6. Open a Pull Request
+
+## Branch Naming Convention
+
+Branch names should match the conventional commit type:
+
+| Type | Branch Prefix | Example |
+|------|---------------|---------|
+| `feat` | `feat/` | `feat/user-authentication` |
+| `fix` | `fix/` | `fix/memory-leak` |
+| `docs` | `docs/` | `docs/api-guide` |
+| `style` | `style/` | `style/formatting` |
+| `refactor` | `refactor/` | `refactor/parser-logic` |
+| `perf` | `perf/` | `perf/query-optimization` |
+| `test` | `test/` | `test/auth-coverage` |
+| `chore` | `chore/` | `chore/update-deps` |
+| `ci` | `ci/` | `ci/add-workflow` |
+
+**Rules:**
+- Use lowercase
+- Use hyphens to separate words
+- Keep names concise but descriptive
+- Branches are auto-deleted after PR merge
 
 ## Commit Message Convention
 

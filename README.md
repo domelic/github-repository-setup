@@ -78,7 +78,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 | `CODE_OF_CONDUCT.md` | Community guidelines | [Contributor Covenant](https://www.contributor-covenant.org/) |
 | `RELEASING.md` | Release process docs | [Template](templates/RELEASING.md) |
 | `CITATION.cff` | Machine-readable citation | [Template](templates/CITATION.cff) |
-| `CLAUDE.md` | Claude Code instructions | — |
+| `CLAUDE.md` | Claude Code instructions | [Template](templates/CLAUDE.md) |
 | `SECURITY.md` | Vulnerability reporting | For software projects |
 
 ### CITATION.cff (For Academic/Citable Projects)
@@ -122,6 +122,27 @@ gh api repos/OWNER/REPO/branches/main/protection -X PUT --input - <<'EOF'
 }
 EOF
 ```
+
+### Auto-Delete Merged Branches
+
+```bash
+gh api repos/OWNER/REPO -X PATCH -f delete_branch_on_merge=true
+```
+
+### Branch Naming Convention
+
+Branch names should match conventional commit types:
+
+| Type | Branch Prefix | Example |
+|------|---------------|---------|
+| `feat` | `feat/` | `feat/user-authentication` |
+| `fix` | `fix/` | `fix/memory-leak` |
+| `docs` | `docs/` | `docs/api-guide` |
+| `chore` | `chore/` | `chore/update-deps` |
+| `ci` | `ci/` | `ci/add-workflow` |
+| `refactor` | `refactor/` | `refactor/parser-logic` |
+
+**Rules:** lowercase, hyphens between words, concise but descriptive
 
 ### Settings by Team Size
 
@@ -387,9 +408,11 @@ EOF
 - [ ] CODE_OF_CONDUCT.md
 - [ ] RELEASING.md (if manual releases)
 - [ ] CITATION.cff (if citable)
+- [ ] CLAUDE.md (for Claude Code users)
 
 ### Branch Protection
 - [ ] PRs required for main
+- [ ] Auto-delete merged branches enabled
 - [ ] CODEOWNERS file
 - [ ] Status checks required (if CI exists)
 - [ ] Force push blocked
