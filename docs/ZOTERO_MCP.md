@@ -48,9 +48,26 @@ npx -y @smithery/cli install @54yyyu/zotero-mcp --client claude
 
 ## Configuration
 
-### Claude Code Integration
+### Claude Code CLI (Recommended)
 
-Add to your Claude Code settings (`~/.claude/settings.json` or project `.claude/settings.json`):
+The simplest way to add Zotero MCP to Claude Code:
+
+```bash
+# Install the package
+uv tool install "git+https://github.com/54yyyu/zotero-mcp.git"
+
+# Add to Claude Code (project-level)
+claude mcp add zotero -- zotero-mcp
+
+# Or add globally (all projects)
+claude mcp add --scope user zotero -- zotero-mcp
+```
+
+This automatically updates your Claude Code MCP configuration. Restart Claude Code to load the server.
+
+### Manual JSON Configuration
+
+Alternatively, add to your Claude Code settings (`~/.claude.json` or project `.claude.json`):
 
 ```json
 {
@@ -64,6 +81,14 @@ Add to your Claude Code settings (`~/.claude/settings.json` or project `.claude/
   }
 }
 ```
+
+### Enable Zotero Local API
+
+**Required step:** Enable local API access in Zotero:
+
+1. Open Zotero 7+
+2. Go to **Edit → Settings → Advanced** (or **Zotero → Settings** on macOS)
+3. Enable **"Allow other applications on this computer to communicate with Zotero"**
 
 ### Web API (Remote Access)
 
@@ -217,11 +242,13 @@ Returns highlighted text, notes, and page numbers.
 Manual workflow for academic projects:
 
 1. **Search in Zotero MCP:**
+
    ```text
    "Find the Hutchins 1995 cognition in the wild paper"
    ```
 
 2. **Export BibTeX:**
+
    ```text
    "Export this as BibTeX"
    ```
@@ -249,7 +276,8 @@ Organize sources by topic:
 
 **Cause:** Zotero not running or local API disabled.
 
-**Fix:** 
+**Fix:**
+
 1. Start Zotero desktop
 2. Go to Preferences → Advanced
 3. Enable "Allow other applications on this computer to communicate with Zotero"
@@ -259,6 +287,7 @@ Organize sources by topic:
 **Cause:** Database not initialized.
 
 **Fix:**
+
 ```bash
 zotero-mcp update-db
 zotero-mcp db-status
@@ -280,7 +309,8 @@ zotero-mcp db-status
 
 **Cause:** Full-text indexing on large library.
 
-**Fix:** 
+**Fix:**
+
 - Use `--limit` for testing: `zotero-mcp update-db --limit 100`
 - Use metadata-only for speed: `zotero-mcp update-db` (without `--fulltext`)
 
@@ -315,12 +345,14 @@ zotero-mcp version                  # Show version
 ## When to Use Zotero MCP
 
 **Good fit:**
+
 - Academic/research projects with citations
 - Managing large literature collections
 - Finding conceptually related papers
 - Extracting annotations from PDFs
 
 **Not needed:**
+
 - Projects without bibliography requirements
 - Small reference lists (manual BibTeX is fine)
 - Non-academic documentation
