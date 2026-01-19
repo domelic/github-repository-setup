@@ -58,6 +58,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
 9. [Complete Setup Checklist](#complete-setup-checklist)
 10. [Workflow Reference](#workflow-reference)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -522,6 +523,70 @@ Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT License - see [LICENSE](LICENSE).
+
+---
+
+## Troubleshooting
+
+### Release Please: "GitHub Actions is not permitted to create or approve pull requests"
+
+**Problem:** Release Please fails with permission error.
+
+**Fix:** Enable PR creation in repository settings:
+1. Go to **Settings → Actions → General**
+2. Scroll to **Workflow permissions**
+3. Check **"Allow GitHub Actions to create and approve pull requests"**
+4. Click **Save**
+
+### Link Checker: `--exclude-mail` flag error
+
+**Problem:** Link checker fails with unknown flag error.
+
+**Cause:** The `--exclude-mail` flag was removed in lychee v2 (now default behavior).
+
+**Fix:** Remove `--exclude-mail` from the workflow args and upgrade to `lycheeverse/lychee-action@v2`.
+
+### Markdown Lint: Many MD022/MD031/MD032 errors
+
+**Problem:** Lint fails with blanks-around-headings, blanks-around-fences, blanks-around-lists errors.
+
+**Fix:** These pedantic rules often conflict with real-world content. Disable in `.markdownlint.json`:
+```json
+{
+  "MD022": false,
+  "MD031": false,
+  "MD032": false
+}
+```
+
+### Markdown Lint: MD040 fenced-code-language errors
+
+**Problem:** Code blocks without language specifiers trigger errors.
+
+**Fix:** Add language identifiers to all code blocks. For plain text, use `text`:
+```text
+This is plain text content
+```
+
+### Spell Check: Many unknown words
+
+**Problem:** Technical terms, author names, or project-specific words flagged.
+
+**Fix:** Add words to `.cspell.json` in the `words` array:
+```json
+{
+  "words": ["yourterm", "anotherterm"]
+}
+```
+
+### Stale Bot closes important issues
+
+**Problem:** Important long-running issues get marked stale.
+
+**Fix:** Add exempt labels to the stale workflow:
+```yaml
+exempt-issue-labels: 'pinned,security,in-progress,amazon-kdp'
+```
 
 ---
 

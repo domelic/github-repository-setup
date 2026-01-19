@@ -22,7 +22,10 @@
     "workflows",
     "changelog",
     "codeowners",
-    "noreply"
+    "noreply",
+    "autorelease",
+    "epubcheck",
+    "Pandoc"
   ],
   "flagWords": [],
   "dictionaries": [
