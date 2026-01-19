@@ -588,6 +588,17 @@ This is plain text content
 exempt-issue-labels: 'pinned,security,in-progress,amazon-kdp'
 ```
 
+### Markdown Lint fails on CHANGELOG.md
+
+**Problem:** Release Please generates CHANGELOG.md with asterisks for lists, but markdownlint config expects dashes.
+
+**Fix:** Exclude CHANGELOG.md from lint in the workflow:
+```yaml
+globs: |
+  **/*.md
+  !CHANGELOG.md
+```
+
 ---
 
 ## Resources
