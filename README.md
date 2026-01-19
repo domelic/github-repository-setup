@@ -537,17 +537,33 @@ env:
 
 ## Claude Code Skills
 
+### Skill File Location
+
+> **Important:** Claude Code uses `.claude/commands/` (not `.claude/skills/`) for custom slash commands.
+
+```bash
+# Correct location for Claude Code to recognize skills
+~/.claude/commands/skill-name.md      # Global (all projects)
+.claude/commands/skill-name.md        # Project-level
+
+# This will NOT work (common mistake)
+~/.claude/skills/skill-name.md        # Wrong directory name
+```
+
+If you see `Unknown skill: skillname`, verify the file is in the `commands/` directory.
+
 ### `/github-setup` — Repository Setup Wizard
 
 Install the `/github-setup` skill:
 
 ```bash
 # Copy to project
-mkdir -p .claude/skills
-cp templates/skills/github-setup.md .claude/skills/
+mkdir -p .claude/commands
+cp templates/skills/github-setup.md .claude/commands/
 
 # Or global installation
-cp templates/skills/github-setup.md ~/.claude/skills/
+mkdir -p ~/.claude/commands
+cp templates/skills/github-setup.md ~/.claude/commands/
 ```
 
 See [templates/skills/github-setup.md](templates/skills/github-setup.md) for full documentation.
@@ -566,7 +582,8 @@ Automate GitHub release creation using Playwright browser automation:
 Install:
 
 ```bash
-cp templates/skills/github-release.md .claude/skills/
+mkdir -p .claude/commands
+cp templates/skills/github-release.md .claude/commands/
 ```
 
 See [templates/skills/github-release.md](templates/skills/github-release.md) for full documentation.
@@ -756,6 +773,52 @@ steps:
 globs: |
   **/*.md
   !CHANGELOG.md
+```
+
+### Install script fails with 404 error
+
+**Problem:** A curl-based install script fails to download files from GitHub with a 404 error.
+
+**Cause:** The script downloads from `main` branch, but the files were recently moved/added on a feature branch that hasn't been merged yet.
+
+```bash
+# Script downloads from main branch
+curl -o file.txt https://raw.githubusercontent.com/owner/repo/main/path/to/file.txt
+# Returns 404 if file only exists on feature branch
+```
+
+**Fix:** Merge the feature branch to `main` before the install script will work. Install scripts that download from GitHub should always reference paths that exist on `main`.
+
+**Best Practice for Install Scripts:**
+1. Test locally before pushing changes to file locations
+2. Merge PRs that move/rename files before updating download URLs
+3. Consider versioned URLs (`/v1.0.0/path`) instead of `/main/path` for stability
+
+### Install script shows "Installed" even when skipped
+
+**Problem:** Install script reports "Installation Complete!" even when user declined all prompts.
+
+**Fix:** Track what was actually installed and show an accurate summary:
+
+```bash
+# Track installation results
+INSTALLED_COMPONENT=false
+
+install_component() {
+    if check_and_download; then
+        INSTALLED_COMPONENT=true
+    fi
+}
+
+show_summary() {
+    if [[ "$INSTALLED_COMPONENT" == "false" ]]; then
+        echo "No changes made - all components already exist or skipped"
+        echo "To reinstall, run with --force flag"
+        return
+    fi
+    echo "Installation Complete!"
+    [[ "$INSTALLED_COMPONENT" == "true" ]] && echo "  • Component installed"
+}
 ```
 
 ---
