@@ -19,7 +19,8 @@ This guide covers everything needed to set up a professional GitHub repository:
 | **Release Automation** | Release Please, auto-CHANGELOG, semantic versioning |
 | **CI/CD** | Build workflows, PDF/artifact previews, Dependabot |
 | **Discovery** | Topics, social preview, FUNDING.yml, CITATION.cff |
-| **Code Intelligence** | [Serena MCP server](docs/SERENA.md) for semantic code understanding |
+| **Code Intelligence** | [Serena MCP](docs/SERENA.md) for semantic code understanding |
+| **Research Tools** | [Zotero MCP](docs/ZOTERO_MCP.md) for bibliography management |
 
 ---
 
@@ -58,9 +59,10 @@ This guide covers everything needed to set up a professional GitHub repository:
 7. [Discovery & Sponsorship](#7-discovery--sponsorship)
 8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
 9. [Serena Code Intelligence](#9-serena-code-intelligence)
-10. [Complete Setup Checklist](#complete-setup-checklist)
-11. [Workflow Reference](#workflow-reference)
-12. [Troubleshooting](#troubleshooting)
+10. [Zotero Research Library](#10-zotero-research-library)
+11. [Complete Setup Checklist](#complete-setup-checklist)
+12. [Workflow Reference](#workflow-reference)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -523,6 +525,64 @@ cp -r templates/serena/ .serena/
 
 ---
 
+## 10. Zotero Research Library
+
+Zotero MCP connects your research library with Claude Code for AI-powered literature management.
+
+**Full Documentation:** [docs/ZOTERO_MCP.md](docs/ZOTERO_MCP.md)
+
+### Quick Setup
+
+1. Install Zotero MCP:
+
+```bash
+uv tool install "git+https://github.com/54yyyu/zotero-mcp.git"
+zotero-mcp setup
+```
+
+2. Add to Claude Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "zotero-mcp",
+      "env": {
+        "ZOTERO_LOCAL": "true"
+      }
+    }
+  }
+}
+```
+
+3. Enable semantic search (optional):
+
+```bash
+zotero-mcp update-db --fulltext
+```
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Semantic Search** | AI-powered similarity search across papers |
+| **BibTeX Export** | Export citations directly to `.bib` files |
+| **PDF Annotations** | Extract highlights and notes from PDFs |
+| **Collection Management** | Browse and search by tags, collections |
+
+### When to Use
+
+**Good fit:**
+- Academic/research projects with citations
+- Books/treatises with bibliography (like `references.bib`)
+- Literature reviews and research synthesis
+
+**Not needed:**
+- Software projects without academic references
+- Small reference lists (manual BibTeX works fine)
+
+---
+
 ## Complete Setup Checklist
 
 ### Documentation
@@ -580,11 +640,10 @@ cp -r templates/serena/ .serena/
 - [ ] FUNDING.yml (if accepting sponsors)
 - [ ] GitHub Pages (if applicable)
 
-### Code Intelligence (Optional)
+### MCP Integrations (Optional)
 
-- [ ] Serena MCP configured
-- [ ] `.serena/project.yml` created
-- [ ] Initial memories documented
+- [ ] Serena MCP configured (code intelligence)
+- [ ] Zotero MCP configured (research/academic projects)
 
 ---
 
@@ -912,3 +971,4 @@ show_summary() {
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Contributor Covenant](https://www.contributor-covenant.org/)
 - [Serena MCP Documentation](docs/SERENA.md)
+- [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
