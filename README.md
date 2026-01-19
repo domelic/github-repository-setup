@@ -21,6 +21,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 | **Discovery** | Topics, social preview, FUNDING.yml, CITATION.cff |
 | **Code Intelligence** | [Serena MCP](docs/SERENA.md) for semantic code understanding |
 | **Research Tools** | [Zotero MCP](docs/ZOTERO_MCP.md) for bibliography management |
+| **Knowledge Management** | [Obsidian MCP](docs/OBSIDIAN_MCP.md) for vault integration |
 
 ---
 
@@ -60,9 +61,10 @@ This guide covers everything needed to set up a professional GitHub repository:
 8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
 9. [Serena Code Intelligence](#9-serena-code-intelligence)
 10. [Zotero Research Library](#10-zotero-research-library)
-11. [Complete Setup Checklist](#complete-setup-checklist)
-12. [Workflow Reference](#workflow-reference)
-13. [Troubleshooting](#troubleshooting)
+11. [Obsidian Knowledge Base](#11-obsidian-knowledge-base)
+12. [Complete Setup Checklist](#complete-setup-checklist)
+13. [Workflow Reference](#workflow-reference)
+14. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -584,6 +586,44 @@ zotero-mcp update-db --fulltext
 
 ---
 
+## 11. Obsidian Knowledge Base
+
+Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
+
+**Full Documentation:** [docs/OBSIDIAN_MCP.md](docs/OBSIDIAN_MCP.md)
+
+### Quick Setup
+
+Install the Obsidian plugin (recommended for Claude Code users):
+
+1. In Obsidian, go to **Settings > Community plugins > Browse**
+2. Search for "Claude Code MCP"
+3. Install and enable the plugin
+
+Claude Code automatically discovers vaults via WebSocket.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Vault Search** | Search and reference notes while working |
+| **File Operations** | Read, edit, create files in your vault |
+| **Auto-Discovery** | No manual config needed with plugin |
+| **Cross-Linking** | Find connections across your notes |
+
+### When to Use
+
+**Good fit:**
+- Research projects with extensive notes
+- Knowledge management workflows
+- Projects with related Obsidian vaults
+
+**Not needed:**
+- Projects without associated notes
+- Simple documentation needs
+
+---
+
 ## Complete Setup Checklist
 
 ### Documentation
@@ -645,6 +685,7 @@ zotero-mcp update-db --fulltext
 
 - [ ] Serena MCP configured (code intelligence)
 - [ ] Zotero MCP configured (research/academic projects)
+- [ ] Obsidian MCP configured (knowledge management)
 
 ---
 
@@ -973,4 +1014,5 @@ show_summary() {
 - [Contributor Covenant](https://www.contributor-covenant.org/)
 - [Serena MCP Documentation](docs/SERENA.md)
 - [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
+- [Obsidian MCP Documentation](docs/OBSIDIAN_MCP.md)
 - [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
