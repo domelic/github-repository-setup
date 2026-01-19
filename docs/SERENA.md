@@ -98,7 +98,7 @@ Serena's memory system provides persistent context across sessions.
 
 ### Creating Memories
 
-```
+```text
 Serena: write_memory
   memory_file_name: "ARCHITECTURE.md"
   content: "# Project Architecture\n\n## Overview\n..."
@@ -108,26 +108,72 @@ Memories are stored in `.serena/memories/` as markdown files.
 
 ### Reading Memories
 
-```
+```text
 Serena: list_memories
 ```
 
 Returns available memory files. Then read specific ones:
 
-```
+```text
 Serena: read_memory
   memory_file_name: "ARCHITECTURE.md"
 ```
 
-### Best Practices for Memories
+### Memory Types by Project Type
 
-| Memory Type | Purpose | Example Content |
-|-------------|---------|----------------|
-| `ARCHITECTURE.md` | High-level system design | Component relationships, data flow |
-| `CONVENTIONS.md` | Coding standards | Naming patterns, file organization |
-| `DOMAIN.md` | Business logic | Key concepts, terminology |
-| `COMMANDS.md` | Common operations | Build commands, test scripts |
-| `EDITING_GUIDE.md` | Document-specific guidance | LaTeX structure, section locations |
+#### For Code Projects
+
+| Memory | Purpose | When to Create |
+|--------|---------|----------------|
+| `ARCHITECTURE.md` | System design, component relationships | Project setup |
+| `CONVENTIONS.md` | Coding standards, naming patterns | Project setup |
+| `DOMAIN.md` | Business logic, terminology | When domain complexity grows |
+| `COMMANDS.md` | Build/test/deploy commands | Project setup |
+
+#### For Documentation Projects (LaTeX, Technical Writing)
+
+| Memory | Purpose | When to Create |
+|--------|---------|----------------|
+| `EDITING_GUIDE.md` | Document structure, line ranges, editing patterns | After initial document structure |
+| `STYLE_GUIDE.md` | Writing conventions, tone, terminology | When consistency matters |
+| `CROSS_REFERENCES.md` | Concept dependencies, term definitions | For interconnected documents |
+| `BIBLIOGRAPHY_SOURCES.md` | Annotated citations, source relationships | For academic/research work |
+| `REVISION_DECISIONS.md` | Editorial decision log, style precedents | For long-term projects |
+
+#### For Framework/Methodology Projects
+
+| Memory | Purpose | When to Create |
+|--------|---------|----------------|
+| `CONCEPTS.md` | Key terms, relationships, quick reference | After core concepts defined |
+| `PATTERNS.md` | Common patterns, anti-patterns, workflows | When patterns emerge |
+
+### Memory Design Principles
+
+1. **One concern per memory** — Don't mix architecture with style guide
+2. **Quick reference format** — Tables, bullet points over prose
+3. **Include "when to use"** — Help future sessions know when to read
+4. **Update the memory** — Log decisions in REVISION_DECISIONS.md
+5. **Cross-reference** — Link related memories in content
+
+### Example: Documentation Project Memory Suite
+
+For a large documentation project (e.g., LaTeX treatise), create this memory suite:
+
+```text
+.serena/memories/
+├── EDITING_GUIDE.md       # WHERE to edit (line ranges, structure)
+├── STYLE_GUIDE.md         # HOW to write (tone, terminology)
+├── CROSS_REFERENCES.md    # WHAT depends on what
+├── BIBLIOGRAPHY_SOURCES.md # WHY cite each source
+└── REVISION_DECISIONS.md  # WHAT was decided and why
+```
+
+**Workflow:**
+1. Before editing → Read `EDITING_GUIDE.md` for structure
+2. While writing → Consult `STYLE_GUIDE.md` for consistency
+3. When referencing → Check `CROSS_REFERENCES.md` for dependencies
+4. When citing → Use `BIBLIOGRAPHY_SOURCES.md` for context
+5. After deciding → Log in `REVISION_DECISIONS.md`
 
 ### Editing Memories
 
