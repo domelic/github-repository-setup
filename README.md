@@ -559,14 +559,14 @@ Install the `/github-setup` skill:
 ```bash
 # Copy to project
 mkdir -p .claude/commands
-cp templates/skills/github-setup.md .claude/commands/
+cp templates/commands/github-setup.md .claude/commands/
 
 # Or global installation
 mkdir -p ~/.claude/commands
-cp templates/skills/github-setup.md ~/.claude/commands/
+cp templates/commands/github-setup.md ~/.claude/commands/
 ```
 
-See [templates/skills/github-setup.md](templates/skills/github-setup.md) for full documentation.
+See [templates/commands/github-setup.md](templates/commands/github-setup.md) for full documentation.
 
 ### `/github-release` — Create Releases via Playwright
 
@@ -583,10 +583,10 @@ Install:
 
 ```bash
 mkdir -p .claude/commands
-cp templates/skills/github-release.md .claude/commands/
+cp templates/commands/github-release.md .claude/commands/
 ```
 
-See [templates/skills/github-release.md](templates/skills/github-release.md) for full documentation.
+See [templates/commands/github-release.md](templates/commands/github-release.md) for full documentation.
 
 ---
 
