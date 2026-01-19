@@ -12,6 +12,7 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup quality            # Commitlint, spell check, link checker, markdown lint
 /github-setup releases           # Release Please automation
 /github-setup automation         # All GitHub Actions workflows
+/github-setup publishing         # Amazon KDP automation (for books)
 /github-setup discovery          # Topics, social preview, funding
 /github-setup checklist          # Audit what's missing
 ```
@@ -240,6 +241,48 @@ Set up all GitHub Actions:
 ### Dependabot
 
 Create `.github/dependabot.yml` for auto-updating Actions.
+
+---
+
+## Mode: Publishing (`/github-setup publishing`)
+
+Set up Amazon KDP automation for book/ebook projects:
+
+### Amazon KDP Workflow
+
+**Workflow:** `.github/workflows/amazon-kdp-publish.yml`
+
+**What it does:**
+1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
+2. Attaches EPUB to GitHub release
+3. Creates issue with KDP upload checklist
+
+### Customization
+
+```yaml
+env:
+  BOOK_TITLE: "Your Book Title"
+  BOOK_SUBTITLE: "Your Subtitle"
+  BOOK_AUTHOR: "Your Name"
+  SOURCE_FILE: "book.tex"  # or book.md
+  COVER_IMAGE: "cover.jpg"
+  BIBLIOGRAPHY: "references.bib"
+```
+
+### Why Semi-Automated?
+
+Amazon KDP has no public API. The workflow automates:
+- EPUB generation from source
+- Release asset attachment
+- Upload instructions via GitHub issue
+
+Manual step required: Upload EPUB to KDP dashboard.
+
+### Create amazon-kdp Label
+
+```bash
+gh label create "amazon-kdp" -c "f9d0c4" -d "Amazon KDP publishing"
+```
 
 ---
 

@@ -1,0 +1,173 @@
+# Amazon KDP Publishing Workflow
+#
+# This workflow automates EPUB generation for Amazon KDP publishing.
+# Since Amazon KDP has no public API, it builds the EPUB and creates
+# a GitHub issue with upload instructions.
+#
+# Customize the following for your book:
+# - SOURCE_FILE: Your book's source file (LaTeX, Markdown, etc.)
+# - COVER_IMAGE: Path to your cover image
+# - METADATA: Title, author, etc.
+# - PANDOC_OPTIONS: Additional Pandoc conversion options
+
+name: Amazon KDP Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  # === CUSTOMIZE THESE VALUES ===
+  BOOK_TITLE: "Your Book Title"
+  BOOK_SUBTITLE: "Your Book Subtitle"
+  BOOK_AUTHOR: "Your Name"
+  SOURCE_FILE: "book.tex"  # or book.md
+  COVER_IMAGE: "cover.jpg"
+  BIBLIOGRAPHY: "references.bib"  # Remove if not using citations
+  # ==============================
+
+jobs:
+  build-epub:
+    runs-on: ubuntu-latest
+    outputs:
+      epub_name: ${{ steps.build.outputs.epub_name }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Install Pandoc and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-latex-base texlive-fonts-recommended
+
+      - name: Build EPUB
+        id: build
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Create filename from title (lowercase, hyphens)
+          SAFE_TITLE=$(echo "${{ env.BOOK_TITLE }}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+          EPUB_NAME="${SAFE_TITLE}_${VERSION}.epub"
+
+          # Build EPUB using Pandoc
+          pandoc "${{ env.SOURCE_FILE }}" -o "${EPUB_NAME}" \
+            --toc \
+            --toc-depth=2 \
+            --epub-cover-image="${{ env.COVER_IMAGE }}" \
+            --metadata title="${{ env.BOOK_TITLE }}" \
+            --metadata subtitle="${{ env.BOOK_SUBTITLE }}" \
+            --metadata author="${{ env.BOOK_AUTHOR }}" \
+            --metadata date="$(date +%Y)" \
+            ${BIBLIOGRAPHY:+--bibliography=${{ env.BIBLIOGRAPHY }} --citeproc} \
+            || echo "Pandoc build completed with warnings"
+
+          # Verify EPUB was created
+          if [ -f "${EPUB_NAME}" ]; then
+            echo "EPUB created successfully: ${EPUB_NAME}"
+            echo "epub_name=${EPUB_NAME}" >> $GITHUB_OUTPUT
+            ls -la "${EPUB_NAME}"
+          else
+            echo "Error: EPUB file not created"
+            exit 1
+          fi
+
+      - name: Upload EPUB as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: epub-${{ steps.version.outputs.version }}
+          path: ${{ steps.build.outputs.epub_name }}
+          retention-days: 90
+
+      - name: Upload EPUB to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${{ steps.build.outputs.epub_name }}" \
+            --clobber
+
+  create-kdp-issue:
+    needs: build-epub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create KDP upload issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.build-epub.outputs.version }}"
+          EPUB_NAME="${{ needs.build-epub.outputs.epub_name }}"
+
+          # Check if issue already exists
+          EXISTING=$(gh issue list --label "amazon-kdp" --state open --json number --jq length)
+          if [ "$EXISTING" -gt "0" ]; then
+            echo "KDP upload issue already exists, skipping creation"
+            exit 0
+          fi
+
+          gh issue create \
+            --title "Amazon KDP: Upload ${VERSION}" \
+            --label "amazon-kdp,release" \
+            --body "## Amazon KDP Upload Required
+
+A new release **${VERSION}** has been published and the EPUB has been built.
+
+### Download EPUB
+
+- **From Release**: [${EPUB_NAME}](https://github.com/${{ github.repository }}/releases/download/${VERSION}/${EPUB_NAME})
+- **From Artifacts**: Check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+### Upload Checklist
+
+- [ ] Download the EPUB file from the release
+- [ ] Log in to [KDP](https://kdp.amazon.com)
+- [ ] Navigate to your book's Kindle eBook Content
+- [ ] Upload the new EPUB file
+- [ ] Review the preview in Kindle Previewer
+- [ ] Update the version number in book details if needed
+- [ ] Save and publish changes
+- [ ] Wait for Amazon review (24-72 hours)
+
+### Book Details
+
+| Field | Value |
+|-------|-------|
+| Title | ${{ env.BOOK_TITLE }} |
+| Subtitle | ${{ env.BOOK_SUBTITLE }} |
+| Author | ${{ env.BOOK_AUTHOR }} |
+| Version | ${VERSION} |
+
+### After Publishing
+
+- [ ] Verify the update is live on Amazon
+- [ ] Close this issue
+
+---
+*This issue was automatically created by the Amazon KDP Publish workflow.*
+"

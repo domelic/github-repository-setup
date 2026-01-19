@@ -55,8 +55,9 @@ This guide covers everything needed to set up a professional GitHub repository:
 5. [Release Automation](#5-release-automation)
 6. [CI/CD Workflows](#6-cicd-workflows)
 7. [Discovery & Sponsorship](#7-discovery--sponsorship)
-8. [Complete Setup Checklist](#complete-setup-checklist)
-9. [Workflow Reference](#workflow-reference)
+8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
+9. [Complete Setup Checklist](#complete-setup-checklist)
+10. [Workflow Reference](#workflow-reference)
 
 ---
 
@@ -463,6 +464,35 @@ EOF
 | `welcome.yml` | First issue/PR | Welcome contributors |
 | `ci.yml` | Push/PR | Build and test |
 | `artifact-preview.yml` | PR | Upload build preview |
+| `amazon-kdp-publish.yml` | Release published | Build EPUB for KDP |
+
+---
+
+## 8. Publishing (Books/eBooks)
+
+### Amazon KDP Automation
+
+For book/ebook projects, automate EPUB generation on release:
+
+**Workflow:** [`templates/workflows/amazon-kdp-publish.yml`](templates/workflows/amazon-kdp-publish.yml)
+
+**What it does:**
+1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
+2. Attaches EPUB to GitHub release
+3. Creates issue with KDP upload checklist
+
+**Why semi-automated?**
+Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
+
+**Customization:**
+```yaml
+env:
+  BOOK_TITLE: "Your Book Title"
+  BOOK_SUBTITLE: "Your Subtitle"
+  BOOK_AUTHOR: "Your Name"
+  SOURCE_FILE: "book.tex"
+  COVER_IMAGE: "cover.jpg"
+```
 
 ---
 
