@@ -62,3 +62,17 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **MAJOR** — Breaking changes
 - **MINOR** — New features (backwards compatible)
 - **PATCH** — Bug fixes (backwards compatible)
+
+## Amazon KDP Publishing (For Books)
+
+If publishing to Amazon KDP alongside free GitHub distribution:
+
+> ⚠️ **Do NOT enroll in KDP Select.** KDP Select requires exclusivity—you cannot distribute the ebook elsewhere (including free EPUB/PDF on GitHub). Only use standard KDP publishing to maintain dual distribution.
+
+### Workflow
+
+1. Release creates EPUB automatically
+2. GitHub issue created with upload checklist
+3. Manually upload EPUB to [KDP](https://kdp.amazon.com)
+4. Wait for Amazon review (24-72 hours)
+5. Close the issue once live

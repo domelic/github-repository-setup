@@ -485,6 +485,8 @@ For book/ebook projects, automate EPUB generation on release:
 **Why semi-automated?**
 Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
 
+> ⚠️ **KDP Select Warning:** Do NOT enroll in KDP Select if you also distribute free EPUB/PDF on GitHub. KDP Select requires exclusivity—you cannot distribute the ebook elsewhere. Use standard KDP publishing instead.
+
 **Customization:**
 ```yaml
 env:
@@ -494,6 +496,8 @@ env:
   SOURCE_FILE: "book.tex"
   COVER_IMAGE: "cover.jpg"
 ```
+
+**Best Practice:** Build EPUB in `release-please.yml` post-release job (not just `amazon-kdp-publish.yml`) to ensure it's always attached to releases. The `amazon-kdp-publish.yml` workflow may not trigger reliably from Release Please-created releases.
 
 ---
 
@@ -607,6 +611,67 @@ This is plain text content
 **Fix:** Add exempt labels to the stale workflow:
 ```yaml
 exempt-issue-labels: 'pinned,security,in-progress,amazon-kdp'
+```
+
+### Release assets not uploading (PDF, EPUB missing)
+
+**Problem:** Post-release job runs but PDF/EPUB not attached to release.
+
+**Cause:** An earlier step (like CITATION.cff push) failed and stopped the job before upload steps ran.
+
+**Fix:** Reorder steps in `release-please.yml`:
+1. Put critical asset uploads **first** (PDF, EPUB)
+2. Put potentially-failing operations **last** (CITATION.cff, notifications)
+3. Add `continue-on-error: true` to non-critical steps
+
+```yaml
+steps:
+  # Critical uploads FIRST
+  - name: Upload PDF to release
+    run: gh release upload ...
+
+  # Non-critical operations LAST
+  - name: Update CITATION.cff
+    continue-on-error: true  # Don't fail release if this fails
+    run: ...
+```
+
+### CITATION.cff not updating automatically
+
+**Problem:** CITATION.cff push fails with "branch protection" error.
+
+**Cause:** Branch protection requires PRs, blocking direct workflow pushes.
+
+**Fix:** Add `continue-on-error: true` to the CITATION.cff step. The release still succeeds; CITATION.cff can be updated manually or via PR.
+
+```yaml
+- name: Update CITATION.cff
+  continue-on-error: true
+  run: |
+    # ... update commands ...
+    git push origin main || echo "::warning::Could not push - branch protection requires PR"
+```
+
+### Markdown Lint: MD024 duplicate heading errors
+
+**Problem:** Lint fails on files with intentionally repeated headings (e.g., multiple "Example" sections).
+
+**Fix:** Disable MD024 in `.markdownlint.json`:
+```json
+{
+  "MD024": false
+}
+```
+
+### Markdown Lint: MD029 ordered list prefix errors
+
+**Problem:** Lint fails on ordered lists that intentionally use `1.` for all items.
+
+**Fix:** Disable MD029 in `.markdownlint.json`:
+```json
+{
+  "MD029": false
+}
 ```
 
 ### Markdown Lint fails on CHANGELOG.md

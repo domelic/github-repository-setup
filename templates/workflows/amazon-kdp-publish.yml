@@ -138,6 +138,8 @@ jobs:
 
 A new release **${VERSION}** has been published and the EPUB has been built.
 
+> ⚠️ **Reminder:** Do NOT enroll in KDP Select. It requires exclusivity and conflicts with free distribution (e.g., EPUB/PDF on GitHub).
+
 ### Download EPUB
 
 - **From Release**: [${EPUB_NAME}](https://github.com/${{ github.repository }}/releases/download/${VERSION}/${EPUB_NAME})
@@ -150,6 +152,7 @@ A new release **${VERSION}** has been published and the EPUB has been built.
 - [ ] Navigate to your book's Kindle eBook Content
 - [ ] Upload the new EPUB file
 - [ ] Review the preview in Kindle Previewer
+- [ ] **Ensure KDP Select is NOT enabled**
 - [ ] Update the version number in book details if needed
 - [ ] Save and publish changes
 - [ ] Wait for Amazon review (24-72 hours)
