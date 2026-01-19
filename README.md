@@ -19,6 +19,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 | **Release Automation** | Release Please, auto-CHANGELOG, semantic versioning |
 | **CI/CD** | Build workflows, PDF/artifact previews, Dependabot |
 | **Discovery** | Topics, social preview, FUNDING.yml, CITATION.cff |
+| **Code Intelligence** | [Serena MCP server](docs/SERENA.md) for semantic code understanding |
 
 ---
 
@@ -56,9 +57,10 @@ This guide covers everything needed to set up a professional GitHub repository:
 6. [CI/CD Workflows](#6-cicd-workflows)
 7. [Discovery & Sponsorship](#7-discovery--sponsorship)
 8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
-9. [Complete Setup Checklist](#complete-setup-checklist)
-10. [Workflow Reference](#workflow-reference)
-11. [Troubleshooting](#troubleshooting)
+9. [Serena Code Intelligence](#9-serena-code-intelligence)
+10. [Complete Setup Checklist](#complete-setup-checklist)
+11. [Workflow Reference](#workflow-reference)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -194,7 +196,7 @@ fix/infrastructure-improvements branch
 
 Location: `.github/CODEOWNERS`
 
-```
+```text
 # Default owner
 * @username
 
@@ -215,6 +217,7 @@ Location: `.github/CODEOWNERS`
 Location: `.github/ISSUE_TEMPLATE/`
 
 See [`templates/ISSUE_TEMPLATE/`](templates/ISSUE_TEMPLATE/) for complete examples:
+
 - `bug_report.md` — Bug reports
 - `feature_request.md` — Feature requests
 - `config.yml` — Template chooser config
@@ -277,6 +280,7 @@ gh api repos/OWNER/REPO -X PATCH -f has_discussions=true
 See [`templates/workflows/stale.yml`](templates/workflows/stale.yml)
 
 Automatically marks and closes inactive issues/PRs:
+
 - Marks stale after 45 days
 - Closes after 14 more days (60 total)
 - Exempt: `pinned`, `security`, `in-progress` labels
@@ -346,7 +350,8 @@ Fully automated releases from conventional commits.
 **Config:** [`templates/release-please-config.json`](templates/release-please-config.json)
 
 **How it works:**
-```
+
+```text
 feat: add feature → Push → Release PR created → Merge → v1.1.0 released
 ```
 
@@ -434,9 +439,94 @@ EOF
 
 ---
 
+## 8. Publishing (Books/eBooks)
+
+### Amazon KDP Automation
+
+For book/ebook projects, automate EPUB generation on release:
+
+**Workflow:** [`templates/workflows/amazon-kdp-publish.yml`](templates/workflows/amazon-kdp-publish.yml)
+
+**What it does:**
+
+1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
+2. Attaches EPUB to GitHub release
+3. Creates issue with KDP upload checklist
+
+**Why semi-automated?**
+Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
+
+> ⚠️ **KDP Select Warning:** Do NOT enroll in KDP Select if you also distribute free EPUB/PDF on GitHub. KDP Select requires exclusivity—you cannot distribute the ebook elsewhere. Use standard KDP publishing instead.
+
+**Customization:**
+
+```yaml
+env:
+  BOOK_TITLE: "Your Book Title"
+  BOOK_SUBTITLE: "Your Subtitle"
+  BOOK_AUTHOR: "Your Name"
+  SOURCE_FILE: "book.tex"
+  COVER_IMAGE: "cover.jpg"
+```
+
+**Best Practice:** Build EPUB in `release-please.yml` post-release job (not just `amazon-kdp-publish.yml`) to ensure it's always attached to releases. The `amazon-kdp-publish.yml` workflow may not trigger reliably from Release Please-created releases.
+
+---
+
+## 9. Serena Code Intelligence
+
+Serena is an MCP server that provides semantic code understanding for Claude Code.
+
+**Full Documentation:** [docs/SERENA.md](docs/SERENA.md)
+
+### Quick Setup
+
+1. Add to Claude Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": ["--from", "serena-mcp", "serena"]
+    }
+  }
+}
+```
+
+2. Activate in your project:
+
+```text
+Serena: activate_project /path/to/project
+```
+
+3. Copy templates to your project:
+
+```bash
+cp -r templates/serena/ .serena/
+```
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Symbolic Navigation** | Find symbols by name, trace references |
+| **Intelligent Editing** | Replace symbol bodies, semantic refactoring |
+| **Memory System** | Persistent markdown notes across sessions |
+| **Multi-Language** | TypeScript, Python, Go, Java, C/C++ via LSP |
+
+### Templates
+
+- [`templates/serena/project.yml`](templates/serena/project.yml) — Project configuration
+- [`templates/serena/.gitignore`](templates/serena/.gitignore) — Cache exclusion
+- [`templates/serena/memories/README.md`](templates/serena/memories/README.md) — Memory system guide
+
+---
+
 ## Complete Setup Checklist
 
 ### Documentation
+
 - [ ] README.md with badges, installation, usage
 - [ ] LICENSE (MIT, Apache 2.0, etc.)
 - [ ] CONTRIBUTING.md with guidelines
@@ -447,6 +537,7 @@ EOF
 - [ ] CLAUDE.md (for Claude Code users)
 
 ### Branch Protection
+
 - [ ] PRs required for main
 - [ ] Auto-delete merged branches enabled
 - [ ] CODEOWNERS file
@@ -454,6 +545,7 @@ EOF
 - [ ] Force push blocked
 
 ### Issue & PR Management
+
 - [ ] Bug report template
 - [ ] Feature request template
 - [ ] PR template
@@ -463,26 +555,36 @@ EOF
 - [ ] Welcome bot configured
 
 ### Quality Gates
+
 - [ ] Commitlint workflow
 - [ ] Spell check workflow + dictionary
 - [ ] Link checker workflow
 - [ ] Markdown lint workflow + config
 
 ### Release Automation
+
 - [ ] Release Please OR manual release workflow
 - [ ] CITATION.cff auto-update (if applicable)
 
 ### CI/CD
+
 - [ ] Build/test workflow
 - [ ] Dependabot for Actions
 - [ ] Artifact preview on PRs (if applicable)
 
 ### Discovery
+
 - [ ] Repository description set
 - [ ] Topics configured
 - [ ] Social preview uploaded
 - [ ] FUNDING.yml (if accepting sponsors)
 - [ ] GitHub Pages (if applicable)
+
+### Code Intelligence (Optional)
+
+- [ ] Serena MCP configured
+- [ ] `.serena/project.yml` created
+- [ ] Initial memories documented
 
 ---
 
@@ -500,38 +602,6 @@ EOF
 | `ci.yml` | Push/PR | Build and test |
 | `artifact-preview.yml` | PR | Upload build preview |
 | `amazon-kdp-publish.yml` | Release published | Build EPUB for KDP |
-
----
-
-## 8. Publishing (Books/eBooks)
-
-### Amazon KDP Automation
-
-For book/ebook projects, automate EPUB generation on release:
-
-**Workflow:** [`templates/workflows/amazon-kdp-publish.yml`](templates/workflows/amazon-kdp-publish.yml)
-
-**What it does:**
-1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
-2. Attaches EPUB to GitHub release
-3. Creates issue with KDP upload checklist
-
-**Why semi-automated?**
-Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
-
-> ⚠️ **KDP Select Warning:** Do NOT enroll in KDP Select if you also distribute free EPUB/PDF on GitHub. KDP Select requires exclusivity—you cannot distribute the ebook elsewhere. Use standard KDP publishing instead.
-
-**Customization:**
-```yaml
-env:
-  BOOK_TITLE: "Your Book Title"
-  BOOK_SUBTITLE: "Your Subtitle"
-  BOOK_AUTHOR: "Your Name"
-  SOURCE_FILE: "book.tex"
-  COVER_IMAGE: "cover.jpg"
-```
-
-**Best Practice:** Build EPUB in `release-please.yml` post-release job (not just `amazon-kdp-publish.yml`) to ensure it's always attached to releases. The `amazon-kdp-publish.yml` workflow may not trigger reliably from Release Please-created releases.
 
 ---
 
@@ -609,6 +679,7 @@ MIT License - see [LICENSE](LICENSE).
 **Problem:** Release Please fails with permission error.
 
 **Fix:** Enable PR creation in repository settings:
+
 1. Go to **Settings → Actions → General**
 2. Scroll to **Workflow permissions**
 3. Check **"Allow GitHub Actions to create and approve pull requests"**
@@ -643,6 +714,7 @@ Replace `OWNER/REPO` with your actual repository path.
 **Problem:** Lint fails with blanks-around-headings, blanks-around-fences, blanks-around-lists errors.
 
 **Fix:** These pedantic rules often conflict with real-world content. Disable in `.markdownlint.json`:
+
 ```json
 {
   "MD022": false,
@@ -656,6 +728,7 @@ Replace `OWNER/REPO` with your actual repository path.
 **Problem:** Code blocks without language specifiers trigger errors.
 
 **Fix:** Add language identifiers to all code blocks. For plain text, use `text`:
+
 ```text
 This is plain text content
 ```
@@ -665,6 +738,7 @@ This is plain text content
 **Problem:** Technical terms, author names, or project-specific words flagged.
 
 **Fix:** Add words to `.cspell.json` in the `words` array:
+
 ```json
 {
   "words": ["yourterm", "anotherterm"]
@@ -676,6 +750,7 @@ This is plain text content
 **Problem:** Important long-running issues get marked stale.
 
 **Fix:** Add exempt labels to the stale workflow:
+
 ```yaml
 exempt-issue-labels: 'pinned,security,in-progress,amazon-kdp'
 ```
@@ -687,6 +762,7 @@ exempt-issue-labels: 'pinned,security,in-progress,amazon-kdp'
 **Cause:** An earlier step (like CITATION.cff push) failed and stopped the job before upload steps ran.
 
 **Fix:** Reorder steps in `release-please.yml`:
+
 1. Put critical asset uploads **first** (PDF, EPUB)
 2. Put potentially-failing operations **last** (CITATION.cff, notifications)
 3. Add `continue-on-error: true` to non-critical steps
@@ -712,6 +788,7 @@ steps:
 **Best Fix (Recommended):** Use Release Please `extra-files` to manage CITATION.cff version automatically. This includes the version update in the Release Please PR itself, respecting branch protection.
 
 1. Add to `release-please-config.json`:
+
 ```json
 {
   "packages": {
@@ -747,6 +824,7 @@ steps:
 **Problem:** Lint fails on files with intentionally repeated headings (e.g., multiple "Example" sections).
 
 **Fix:** Disable MD024 in `.markdownlint.json`:
+
 ```json
 {
   "MD024": false
@@ -758,6 +836,7 @@ steps:
 **Problem:** Lint fails on ordered lists that intentionally use `1.` for all items.
 
 **Fix:** Disable MD029 in `.markdownlint.json`:
+
 ```json
 {
   "MD029": false
@@ -769,6 +848,7 @@ steps:
 **Problem:** Release Please generates CHANGELOG.md with asterisks for lists, but markdownlint config expects dashes.
 
 **Fix:** Exclude CHANGELOG.md from lint in the workflow:
+
 ```yaml
 globs: |
   **/*.md
@@ -790,6 +870,7 @@ curl -o file.txt https://raw.githubusercontent.com/owner/repo/main/path/to/file.
 **Fix:** Merge the feature branch to `main` before the install script will work. Install scripts that download from GitHub should always reference paths that exist on `main`.
 
 **Best Practice for Install Scripts:**
+
 1. Test locally before pushing changes to file locations
 2. Merge PRs that move/rename files before updating download URLs
 3. Consider versioned URLs (`/v1.0.0/path`) instead of `/main/path` for stability
@@ -830,3 +911,4 @@ show_summary() {
 - [Release Please](https://github.com/google-github-actions/release-please-action)
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Contributor Covenant](https://www.contributor-covenant.org/)
+- [Serena MCP Documentation](docs/SERENA.md)
