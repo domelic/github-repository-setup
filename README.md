@@ -497,7 +497,9 @@ env:
 
 ---
 
-## Claude Code Skill
+## Claude Code Skills
+
+### `/github-setup` — Repository Setup Wizard
 
 Install the `/github-setup` skill:
 
@@ -511,6 +513,25 @@ cp templates/skills/github-setup.md ~/.claude/skills/
 ```
 
 See [templates/skills/github-setup.md](templates/skills/github-setup.md) for full documentation.
+
+### `/github-release` — Create Releases via Playwright
+
+Automate GitHub release creation using Playwright browser automation:
+
+```bash
+/github-release v3.0.0
+/github-release v2.1.0 "Bug fixes and improvements"
+```
+
+**Prerequisites:** Tag pushed to remote, user authenticated to GitHub, Playwright MCP available.
+
+Install:
+
+```bash
+cp templates/skills/github-release.md .claude/skills/
+```
+
+See [templates/skills/github-release.md](templates/skills/github-release.md) for full documentation.
 
 ---
 
