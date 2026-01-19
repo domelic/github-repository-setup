@@ -25,6 +25,8 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           # Note: --exclude-mail was removed in lychee v2 (now default behavior)
+          # Customize exclusions for your repository
+          # IMPORTANT: Replace OWNER/REPO with your actual repository path
           args: >-
             --verbose
             --no-progress
@@ -32,6 +34,7 @@ jobs:
             --exclude "^https://doi.org/"
             --exclude "localhost"
             --exclude "127.0.0.1"
+            --exclude "^https://github.com/OWNER/REPO/compare/"
             '**/*.md'
           fail: true
         env:

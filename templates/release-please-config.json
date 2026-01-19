@@ -17,6 +17,13 @@
         { "type": "perf", "section": "Performance", "hidden": false },
         { "type": "test", "section": "Tests", "hidden": true },
         { "type": "ci", "section": "CI/CD", "hidden": true }
+      ],
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "CITATION.cff",
+          "glob": false
+        }
       ]
     }
   }

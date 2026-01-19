@@ -146,6 +146,40 @@ Branch names should match conventional commit types:
 
 **Rules:** lowercase, hyphens between words, concise but descriptive
 
+### Branching Strategy
+
+**When to use feature branches vs. small PRs:**
+
+| Work Type | Approach | Why |
+|-----------|----------|-----|
+| **Exploratory/investigative** | Feature branch | Accumulate changes, merge once when stable |
+| **Interconnected fixes** | Feature branch | Related changes should ship together |
+| **Independent, unrelated fixes** | Small PRs | Each has standalone value |
+| **Production hotfixes** | Small PRs | Need immediate deployment |
+| **New features** | Feature branch | Develop fully before merging |
+| **CI/infrastructure changes** | Feature branch | Test everything works before merging |
+
+**Anti-pattern to avoid:**
+
+```text
+# BAD: Many small PRs for interconnected exploratory work
+fix #1 → PR → merge → v1.0.1
+fix #2 → PR → merge → v1.0.2  (discovered while fixing #1)
+fix #3 → PR → merge → v1.0.3  (discovered while fixing #2)
+fix #4 → PR → merge → v1.0.4  (related to #1-3)
+
+# GOOD: Feature branch for exploratory work
+fix/infrastructure-improvements branch
+  ├── fix #1 (commit)
+  ├── fix #2 (commit)
+  ├── fix #3 (commit)
+  └── fix #4 (commit)
+        ↓
+    single PR → merge → v1.0.1
+```
+
+**Key insight:** If you're discovering related issues as you work, you're doing exploratory work—use a feature branch. If fixes are truly independent and each could ship alone, use small PRs.
+
 ### Settings by Team Size
 
 | Setting | Solo | Small Team | Large Team |
@@ -571,6 +605,22 @@ MIT License - see [LICENSE](LICENSE).
 
 **Fix:** Remove `--exclude-mail` from the workflow args and upgrade to `lycheeverse/lychee-action@v2`.
 
+### Link Checker: Release Please compare URLs return 404
+
+**Problem:** Link checker fails on URLs like `https://github.com/owner/repo/compare/v1.0.0...v1.0.1`.
+
+**Cause:** Release Please auto-generates these compare URLs in CHANGELOG.md. GitHub may return 404 briefly after a new release until the comparison is indexed.
+
+**Fix:** Exclude compare URLs in your link-checker workflow:
+
+```yaml
+args: >-
+  --exclude "^https://github.com/OWNER/REPO/compare/"
+  '**/*.md'
+```
+
+Replace `OWNER/REPO` with your actual repository path.
+
 ### Markdown Lint: Many MD022/MD031/MD032 errors
 
 **Problem:** Lint fails with blanks-around-headings, blanks-around-fences, blanks-around-lists errors.
@@ -638,11 +688,34 @@ steps:
 
 ### CITATION.cff not updating automatically
 
-**Problem:** CITATION.cff push fails with "branch protection" error.
+**Problem:** CITATION.cff version doesn't update on release, or push fails with "branch protection" error.
 
-**Cause:** Branch protection requires PRs, blocking direct workflow pushes.
+**Cause:** Post-release workflow steps that push directly to main are blocked by branch protection.
 
-**Fix:** Add `continue-on-error: true` to the CITATION.cff step. The release still succeeds; CITATION.cff can be updated manually or via PR.
+**Best Fix (Recommended):** Use Release Please `extra-files` to manage CITATION.cff version automatically. This includes the version update in the Release Please PR itself, respecting branch protection.
+
+1. Add to `release-please-config.json`:
+```json
+{
+  "packages": {
+    ".": {
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "CITATION.cff",
+          "glob": false
+        }
+      ]
+    }
+  }
+}
+```
+
+2. Ensure CITATION.cff has a `version:` field that Release Please can find and update.
+
+3. Remove any post-release CITATION.cff update steps from your workflow.
+
+**Alternative Fix:** If you can't use extra-files, add `continue-on-error: true`:
 
 ```yaml
 - name: Update CITATION.cff
