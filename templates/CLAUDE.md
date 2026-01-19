@@ -46,7 +46,7 @@ When creating branches, use prefixes that match the conventional commit type:
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>: <description>
 
 [optional body]

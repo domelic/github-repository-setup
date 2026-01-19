@@ -37,23 +37,28 @@ Concept dependencies, definition locations, and term relationships.
 
 ## Cross-Reference Patterns
 
-### When referencing concepts forward:
+### When Referencing Concepts Forward
+
 - [Pattern for forward references]
 
-### When referencing concepts backward:
+### When Referencing Concepts Backward
+
 - [Pattern for backward references]
 
-### Key labels/anchors:
+### Key Labels and Anchors
+
 - `[label1]` - [description]
 - `[label2]` - [description]
 
 ## Editing Guidelines
 
-### Adding new concepts:
+### Adding New Concepts
+
 1. Check if concept relates to existing foundations
 2. Reference the foundational concept on first use
 3. Add to this cross-reference map
 
-### Modifying existing concepts:
+### Modifying Existing Concepts
+
 1. Check dependency graph for downstream references
 2. Verify changes don't contradict dependent content

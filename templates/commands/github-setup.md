@@ -110,7 +110,7 @@ When creating branches, use prefixes matching conventional commit types:
 
 Create `.github/CODEOWNERS`:
 
-```
+```text
 * @username
 ```
 
@@ -207,7 +207,7 @@ Set up automated releases with Release Please:
 
 ### How It Works
 
-```
+```text
 feat: add feature → Push → Release PR created → Merge → Release published
 ```
 

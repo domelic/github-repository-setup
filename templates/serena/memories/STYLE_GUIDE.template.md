@@ -31,12 +31,14 @@ Writing conventions, terminology, and formatting patterns for maintaining consis
 ## Formatting Patterns
 
 ### [Pattern Type 1]
-```
+
+```text
 [Example code/markup]
 ```
 
 ### [Pattern Type 2]
-```
+
+```text
 [Example code/markup]
 ```
 

@@ -339,6 +339,7 @@ Enforces consistent markdown formatting.
 
 **Workflow:** [`templates/workflows/markdown-lint.yml`](templates/workflows/markdown-lint.yml)
 **Config:** [`templates/.markdownlint.json`](templates/.markdownlint.json)
+**Guide:** [docs/MARKDOWN_LINT.md](docs/MARKDOWN_LINT.md) — Common rules and fixes
 
 ---
 
@@ -972,3 +973,4 @@ show_summary() {
 - [Contributor Covenant](https://www.contributor-covenant.org/)
 - [Serena MCP Documentation](docs/SERENA.md)
 - [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
+- [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
