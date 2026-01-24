@@ -112,7 +112,13 @@ Then use it:
 
 **Category presets:** `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`
 
-> **Note:** The skill fetches templates directly from this repository, ensuring you always get the latest tested configurations. Network access is required.
+> **Note:** The skill fetches templates from a pinned release version (`v0.1.13`) ensuring stability. Features include:
+>
+> - **Version pinning** - Templates won't change unexpectedly
+> - **SHA-256 checksums** - Verify template integrity after download
+> - **Fallback templates** - Critical templates included inline for offline use
+>
+> Network access is required for full functionality.
 
 #### Setup Decision Tree
 

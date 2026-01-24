@@ -14,9 +14,268 @@ Set up GitHub repositories with production-grade automation by fetching template
 
 ## Template Source
 
-**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/`
+**Pinned Version:** `v0.1.13`
 
-All templates are fetched from this repository. Use `curl`, `wget`, or WebFetch to download.
+**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.13/templates/`
+
+All templates are fetched from this pinned release. This ensures stability - templates won't change unexpectedly.
+
+### Upgrading to a New Version
+
+To use a newer version, update the version in the Base URL (e.g., `v0.1.14`). Check the [releases page](https://github.com/domelic/github-repository-setup/releases) for available versions.
+
+---
+
+## Integrity Verification
+
+Templates include SHA-256 checksums for integrity verification.
+
+### Checksum Manifest
+
+Fetch the checksums file:
+```bash
+VERSION="v0.1.13"  # Update to match pinned version
+curl -s "https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates/checksums.json"
+```
+
+### Verification Process
+
+After fetching a template, verify its integrity:
+
+```bash
+# Fetch template
+curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.13/templates/.editorconfig"
+
+# Verify checksum (expected: fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71)
+shasum -a 256 .editorconfig
+```
+
+If checksums don't match, the template may have been tampered with or corrupted during download.
+
+---
+
+## Fallback Templates
+
+If network access is unavailable, use these critical templates inline.
+
+<details>
+<summary><strong>.editorconfig</strong> (universal)</summary>
+
+```ini
+# EditorConfig helps maintain consistent coding styles across editors
+# https://editorconfig.org
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown files - preserve trailing whitespace for line breaks
+[*.md]
+trim_trailing_whitespace = false
+
+# Python - PEP 8 recommends 4 spaces
+[*.py]
+indent_size = 4
+
+# Go - tabs per gofmt convention
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Rust - 4 spaces per rustfmt default
+[*.rs]
+indent_size = 4
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
+
+[*.mk]
+indent_style = tab
+
+# Shell scripts
+[*.sh]
+indent_size = 2
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# TOML files (Rust/Python)
+[*.toml]
+indent_size = 2
+
+# Docker
+[Dockerfile*]
+indent_size = 2
+
+# Git config files
+[.git*]
+indent_size = 2
+```
+
+**Checksum:** `fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71`
+</details>
+
+<details>
+<summary><strong>dependabot.yml</strong> (security updates)</summary>
+
+```yaml
+version: 2
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
+    groups:
+      # Group all action updates into a single PR
+      actions:
+        patterns:
+          - "*"
+
+  # Uncomment for npm projects
+  # - package-ecosystem: "npm"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   commit-message:
+  #     prefix: "chore"
+  #   labels:
+  #     - "dependencies"
+  #   groups:
+  #     minor-and-patch:
+  #       update-types:
+  #         - "minor"
+  #         - "patch"
+
+  # Uncomment for Python projects
+  # - package-ecosystem: "pip"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   commit-message:
+  #     prefix: "chore"
+```
+
+**Checksum:** `45c682820aebaeae78eb15629d2a795883327bb53ccc682a506caff9b4a0ea2b`
+</details>
+
+<details>
+<summary><strong>.gitignore-global-macos</strong></summary>
+
+```gitignore
+# macOS Global .gitignore template
+# https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
+#
+# USAGE: This is a GLOBAL gitignore template for user-level configuration.
+# Add to your global gitconfig:
+#   git config --global core.excludesfile ~/.gitignore_global
+#
+# Or combine with language-specific templates in your project .gitignore.
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# iCloud generated files
+*.icloud
+```
+
+**Checksum:** `3c27393491661db73fd7f05e84fe874c6a55cadb6a5dd5e8bfe9500cbddd91b1`
+</details>
+
+<details>
+<summary><strong>.gitignore-global-windows</strong></summary>
+
+```gitignore
+# Windows Global .gitignore template
+# https://github.com/github/gitignore/blob/main/Global/Windows.gitignore
+#
+# USAGE: This is a GLOBAL gitignore template for user-level configuration.
+# Add to your global gitconfig:
+#   git config --global core.excludesfile ~/.gitignore_global
+#
+# Or combine with language-specific templates in your project .gitignore.
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Windows Explorer lock files
+~$*
+
+# Windows Search index files
+*.search-ms
+
+# Windows security/zone identifier
+*:Zone.Identifier
+```
+
+**Checksum:** `dbafbdce20bd8814bae52a0d0141e327373f0c3d7c6d4f5ecd6c43470a35a57f`
+</details>
 
 ---
 
@@ -356,7 +615,7 @@ Check for existence of these files/settings:
 ### Security
 - [ ] `.github/workflows/dependency-review.yml`
 
-Report missing items grouped by priority: Essential → Recommended → Optional.
+Report missing items grouped by priority: Essential -> Recommended -> Optional.
 
 ---
 
@@ -412,11 +671,21 @@ gh api repos/{owner}/{repo} -X PATCH -f has_discussions=true
 ### Using curl
 
 ```bash
-BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates"
+VERSION="v0.1.13"
+BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates"
 
 # Example: Fetch Node.js CI workflow
 mkdir -p .github/workflows
 curl -o .github/workflows/ci-nodejs.yml "$BASE_URL/workflows/ci-nodejs.yml"
+
+# Verify checksum
+EXPECTED="4777f47f972857aec2a8944cca3bcd0a11c6c63231b25f94b069f85463b88b70"
+ACTUAL=$(shasum -a 256 .github/workflows/ci-nodejs.yml | cut -d' ' -f1)
+if [ "$EXPECTED" = "$ACTUAL" ]; then
+  echo "Checksum verified"
+else
+  echo "WARNING: Checksum mismatch!"
+fi
 ```
 
 ### Using WebFetch (Claude Code)
@@ -437,3 +706,5 @@ After fetching, customize templates:
 Full documentation: https://github.com/domelic/github-repository-setup
 
 Template directory: https://github.com/domelic/github-repository-setup/tree/main/templates
+
+Checksums manifest: `templates/checksums.json` (available in v0.1.13+)
