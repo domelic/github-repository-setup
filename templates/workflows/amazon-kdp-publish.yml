@@ -134,43 +134,45 @@ jobs:
           gh issue create \
             --title "Amazon KDP: Upload ${VERSION}" \
             --label "amazon-kdp,release" \
-            --body "## Amazon KDP Upload Required
+            --body "$(cat <<BODY
+          ## Amazon KDP Upload Required
 
-A new release **${VERSION}** has been published and the EPUB has been built.
+          A new release **${VERSION}** has been published and the EPUB has been built.
 
-> ⚠️ **Reminder:** Do NOT enroll in KDP Select. It requires exclusivity and conflicts with free distribution (e.g., EPUB/PDF on GitHub).
+          > **Reminder:** Do NOT enroll in KDP Select. It requires exclusivity and conflicts with free distribution (e.g., EPUB/PDF on GitHub).
 
-### Download EPUB
+          ### Download EPUB
 
-- **From Release**: [${EPUB_NAME}](https://github.com/${{ github.repository }}/releases/download/${VERSION}/${EPUB_NAME})
-- **From Artifacts**: Check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **From Release**: [${EPUB_NAME}](https://github.com/${{ github.repository }}/releases/download/${VERSION}/${EPUB_NAME})
+          - **From Artifacts**: Check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-### Upload Checklist
+          ### Upload Checklist
 
-- [ ] Download the EPUB file from the release
-- [ ] Log in to [KDP](https://kdp.amazon.com)
-- [ ] Navigate to your book's Kindle eBook Content
-- [ ] Upload the new EPUB file
-- [ ] Review the preview in Kindle Previewer
-- [ ] **Ensure KDP Select is NOT enabled**
-- [ ] Update the version number in book details if needed
-- [ ] Save and publish changes
-- [ ] Wait for Amazon review (24-72 hours)
+          - [ ] Download the EPUB file from the release
+          - [ ] Log in to [KDP](https://kdp.amazon.com)
+          - [ ] Navigate to your book's Kindle eBook Content
+          - [ ] Upload the new EPUB file
+          - [ ] Review the preview in Kindle Previewer
+          - [ ] **Ensure KDP Select is NOT enabled**
+          - [ ] Update the version number in book details if needed
+          - [ ] Save and publish changes
+          - [ ] Wait for Amazon review (24-72 hours)
 
-### Book Details
+          ### Book Details
 
-| Field | Value |
-|-------|-------|
-| Title | ${{ env.BOOK_TITLE }} |
-| Subtitle | ${{ env.BOOK_SUBTITLE }} |
-| Author | ${{ env.BOOK_AUTHOR }} |
-| Version | ${VERSION} |
+          | Field | Value |
+          |-------|-------|
+          | Title | ${{ env.BOOK_TITLE }} |
+          | Subtitle | ${{ env.BOOK_SUBTITLE }} |
+          | Author | ${{ env.BOOK_AUTHOR }} |
+          | Version | ${VERSION} |
 
-### After Publishing
+          ### After Publishing
 
-- [ ] Verify the update is live on Amazon
-- [ ] Close this issue
+          - [ ] Verify the update is live on Amazon
+          - [ ] Close this issue
 
----
-*This issue was automatically created by the Amazon KDP Publish workflow.*
-"
+          ---
+          *This issue was automatically created by the Amazon KDP Publish workflow.*
+          BODY
+          )"

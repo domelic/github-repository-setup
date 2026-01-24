@@ -1,0 +1,164 @@
+# Template Validation Workflow
+#
+# Validates all templates in the repository:
+# - YAML syntax validation for workflow files
+# - JSON syntax validation for config files
+# - Checksum verification to ensure checksums.json is up to date
+#
+# Runs on PRs that modify templates or the checksum generation script
+
+name: Validate Templates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'templates/**'
+      - 'scripts/regenerate-checksums.sh'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'templates/**'
+      - 'scripts/regenerate-checksums.sh'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-yaml:
+    name: Validate YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Validate YAML syntax
+        run: |
+          # Use Python YAML parser for syntax validation
+          # This checks if files are parseable without style rules
+          # that cause false positives on embedded shell/markdown content
+          python3 << 'SCRIPT'
+          import yaml
+          import sys
+          from pathlib import Path
+
+          errors = []
+          workflows = list(Path('templates/workflows').glob('*.yml'))
+
+          for f in workflows:
+              try:
+                  with open(f) as fh:
+                      yaml.safe_load(fh)
+                  print(f"✓ {f}")
+              except yaml.YAMLError as e:
+                  print(f"✗ {f}")
+                  print(f"  Error: {e}")
+                  errors.append(f)
+
+          print(f"\nValidated {len(workflows)} workflow files")
+          if errors:
+              print(f"Failed: {len(errors)} files with syntax errors")
+              sys.exit(1)
+          print("All files have valid YAML syntax")
+          SCRIPT
+
+  validate-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          find templates -name "*.json" -type f | while read -r file; do
+            echo "Validating: $file"
+            python3 -m json.tool "$file" > /dev/null || exit 1
+          done
+          echo "All JSON files are valid"
+
+  verify-checksums:
+    name: Verify Checksums
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regenerate checksums
+        run: |
+          # Save original checksums
+          cp templates/checksums.json /tmp/original-checksums.json
+
+          # Regenerate with current version
+          ./scripts/regenerate-checksums.sh
+
+      - name: Compare checksums
+        run: |
+          # Extract just the checksums object (ignore version/comment which may differ)
+          python3 << 'EOF'
+          import json
+          import sys
+
+          with open('/tmp/original-checksums.json') as f:
+              original = json.load(f)
+
+          with open('templates/checksums.json') as f:
+              regenerated = json.load(f)
+
+          # Compare only the checksums, not metadata
+          original_checksums = original.get('checksums', {})
+          regenerated_checksums = regenerated.get('checksums', {})
+
+          if original_checksums != regenerated_checksums:
+              print("ERROR: Checksums are out of date!")
+              print("")
+
+              # Find differences
+              all_keys = set(original_checksums.keys()) | set(regenerated_checksums.keys())
+              for key in sorted(all_keys):
+                  orig = original_checksums.get(key)
+                  regen = regenerated_checksums.get(key)
+                  if orig != regen:
+                      if orig is None:
+                          print(f"  + {key} (new file)")
+                      elif regen is None:
+                          print(f"  - {key} (removed)")
+                      else:
+                          print(f"  ~ {key} (modified)")
+
+              print("")
+              print("Run './scripts/regenerate-checksums.sh' to update checksums.json")
+              sys.exit(1)
+          else:
+              print("Checksums are up to date")
+          EOF
+
+  validate-github-actions:
+    name: Validate GitHub Actions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install action-validator
+        run: |
+          # Install actionlint
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
+      - name: Validate workflow files
+        run: |
+          # Validate all workflow templates
+          # Note: Some may have intentional placeholders, so we allow warnings
+          ./actionlint -color templates/workflows/*.yml || true
+
+          # Strict validation for our own workflows
+          ./actionlint -color .github/workflows/*.yml
