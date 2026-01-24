@@ -29,6 +29,9 @@ This guide covers everything needed to set up a professional GitHub repository:
 
 ### CI/CD Pipeline Flow
 
+<details>
+<summary>View diagram</summary>
+
 ```mermaid
 flowchart TB
     subgraph Trigger["🚀 Trigger"]
@@ -78,6 +81,8 @@ flowchart TB
     Release --> Deploy
 ```
 
+</details>
+
 ---
 
 ## Quick Start
@@ -106,6 +111,51 @@ Then use it:
 **Language presets:** `nodejs`, `python`, `go`, `rust`, `java`, `ruby`, `php`, `dotnet`
 
 **Category presets:** `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`
+
+#### Setup Decision Tree
+
+<details>
+<summary>View diagram</summary>
+
+```mermaid
+flowchart TB
+    start(["🚀 What type of project?"])
+
+    subgraph Lang["📚 Language"]
+        nodejs["Node.js"]
+        python["Python"]
+        go["Go"]
+        rust["Rust"]
+    end
+
+    subgraph Deploy["🌐 Deployment Type"]
+        static["Static Site"]
+        container["Container"]
+        serverless["Serverless"]
+        package["Package/Library"]
+    end
+
+    subgraph Templates["📋 Templates"]
+        t_pages["deploy-github-pages.yml"]
+        t_docker["publish-docker.yml"]
+        t_lambda["deploy-aws-lambda.yml"]
+        t_npm["publish-npm.yml"]
+        t_pypi["publish-pypi.yml"]
+        t_crates["publish-crates.yml"]
+    end
+
+    start --> Lang
+    Lang --> Deploy
+
+    static --> t_pages
+    container --> t_docker
+    serverless --> t_lambda
+    nodejs & package --> t_npm
+    python & package --> t_pypi
+    rust & package --> t_crates
+```
+
+</details>
 
 ### Manual Setup
 
@@ -365,6 +415,40 @@ Greets first-time contributors with helpful information.
 
 ## 3. Quality Gates
 
+<details>
+<summary>View diagram</summary>
+
+```mermaid
+flowchart LR
+    subgraph Local["🏠 Local (pre-commit)"]
+        direction TB
+        whitespace["Trailing whitespace ✓"]
+        eof["End-of-file fixer ✓"]
+        yaml["YAML check ✓"]
+        large["Large files ✗"]
+    end
+
+    subgraph CI["☁️ CI Pipeline"]
+        direction TB
+        commitlint["Commitlint ✗"]
+        spell["Spell check ✗"]
+        links["Link checker ✗"]
+        mdlint["Markdown lint ✓"]
+    end
+
+    subgraph Security["🔒 Security"]
+        direction TB
+        codeql["CodeQL ✗"]
+        trivy["Trivy ✗"]
+    end
+
+    Local -->|"git push"| CI -->|"PR opened"| Security
+```
+
+**Legend:** ✓ = Auto-fixable | ✗ = Manual fix required
+
+</details>
+
 ### Commitlint (Conventional Commits)
 
 Enforces commit message format: `type: description`
@@ -486,6 +570,52 @@ feat: add feature → Push → Release PR created → Merge → v1.1.0 released
 | `fix:` | Patch (1.0.0 → 1.0.1) |
 | `feat!:` or `BREAKING CHANGE:` | Major (1.0.0 → 2.0.0) |
 | `chore:`, `ci:` | No release |
+
+#### Release Please Automation Flow
+
+<details>
+<summary>View diagram</summary>
+
+```mermaid
+flowchart TB
+    subgraph Trigger["🚀 Trigger"]
+        push["Push to main"]
+        commits["Conventional Commits"]
+    end
+
+    subgraph Analyze["🔍 Analyze"]
+        scan["Scan commit history"]
+        bump["Determine version bump"]
+    end
+
+    subgraph Version["📊 Version Logic"]
+        feat["feat: → Minor"]
+        fix["fix: → Patch"]
+        breaking["BREAKING → Major"]
+    end
+
+    subgraph PR["📝 Release PR"]
+        create["Create/Update PR"]
+        changelog["Generate CHANGELOG"]
+    end
+
+    subgraph Release["📦 On Merge"]
+        tag["Create Git tag"]
+        ghrelease["GitHub Release"]
+    end
+
+    subgraph Publish["📤 Post-Release"]
+        workflows["Trigger publish workflows"]
+        assets["Upload assets"]
+    end
+
+    push --> commits --> scan --> bump
+    bump --> feat & fix & breaking
+    feat & fix & breaking --> create --> changelog
+    changelog -->|Merge| tag --> ghrelease --> workflows & assets
+```
+
+</details>
 
 ### Manual Release Workflow
 
@@ -701,6 +831,50 @@ Features:
 
 Comprehensive security scanning and supply chain protection.
 
+<details>
+<summary>View diagram</summary>
+
+```mermaid
+flowchart TB
+    subgraph Triggers["🚀 Triggers"]
+        pr["Pull Request"]
+        push["Push to main"]
+        schedule["Weekly Schedule"]
+    end
+
+    subgraph SAST["🔍 CodeQL"]
+        codeql_analyze["Analyze patterns"]
+        codeql_sarif["SARIF output"]
+    end
+
+    subgraph SCA["📦 Trivy"]
+        trivy_deps["Dependency scan"]
+        trivy_sarif["SARIF output"]
+    end
+
+    subgraph Supply["🔗 Supply Chain"]
+        scorecard["OpenSSF Scorecard"]
+        sbom["SBOM Generation"]
+    end
+
+    subgraph Results["📊 Results"]
+        security_tab["GitHub Security Tab"]
+        alerts["Security Alerts"]
+        badge["Scorecard Badge"]
+    end
+
+    pr & push --> SAST & SCA
+    schedule --> SAST & SCA & Supply
+
+    codeql_analyze --> codeql_sarif --> security_tab
+    trivy_deps --> trivy_sarif --> security_tab
+    scorecard --> badge & security_tab
+    sbom --> alerts
+    security_tab --> alerts
+```
+
+</details>
+
 ### CodeQL (SAST)
 
 **Workflow:** [`templates/workflows/codeql.yml`](templates/workflows/codeql.yml)
@@ -766,6 +940,54 @@ Software Bill of Materials generation:
 ---
 
 ## 7. Publishing & Deployment
+
+<details>
+<summary>View diagram</summary>
+
+```mermaid
+flowchart TB
+    start(["🚀 What are you deploying?"])
+
+    subgraph Type["📦 Project Type"]
+        static["Static Site / Docs"]
+        container["Container / Service"]
+        serverless["Serverless Function"]
+        package["Package / Library"]
+    end
+
+    subgraph Static["🌐 Static Hosting"]
+        pages["GitHub Pages"]
+        vercel["Vercel"]
+        netlify["Netlify"]
+        s3["AWS S3 + CloudFront"]
+    end
+
+    subgraph Container["🐳 Container Platforms"]
+        ghcr["GHCR + Kubernetes"]
+        railway["Railway"]
+        fly["Fly.io"]
+        render["Render"]
+    end
+
+    subgraph Serverless["⚡ Serverless"]
+        lambda["AWS Lambda"]
+    end
+
+    subgraph Package["📚 Package Registries"]
+        npm["npm"]
+        pypi["PyPI"]
+        crates["crates.io"]
+        docker["Docker Hub / GHCR"]
+    end
+
+    start --> Type
+    static --> pages & vercel & netlify & s3
+    container --> ghcr & railway & fly & render
+    serverless --> lambda
+    package --> npm & pypi & crates & docker
+```
+
+</details>
 
 ### Package Publishing
 
