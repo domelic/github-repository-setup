@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.16](https://github.com/domelic/github-repository-setup/compare/v0.1.15...v0.1.16) (2026-01-24)
+
+
+### Bug Fixes
+
+* sync .claude/commands skills with templates ([#65](https://github.com/domelic/github-repository-setup/issues/65)) ([eb0dd0f](https://github.com/domelic/github-repository-setup/commit/eb0dd0f92011fc3a306cd70b669808bd90ff8930))
+
 ## [0.1.15](https://github.com/domelic/github-repository-setup/compare/v0.1.14...v0.1.15) (2026-01-24)
 
 
