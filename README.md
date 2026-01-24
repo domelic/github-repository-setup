@@ -18,13 +18,65 @@ This guide covers everything needed to set up a professional GitHub repository:
 | **Documentation** | README, LICENSE, CONTRIBUTING, CHANGELOG, CODE_OF_CONDUCT, RELEASING |
 | **Branch Protection** | PR requirements, CODEOWNERS, admin enforcement |
 | **Issue/PR Management** | Templates, labels, PR template, stale bot, welcome bot |
-| **Quality Gates** | Commitlint, spell check, link checker, markdown lint |
+| **Quality Gates** | Commitlint, spell check, link checker, markdown lint, pre-commit hooks |
 | **Release Automation** | Release Please, auto-CHANGELOG, semantic versioning |
-| **CI/CD** | Build workflows, PDF/artifact previews, Dependabot |
+| **CI/CD** | Build workflows, E2E testing, cross-platform CI, Dependabot |
+| **Security** | CodeQL, Trivy, OpenSSF Scorecard, SBOM generation |
+| **Publishing** | npm, PyPI, Docker, crates.io publishing workflows |
+| **Deployment** | GitHub Pages, Vercel, Netlify, AWS, Kubernetes |
 | **Discovery** | Topics, social preview, FUNDING.yml, CITATION.cff |
-| **Code Intelligence** | [Serena MCP](docs/SERENA.md) for semantic code understanding |
-| **Research Tools** | [Zotero MCP](docs/ZOTERO_MCP.md) for bibliography management |
-| **Knowledge Management** | [Obsidian MCP](docs/OBSIDIAN_MCP.md) for vault integration |
+| **MCP Integrations** | [Serena](docs/SERENA.md), [Zotero](docs/ZOTERO_MCP.md), [Obsidian](docs/OBSIDIAN_MCP.md) |
+
+### CI/CD Pipeline Flow
+
+```mermaid
+flowchart TB
+    subgraph Trigger["🚀 Trigger"]
+        push["Push to main"]
+        pr["Pull Request"]
+    end
+
+    subgraph Quality["✅ Quality Gates"]
+        commitlint["Commitlint"]
+        spell["Spell Check"]
+        links["Link Checker"]
+        mdlint["Markdown Lint"]
+    end
+
+    subgraph CI["🔨 CI Workflows"]
+        build["Build"]
+        test["Test"]
+        lint["Lint"]
+        security["Security Scan"]
+    end
+
+    subgraph Release["📦 Release"]
+        rp["Release Please"]
+        tag["Create Tag"]
+        changelog["Update CHANGELOG"]
+    end
+
+    subgraph Publish["📤 Publish"]
+        npm["npm"]
+        pypi["PyPI"]
+        docker["Docker"]
+        crates["crates.io"]
+    end
+
+    subgraph Deploy["🌐 Deploy"]
+        pages["GitHub Pages"]
+        vercel["Vercel"]
+        aws["AWS"]
+        k8s["Kubernetes"]
+    end
+
+    push --> Quality
+    pr --> Quality
+    Quality --> CI
+    CI --> Release
+    Release --> Publish
+    Release --> Deploy
+```
 
 ---
 
@@ -32,7 +84,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 
 ### Using the Claude Code Skill
 
-First, install the skill in your repository:
+Install the `/github-setup` skill in your repository:
 
 ```bash
 mkdir -p .claude/commands
@@ -44,49 +96,21 @@ Then use it:
 
 ```bash
 /github-setup                    # Full setup wizard (auto-detects project type)
+/github-setup checklist          # Audit what's missing
 /github-setup docs               # Documentation files
 /github-setup protection         # Branch protection + CODEOWNERS
-/github-setup issues             # Templates, labels, Discussions
 /github-setup quality            # Linting, spell check, link checker
 /github-setup releases           # Release Please automation
-/github-setup automation         # All GitHub Actions
-/github-setup discovery          # Topics, social preview, funding
-/github-setup checklist          # Show what's missing
 ```
 
-### Language Presets
+**Language presets:** `nodejs`, `python`, `go`, `rust`, `java`, `ruby`, `php`, `dotnet`
 
-```bash
-/github-setup nodejs             # Node.js/TypeScript preset
-/github-setup python             # Python preset
-/github-setup go                 # Go preset
-/github-setup rust               # Rust preset
-/github-setup java               # Java preset (Maven/Gradle)
-/github-setup ruby               # Ruby preset
-/github-setup php                # PHP preset (Composer)
-/github-setup dotnet             # .NET preset
-```
-
-### Category Presets
-
-```bash
-/github-setup ci                 # CI workflows only
-/github-setup security           # Security workflows only
-/github-setup deploy             # Deployment workflows only
-/github-setup testing            # E2E testing (Playwright, Cypress)
-/github-setup cross-os           # Multi-OS CI (Ubuntu, macOS, Windows)
-/github-setup aws                # AWS deployments (S3, Lambda)
-/github-setup kubernetes         # Kubernetes deployment
-/github-setup monorepo           # Monorepo setup (Turborepo, pnpm)
-/github-setup precommit          # Pre-commit hooks setup
-/github-setup notifications      # Slack/Discord notifications
-/github-setup api-docs           # API documentation workflow
-```
+**Category presets:** `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`
 
 ### Manual Setup
 
 1. Copy templates from [`templates/`](templates/) directory
-2. Follow the [Complete Checklist](#complete-setup-checklist)
+2. Follow the [Complete Setup Checklist](#complete-setup-checklist)
 3. Customize for your project
 
 ---
@@ -94,33 +118,19 @@ Then use it:
 ## Table of Contents
 
 1. [Documentation Files](#1-documentation-files)
-2. [Branch Protection](#2-branch-protection)
-3. [Issue & PR Management](#3-issue--pr-management)
-4. [Quality Gate Workflows](#4-quality-gate-workflows)
-5. [Release Automation](#5-release-automation)
-6. [CI/CD Workflows](#6-cicd-workflows)
-7. [Language-Specific CI](#7-language-specific-ci)
-8. [E2E Testing Workflows](#8-e2e-testing-workflows)
-9. [Security Workflows](#9-security-workflows)
-10. [Publishing Workflows](#10-publishing-workflows)
-11. [Deployment Templates](#11-deployment-templates)
-12. [Modern Tooling Configs](#12-modern-tooling-configs)
-13. [Dev Containers](#13-dev-containers)
-14. [Editor Configuration](#14-editor-configuration)
-15. [Config Templates](#15-config-templates)
-16. [Gitignore Templates](#16-gitignore-templates)
-17. [Discovery & Sponsorship](#17-discovery--sponsorship)
-18. [Publishing (Books/eBooks)](#18-publishing-booksebooks)
-19. [Pre-commit Hooks](#19-pre-commit-hooks)
-20. [Notification Workflows](#20-notification-workflows)
-21. [API Documentation](#21-api-documentation)
-22. [Serena Code Intelligence](#22-serena-code-intelligence)
-23. [Zotero Research Library](#23-zotero-research-library)
-24. [Obsidian Knowledge Base](#24-obsidian-knowledge-base)
-25. [Complete Setup Checklist](#complete-setup-checklist)
-26. [Workflow Reference](#workflow-reference)
-27. [Claude Code Skills](#claude-code-skills)
-28. [Troubleshooting](#troubleshooting)
+2. [Repository Settings](#2-repository-settings)
+3. [Quality Gates](#3-quality-gates)
+4. [Release Automation](#4-release-automation)
+5. [CI Workflows](#5-ci-workflows)
+6. [Security Workflows](#6-security-workflows)
+7. [Publishing & Deployment](#7-publishing--deployment)
+8. [Configuration Files](#8-configuration-files)
+9. [Discovery & Sponsorship](#9-discovery--sponsorship)
+10. [MCP Integrations](#10-mcp-integrations)
+11. [Specialty: Book Publishing](#11-specialty-book-publishing)
+12. [Complete Setup Checklist](#complete-setup-checklist)
+13. [Troubleshooting](#troubleshooting)
+14. [Resources](#resources)
 
 ---
 
@@ -165,9 +175,11 @@ GitHub displays a "Cite this repository" button when this file exists.
 
 ---
 
-## 2. Branch Protection
+## 2. Repository Settings
 
-### Configuration via CLI
+### Branch Protection
+
+#### Configuration via CLI
 
 ```bash
 gh api repos/OWNER/REPO/branches/main/protection -X PUT --input - <<'EOF'
@@ -187,13 +199,13 @@ gh api repos/OWNER/REPO/branches/main/protection -X PUT --input - <<'EOF'
 EOF
 ```
 
-### Auto-Delete Merged Branches
+#### Auto-Delete Merged Branches
 
 ```bash
 gh api repos/OWNER/REPO -X PATCH -f delete_branch_on_merge=true
 ```
 
-### Branch Naming Convention
+#### Branch Naming Convention
 
 Branch names should match conventional commit types:
 
@@ -208,7 +220,7 @@ Branch names should match conventional commit types:
 
 **Rules:** lowercase, hyphens between words, concise but descriptive
 
-### Branching Strategy
+#### Branching Strategy
 
 **When to use feature branches vs. small PRs:**
 
@@ -242,17 +254,17 @@ fix/infrastructure-improvements branch
 
 **Key insight:** If you're discovering related issues as you work, you're doing exploratory work—use a feature branch. If fixes are truly independent and each could ship alone, use small PRs.
 
-### Settings by Team Size
+#### Settings by Team Size
 
 | Setting | Solo | Small Team | Large Team |
 |---------|------|------------|------------|
-| PRs required | ✅ | ✅ | ✅ |
+| PRs required | Yes | Yes | Yes |
 | Approvals | 0 | 1 | 2+ |
-| CODEOWNERS | Optional | ✅ | ✅ |
-| Status checks | Optional | ✅ | ✅ |
-| Enforce admins | ✅ | ✅ | ✅ |
+| CODEOWNERS | Optional | Yes | Yes |
+| Status checks | Optional | Yes | Yes |
+| Enforce admins | Yes | Yes | Yes |
 
-### CODEOWNERS
+#### CODEOWNERS
 
 Location: `.github/CODEOWNERS`
 
@@ -268,11 +280,9 @@ Location: `.github/CODEOWNERS`
 *.ts @typescript-team
 ```
 
----
+### Issue & PR Management
 
-## 3. Issue & PR Management
-
-### Issue Templates
+#### Issue Templates
 
 Location: `.github/ISSUE_TEMPLATE/`
 
@@ -282,7 +292,7 @@ See [`templates/ISSUE_TEMPLATE/`](templates/ISSUE_TEMPLATE/) for complete exampl
 - `feature_request.md` — Feature requests
 - `config.yml` — Template chooser config
 
-### PR Template
+#### PR Template
 
 Location: `.github/PULL_REQUEST_TEMPLATE.md`
 
@@ -302,7 +312,7 @@ Location: `.github/PULL_REQUEST_TEMPLATE.md`
 - [ ] Commits follow conventional format
 ```
 
-### Labels
+#### Labels
 
 ```bash
 # Essential labels
@@ -329,13 +339,13 @@ gh label create "dependencies" -c "0366d6" -d "Dependency updates"
 gh label create "github-actions" -c "000000" -d "CI/CD changes"
 ```
 
-### Enable Discussions
+#### Enable Discussions
 
 ```bash
 gh api repos/OWNER/REPO -X PATCH -f has_discussions=true
 ```
 
-### Stale Bot
+#### Stale Bot
 
 See [`templates/workflows/stale.yml`](templates/workflows/stale.yml)
 
@@ -345,7 +355,7 @@ Automatically marks and closes inactive issues/PRs:
 - Closes after 14 more days (60 total)
 - Exempt: `pinned`, `security`, `in-progress` labels
 
-### Welcome Bot
+#### Welcome Bot
 
 See [`templates/workflows/welcome.yml`](templates/workflows/welcome.yml)
 
@@ -353,7 +363,7 @@ Greets first-time contributors with helpful information.
 
 ---
 
-## 4. Quality Gate Workflows
+## 3. Quality Gates
 
 ### Commitlint (Conventional Commits)
 
@@ -399,9 +409,63 @@ Enforces consistent markdown formatting.
 **Config:** [`templates/.markdownlint.json`](templates/.markdownlint.json)
 **Guide:** [docs/MARKDOWN_LINT.md](docs/MARKDOWN_LINT.md) — Common rules and fixes
 
+### Pre-commit Hooks
+
+Pre-commit hooks automate code quality checks before each commit.
+
+**File:** [`templates/.pre-commit-config.yaml`](templates/.pre-commit-config.yaml)
+
+#### Setup
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks in your repository
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Run on all files (first time or manually)
+pre-commit run --all-files
+
+# Update hooks to latest versions
+pre-commit autoupdate
+```
+
+#### Included Hooks
+
+| Hook | Languages | Purpose |
+|------|-----------|---------|
+| `pre-commit-hooks` | All | Trailing whitespace, file endings, YAML/JSON checks |
+| `ruff` | Python | Fast linting and formatting |
+| `prettier` | JS/TS/JSON/YAML/MD | Code formatting |
+| `conventional-pre-commit` | All | Commit message validation |
+| `detect-secrets` | All | Prevent committing secrets |
+| `shellcheck` | Bash | Shell script linting |
+| `markdownlint` | Markdown | Markdown formatting |
+
+#### Language-Specific Hooks
+
+The template includes commented sections for additional languages:
+
+- **Go** — golangci-lint
+- **Rust** — cargo fmt, clippy
+
+Uncomment the relevant sections in `.pre-commit-config.yaml` for your project.
+
+#### CI Integration
+
+The configuration includes CI settings for automated hook updates:
+
+```yaml
+ci:
+  autofix_commit_msg: "style: auto-fix from pre-commit hooks"
+  autoupdate_schedule: monthly
+```
+
 ---
 
-## 5. Release Automation
+## 4. Release Automation
 
 ### Release Please (Recommended)
 
@@ -437,9 +501,11 @@ git push origin v1.0.0
 
 ---
 
-## 6. CI/CD Workflows
+## 5. CI Workflows
 
-### Dependabot (Auto-update Actions)
+### Generic CI
+
+#### Dependabot (Auto-update Actions)
 
 **Config:** [`templates/dependabot.yml`](templates/dependabot.yml)
 
@@ -447,23 +513,21 @@ git push origin v1.0.0
 - Groups updates into single PR
 - Uses conventional commit format
 
-### Build/Test Workflow
+#### Build/Test Workflow
 
 **Workflow:** [`templates/workflows/ci.yml`](templates/workflows/ci.yml)
 
-### Artifact Preview on PRs
+#### Artifact Preview on PRs
 
 Upload build artifacts for review before merge.
 
 **Workflow:** [`templates/workflows/artifact-preview.yml`](templates/workflows/artifact-preview.yml)
 
----
-
-## 7. Language-Specific CI
+### Language-Specific CI
 
 Pre-configured CI workflows for major programming languages with version matrix testing.
 
-### Node.js CI
+#### Node.js CI
 
 **Workflow:** [`templates/workflows/ci-nodejs.yml`](templates/workflows/ci-nodejs.yml)
 
@@ -473,7 +537,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Package manager | npm with caching |
 | Steps | Install, lint, type-check, test, build |
 
-### Python CI
+#### Python CI
 
 **Workflow:** [`templates/workflows/ci-python.yml`](templates/workflows/ci-python.yml)
 
@@ -485,7 +549,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Type checking | mypy |
 | Testing | pytest with coverage |
 
-### Go CI
+#### Go CI
 
 **Workflow:** [`templates/workflows/ci-go.yml`](templates/workflows/ci-go.yml)
 
@@ -495,7 +559,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Linting | golangci-lint |
 | Testing | go test with race detection |
 
-### Rust CI
+#### Rust CI
 
 **Workflow:** [`templates/workflows/ci-rust.yml`](templates/workflows/ci-rust.yml)
 
@@ -506,7 +570,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Formatting | rustfmt |
 | Caching | Swatinem/rust-cache |
 
-### Java CI
+#### Java CI
 
 **Workflow:** [`templates/workflows/ci-java.yml`](templates/workflows/ci-java.yml)
 
@@ -516,7 +580,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Build tools | Maven, Gradle support |
 | Caching | Maven/Gradle dependencies |
 
-### Ruby CI
+#### Ruby CI
 
 **Workflow:** [`templates/workflows/ci-ruby.yml`](templates/workflows/ci-ruby.yml)
 
@@ -527,7 +591,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Linting | RuboCop |
 | Testing | RSpec, Minitest support |
 
-### PHP CI
+#### PHP CI
 
 **Workflow:** [`templates/workflows/ci-php.yml`](templates/workflows/ci-php.yml)
 
@@ -538,7 +602,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Linting | PHP-CS-Fixer, PHPStan |
 | Testing | PHPUnit |
 
-### .NET CI
+#### .NET CI
 
 **Workflow:** [`templates/workflows/ci-dotnet.yml`](templates/workflows/ci-dotnet.yml)
 
@@ -548,7 +612,7 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Caching | NuGet packages |
 | Format check | dotnet format |
 
-### Shared Features
+#### Shared Features
 
 All language-specific CI workflows include:
 
@@ -557,13 +621,11 @@ All language-specific CI workflows include:
 - **Fail-fast disabled** — All matrix jobs complete
 - **Caching** — Package manager caches for speed
 
----
-
-## 8. E2E Testing Workflows
+### E2E Testing
 
 End-to-end testing workflows for comprehensive UI and performance testing.
 
-### Playwright E2E Testing
+#### Playwright E2E Testing
 
 **Workflow:** [`templates/workflows/e2e-playwright.yml`](templates/workflows/e2e-playwright.yml)
 
@@ -575,11 +637,12 @@ End-to-end testing workflows for comprehensive UI and performance testing.
 | Multi-browser matrix | Optional parallel browser testing |
 
 Features:
+
 - Automatic browser installation with `--with-deps`
 - Test report artifacts uploaded on any outcome
 - Optional sharding for large test suites (e.g., 4 shards)
 
-### Cypress E2E Testing
+#### Cypress E2E Testing
 
 **Workflow:** [`templates/workflows/e2e-cypress.yml`](templates/workflows/e2e-cypress.yml)
 
@@ -591,11 +654,12 @@ Features:
 | Component testing | Optional component test support |
 
 Features:
+
 - Automatic dev server startup with configurable wait
 - Screenshot and video artifacts on failure
 - Optional parallel execution with Cypress Cloud
 
-### Cross-Platform CI
+#### Cross-Platform CI
 
 **Workflow:** [`templates/workflows/ci-cross-os.yml`](templates/workflows/ci-cross-os.yml)
 
@@ -608,12 +672,13 @@ Run CI across multiple operating systems:
 | Windows | `windows-latest` |
 
 Features:
+
 - Fail-fast disabled (all platforms complete)
 - Optional language version matrix
 - Platform-specific artifact uploads
 - Examples for Node.js, Python, Rust, Go
 
-### Lighthouse Performance Testing
+#### Lighthouse Performance Testing
 
 **Workflow:** [`templates/workflows/lighthouse.yml`](templates/workflows/lighthouse.yml)
 
@@ -625,13 +690,14 @@ Features:
 | Budgets | Optional performance budget assertions |
 
 Features:
+
 - Lighthouse CI with configurable thresholds
 - Performance budgets for CI enforcement
 - Supports both local builds and deployed URLs
 
 ---
 
-## 9. Security Workflows
+## 6. Security Workflows
 
 Comprehensive security scanning and supply chain protection.
 
@@ -640,6 +706,7 @@ Comprehensive security scanning and supply chain protection.
 **Workflow:** [`templates/workflows/codeql.yml`](templates/workflows/codeql.yml)
 
 Static Application Security Testing for:
+
 - JavaScript/TypeScript
 - Python
 - Java
@@ -650,6 +717,7 @@ Static Application Security Testing for:
 - Swift/Kotlin
 
 Features:
+
 - Weekly scheduled scans + PR checks
 - Results in GitHub Security tab
 - Custom queries support
@@ -665,6 +733,7 @@ Features:
 | Config | IaC misconfigurations |
 
 Features:
+
 - SARIF output for GitHub integration
 - Severity filtering (CRITICAL, HIGH)
 - Container and IaC scanning options
@@ -674,6 +743,7 @@ Features:
 **Workflow:** [`templates/workflows/scorecard.yml`](templates/workflows/scorecard.yml)
 
 Supply chain security assessment:
+
 - Branch protection checks
 - Dependency update monitoring
 - Token permissions analysis
@@ -687,6 +757,7 @@ Enables the OpenSSF Scorecard badge for your repository.
 **Workflow:** [`templates/workflows/sbom.yml`](templates/workflows/sbom.yml)
 
 Software Bill of Materials generation:
+
 - SPDX format
 - CycloneDX format
 - Automatic attachment to releases
@@ -694,11 +765,13 @@ Software Bill of Materials generation:
 
 ---
 
-## 10. Publishing Workflows
+## 7. Publishing & Deployment
+
+### Package Publishing
 
 Automated package publishing on GitHub release.
 
-### npm Publishing
+#### npm Publishing
 
 **Workflow:** [`templates/workflows/publish-npm.yml`](templates/workflows/publish-npm.yml)
 
@@ -708,7 +781,7 @@ Automated package publishing on GitHub release.
 
 **Required secret:** `NPM_TOKEN`
 
-### PyPI Publishing
+#### PyPI Publishing
 
 **Workflow:** [`templates/workflows/publish-pypi.yml`](templates/workflows/publish-pypi.yml)
 
@@ -718,7 +791,7 @@ Automated package publishing on GitHub release.
 
 **Setup:** Configure trusted publishing at [pypi.org/manage/account/publishing](https://pypi.org/manage/account/publishing)
 
-### Docker Publishing
+#### Docker Publishing
 
 **Workflow:** [`templates/workflows/publish-docker.yml`](templates/workflows/publish-docker.yml)
 
@@ -728,7 +801,7 @@ Automated package publishing on GitHub release.
 - Automatic tagging (semver, sha)
 - Build provenance and SBOM
 
-### crates.io Publishing
+#### crates.io Publishing
 
 **Workflow:** [`templates/workflows/publish-crates.yml`](templates/workflows/publish-crates.yml)
 
@@ -738,15 +811,13 @@ Automated package publishing on GitHub release.
 
 **Required secret:** `CRATES_IO_TOKEN`
 
----
-
-## 11. Deployment Templates
+### Deployment
 
 Automated deployment workflows for static sites, serverless, and containerized applications.
 
-### Static Site Deployments
+#### Static Site Deployments
 
-#### GitHub Pages
+##### GitHub Pages
 
 **Workflow:** [`templates/workflows/deploy-github-pages.yml`](templates/workflows/deploy-github-pages.yml)
 
@@ -754,7 +825,7 @@ Automated deployment workflows for static sites, serverless, and containerized a
 - Uses GitHub Pages official actions
 - Configurable build output directory
 
-#### Vercel
+##### Vercel
 
 **Workflow:** [`templates/workflows/deploy-vercel.yml`](templates/workflows/deploy-vercel.yml)
 
@@ -764,7 +835,7 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
-#### Netlify
+##### Netlify
 
 **Workflow:** [`templates/workflows/deploy-netlify.yml`](templates/workflows/deploy-netlify.yml)
 
@@ -774,9 +845,9 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required secrets:** `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`
 
-### AWS Deployments
+#### AWS Deployments
 
-#### AWS S3 + CloudFront
+##### AWS S3 + CloudFront
 
 **Workflow:** [`templates/workflows/deploy-aws-s3.yml`](templates/workflows/deploy-aws-s3.yml)
 
@@ -788,7 +859,7 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required secrets:** `AWS_ROLE_ARN`, `S3_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`
 
-#### AWS Lambda
+##### AWS Lambda
 
 **Workflow:** [`templates/workflows/deploy-aws-lambda.yml`](templates/workflows/deploy-aws-lambda.yml)
 
@@ -800,9 +871,9 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required secrets:** `AWS_ROLE_ARN`, `LAMBDA_FUNCTION_NAME`
 
-### Container & Kubernetes Deployments
+#### Container & Kubernetes Deployments
 
-#### Kubernetes
+##### Kubernetes
 
 **Workflow:** [`templates/workflows/deploy-kubernetes.yml`](templates/workflows/deploy-kubernetes.yml)
 
@@ -815,15 +886,15 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required secrets:** `KUBE_CONFIG` (base64-encoded kubeconfig)
 
-### Platform-as-a-Service Deployments
+#### Platform-as-a-Service Deployments
 
-#### Railway
+##### Railway
 
 **Workflow:** [`templates/workflows/deploy-railway.yml`](templates/workflows/deploy-railway.yml)
 
 **Required secrets:** `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID`
 
-#### Fly.io
+##### Fly.io
 
 **Workflow:** [`templates/workflows/deploy-fly.yml`](templates/workflows/deploy-fly.yml)
 
@@ -831,33 +902,134 @@ Automated deployment workflows for static sites, serverless, and containerized a
 
 **Required file:** `fly.toml` in repository root
 
-#### Render
+##### Render
 
 **Workflow:** [`templates/workflows/deploy-render.yml`](templates/workflows/deploy-render.yml)
 
 **Required secrets:** `RENDER_DEPLOY_HOOK_URL`
 
-### Platform Comparison
+#### Platform Comparison
 
 | Platform | Best For | Auth Method | Free Tier |
 |----------|----------|-------------|-----------|
-| GitHub Pages | Static sites | Built-in | ✅ |
-| Vercel | Next.js, React | Token | ✅ |
-| Netlify | JAMstack | Token | ✅ |
+| GitHub Pages | Static sites | Built-in | Yes |
+| Vercel | Next.js, React | Token | Yes |
+| Netlify | JAMstack | Token | Yes |
 | AWS S3 | Enterprise static | OIDC | Pay-as-you-go |
 | AWS Lambda | Serverless functions | OIDC | Free tier |
 | Kubernetes | Complex applications | kubeconfig | Self-hosted |
 | Railway | Full-stack apps | Token | Limited |
-| Fly.io | Containers, global edge | Token | ✅ |
-| Render | Full-stack apps | Webhook | ✅ |
+| Fly.io | Containers, global edge | Token | Yes |
+| Render | Full-stack apps | Webhook | Yes |
+
+### Notifications
+
+Send notifications to Slack or Discord for releases and CI failures.
+
+#### Slack Notifications
+
+**Workflow:** [`templates/workflows/notify-slack.yml`](templates/workflows/notify-slack.yml)
+
+| Event | Notification |
+|-------|-------------|
+| Release published | New release announcement with changelog |
+| CI failure | Alert with branch, commit, and workflow link |
+
+**Setup:**
+
+1. Create a Slack App at https://api.slack.com/apps
+2. Enable "Incoming Webhooks" in the app settings
+3. Add a new webhook to your workspace
+4. Copy the webhook URL to repository secrets as `SLACK_WEBHOOK_URL`
+
+#### Discord Notifications
+
+**Workflow:** [`templates/workflows/notify-discord.yml`](templates/workflows/notify-discord.yml)
+
+| Event | Notification |
+|-------|-------------|
+| Release published | New release announcement with changelog |
+| CI failure | Alert with branch, commit, and workflow link |
+
+**Setup:**
+
+1. In Discord, go to Server Settings > Integrations > Webhooks
+2. Create a new webhook for your notifications channel
+3. Copy the webhook URL to repository secrets as `DISCORD_WEBHOOK`
+
+#### Required Secrets
+
+| Secret | Platform | Purpose |
+|--------|----------|---------|
+| `SLACK_WEBHOOK_URL` | Slack | Incoming webhook URL |
+| `DISCORD_WEBHOOK` | Discord | Webhook URL |
+
+### API Documentation
+
+Automated API documentation generation and deployment to GitHub Pages.
+
+**Workflow:** [`templates/workflows/docs-api.yml`](templates/workflows/docs-api.yml)
+
+#### Supported Documentation Generators
+
+| Generator | Language | Source Format |
+|-----------|----------|---------------|
+| Redocly | OpenAPI/Swagger | YAML/JSON |
+| TypeDoc | TypeScript/JavaScript | Source code |
+| Sphinx | Python | RST/autodoc |
+| Rustdoc | Rust | Source code |
+| Javadoc | Java | Source code |
+
+#### OpenAPI/Swagger (Default)
+
+The workflow automatically finds and builds documentation from:
+
+- `openapi.yaml` / `openapi.json`
+- `swagger.yaml` / `swagger.json`
+- `docs/openapi.yaml`
+
+Features:
+
+- Lint validation with Redocly
+- Beautiful HTML output with Redoc
+- Automatic deployment to GitHub Pages
+
+#### Setup
+
+1. Enable GitHub Pages in repository settings
+2. Set source to "GitHub Actions"
+3. Place your OpenAPI spec in the root or `docs/` directory
+4. Push to main branch to trigger build
+
+#### Other Generators
+
+Uncomment the relevant section in the workflow for:
+
+- **TypeDoc** — Requires `npm ci` and TypeDoc configuration
+- **Sphinx** — Requires Python and `docs/source/` structure
+- **Rustdoc** — Requires Cargo project
+- **Javadoc** — Requires Maven or Gradle project
+
+#### Example OpenAPI Spec Location
+
+```text
+my-project/
+├── openapi.yaml      # ← Workflow finds this
+├── src/
+└── .github/
+    └── workflows/
+        └── docs-api.yml
+```
 
 ---
 
-## 12. Modern Tooling Configs
+## 8. Configuration Files
+
+### Modern Tooling Configs
 
 Pre-configured templates for modern JavaScript/TypeScript tooling.
 
-### Biome (ESLint + Prettier Alternative)
+#### Biome (ESLint + Prettier Alternative)
 
 **File:** [`templates/biome.json`](templates/biome.json)
 
@@ -867,7 +1039,7 @@ Pre-configured templates for modern JavaScript/TypeScript tooling.
 | Config | Single file for linting + formatting |
 | Languages | JavaScript, TypeScript, JSON |
 
-### Vitest (Modern Test Runner)
+#### Vitest (Modern Test Runner)
 
 **File:** [`templates/vitest.config.js`](templates/vitest.config.js)
 
@@ -878,7 +1050,7 @@ Pre-configured templates for modern JavaScript/TypeScript tooling.
 | Compatibility | Vite-compatible configuration |
 | TypeScript | Native support |
 
-### Jest (Traditional Test Runner)
+#### Jest (Traditional Test Runner)
 
 **File:** [`templates/jest.config.js`](templates/jest.config.js)
 
@@ -888,7 +1060,7 @@ Pre-configured templates for modern JavaScript/TypeScript tooling.
 | Coverage | Coverlet integration |
 | Watch | Typeahead plugins |
 
-### Turborepo (Monorepo Build System)
+#### Turborepo (Monorepo Build System)
 
 **File:** [`templates/turbo.json`](templates/turbo.json)
 
@@ -899,12 +1071,13 @@ Pre-configured templates for modern JavaScript/TypeScript tooling.
 | Dependencies | Automatic dependency detection |
 
 Tasks configured:
+
 - `build` — Depends on upstream builds, cached
 - `test` — Depends on build, cached
 - `lint` — Depends on upstream lints
 - `dev` — No caching, persistent
 
-### pnpm Workspace
+#### pnpm Workspace
 
 **File:** [`templates/pnpm-workspace.yaml`](templates/pnpm-workspace.yaml)
 
@@ -918,7 +1091,7 @@ my-monorepo/
 └── tools/          # Build tools
 ```
 
-### Deno Runtime
+#### Deno Runtime
 
 **File:** [`templates/deno.json`](templates/deno.json)
 
@@ -928,19 +1101,21 @@ my-monorepo/
 | Imports | JSR standard library |
 | Permissions | Explicit per-task |
 
-### Docker Compose (Local Development)
+#### Docker Compose (Local Development)
 
 **File:** [`templates/docker-compose.yml`](templates/docker-compose.yml)
 
 Pre-configured services:
+
 - **app** — Application with hot reload
 - **db** — PostgreSQL 16 with health checks
 - **redis** — Redis 7 with persistence
 
 Optional services (commented):
+
 - MySQL, MongoDB, Elasticsearch, MinIO, Mailpit
 
-### npm Configuration
+#### npm Configuration
 
 **File:** [`templates/.npmrc`](templates/.npmrc)
 
@@ -950,13 +1125,11 @@ Optional services (commented):
 | `engine-strict` | `true` |
 | `audit-level` | `moderate` |
 
----
-
-## 13. Dev Containers
+### Dev Containers
 
 Pre-configured development containers for consistent environments.
 
-### Available Containers
+#### Available Containers
 
 | File | Language | Base Image |
 |------|----------|------------|
@@ -970,26 +1143,24 @@ Pre-configured development containers for consistent environments.
 | [`devcontainer-php.json`](templates/.devcontainer/devcontainer-php.json) | PHP | PHP 8.3 |
 | [`devcontainer-dotnet.json`](templates/.devcontainer/devcontainer-dotnet.json) | .NET | .NET 8 |
 
-### Usage
+#### Usage
 
 1. Copy the appropriate config to `.devcontainer/devcontainer.json`
 2. Open in VS Code with Remote - Containers extension
 3. Or use GitHub Codespaces
 
-### Features Included
+#### Features Included
 
 - **Common utilities** — zsh, Oh My Zsh, git, GitHub CLI
 - **Language tools** — Formatters, linters, language servers
 - **VS Code extensions** — Pre-installed recommendations
 - **Port forwarding** — Common development ports configured
 
----
-
-## 14. Editor Configuration
+### Editor Configuration
 
 Consistent editor settings across the team.
 
-### EditorConfig
+#### EditorConfig
 
 **File:** [`templates/.editorconfig`](templates/.editorconfig)
 
@@ -1001,7 +1172,7 @@ Universal formatting rules:
 | Indent size | 2 | 4 | 4 |
 | End of line | LF | LF | LF |
 
-### VS Code Settings
+#### VS Code Settings
 
 **Files:**
 
@@ -1018,13 +1189,11 @@ Language-specific formatters configured:
 | Rust | rustfmt |
 | YAML | Red Hat YAML |
 
----
-
-## 15. Config Templates
+### Config Templates
 
 Pre-configured files for common development tools.
 
-### JavaScript/TypeScript
+#### JavaScript/TypeScript
 
 | File | Purpose |
 |------|---------|
@@ -1032,13 +1201,13 @@ Pre-configured files for common development tools.
 | [`.eslintrc.json`](templates/.eslintrc.json) | ESLint rules config |
 | [`tsconfig.json`](templates/tsconfig.json) | TypeScript compiler config |
 
-### Python
+#### Python
 
 | File | Purpose |
 |------|---------|
 | [`pyproject.toml`](templates/pyproject.toml) | Python project config (ruff, mypy, pytest) |
 
-### Usage
+#### Usage
 
 Copy to your project root and customize:
 
@@ -1047,13 +1216,11 @@ cp templates/.prettierrc .prettierrc
 cp templates/tsconfig.json tsconfig.json
 ```
 
----
-
-## 16. Gitignore Templates
+### Gitignore Templates
 
 Language-specific `.gitignore` files with comprehensive ignore patterns.
 
-### Available Templates
+#### Available Templates
 
 | Template | Languages/Frameworks |
 |----------|---------------------|
@@ -1062,7 +1229,7 @@ Language-specific `.gitignore` files with comprehensive ignore patterns.
 | [`.gitignore-go`](templates/.gitignore-go) | Go, vendor, binaries |
 | [`.gitignore-rust`](templates/.gitignore-rust) | Rust, Cargo, target |
 
-### Usage
+#### Usage
 
 Copy and rename to `.gitignore`:
 
@@ -1074,7 +1241,7 @@ Or merge with existing `.gitignore` using your editor.
 
 ---
 
-## 17. Discovery & Sponsorship
+## 9. Discovery & Sponsorship
 
 ### Repository Topics
 
@@ -1115,209 +1282,17 @@ EOF
 
 ---
 
-## 18. Publishing (Books/eBooks)
+## 10. MCP Integrations
 
-### Amazon KDP Automation
+MCP (Model Context Protocol) servers extend Claude Code with additional capabilities. This section covers integrations for code intelligence, research, and knowledge management.
 
-For book/ebook projects, automate EPUB generation on release:
-
-**Workflow:** [`templates/workflows/amazon-kdp-publish.yml`](templates/workflows/amazon-kdp-publish.yml)
-
-**What it does:**
-
-1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
-2. Attaches EPUB to GitHub release
-3. Creates issue with KDP upload checklist
-
-**Why semi-automated?**
-Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
-
-> ⚠️ **KDP Select Warning:** Do NOT enroll in KDP Select if you also distribute free EPUB/PDF on GitHub. KDP Select requires exclusivity—you cannot distribute the ebook elsewhere. Use standard KDP publishing instead.
-
-**Customization:**
-
-```yaml
-env:
-  BOOK_TITLE: "Your Book Title"
-  BOOK_SUBTITLE: "Your Subtitle"
-  BOOK_AUTHOR: "Your Name"
-  SOURCE_FILE: "book.tex"
-  COVER_IMAGE: "cover.jpg"
-```
-
-**Best Practice:** Build EPUB in `release-please.yml` post-release job (not just `amazon-kdp-publish.yml`) to ensure it's always attached to releases. The `amazon-kdp-publish.yml` workflow may not trigger reliably from Release Please-created releases.
-
----
-
-## 19. Pre-commit Hooks
-
-Pre-commit hooks automate code quality checks before each commit.
-
-**File:** [`templates/.pre-commit-config.yaml`](templates/.pre-commit-config.yaml)
-
-### Setup
-
-```bash
-# Install pre-commit
-pip install pre-commit
-
-# Install hooks in your repository
-pre-commit install
-pre-commit install --hook-type commit-msg
-
-# Run on all files (first time or manually)
-pre-commit run --all-files
-
-# Update hooks to latest versions
-pre-commit autoupdate
-```
-
-### Included Hooks
-
-| Hook | Languages | Purpose |
-|------|-----------|---------|
-| `pre-commit-hooks` | All | Trailing whitespace, file endings, YAML/JSON checks |
-| `ruff` | Python | Fast linting and formatting |
-| `prettier` | JS/TS/JSON/YAML/MD | Code formatting |
-| `conventional-pre-commit` | All | Commit message validation |
-| `detect-secrets` | All | Prevent committing secrets |
-| `shellcheck` | Bash | Shell script linting |
-| `markdownlint` | Markdown | Markdown formatting |
-
-### Language-Specific Hooks
-
-The template includes commented sections for additional languages:
-- **Go** — golangci-lint
-- **Rust** — cargo fmt, clippy
-
-Uncomment the relevant sections in `.pre-commit-config.yaml` for your project.
-
-### CI Integration
-
-The configuration includes CI settings for automated hook updates:
-
-```yaml
-ci:
-  autofix_commit_msg: "style: auto-fix from pre-commit hooks"
-  autoupdate_schedule: monthly
-```
-
----
-
-## 20. Notification Workflows
-
-Send notifications to Slack or Discord for releases and CI failures.
-
-### Slack Notifications
-
-**Workflow:** [`templates/workflows/notify-slack.yml`](templates/workflows/notify-slack.yml)
-
-| Event | Notification |
-|-------|-------------|
-| Release published | New release announcement with changelog |
-| CI failure | Alert with branch, commit, and workflow link |
-
-**Setup:**
-
-1. Create a Slack App at https://api.slack.com/apps
-2. Enable "Incoming Webhooks" in the app settings
-3. Add a new webhook to your workspace
-4. Copy the webhook URL to repository secrets as `SLACK_WEBHOOK_URL`
-
-### Discord Notifications
-
-**Workflow:** [`templates/workflows/notify-discord.yml`](templates/workflows/notify-discord.yml)
-
-| Event | Notification |
-|-------|-------------|
-| Release published | New release announcement with changelog |
-| CI failure | Alert with branch, commit, and workflow link |
-
-**Setup:**
-
-1. In Discord, go to Server Settings > Integrations > Webhooks
-2. Create a new webhook for your notifications channel
-3. Copy the webhook URL to repository secrets as `DISCORD_WEBHOOK`
-
-### Required Secrets
-
-| Secret | Platform | Purpose |
-|--------|----------|---------|
-| `SLACK_WEBHOOK_URL` | Slack | Incoming webhook URL |
-| `DISCORD_WEBHOOK` | Discord | Webhook URL |
-
-### Customization
-
-Both workflows support:
-- Modifying message format and styling
-- Adding success notifications (commented by default)
-- Adding triggers for other workflows
-
----
-
-## 21. API Documentation
-
-Automated API documentation generation and deployment to GitHub Pages.
-
-**Workflow:** [`templates/workflows/docs-api.yml`](templates/workflows/docs-api.yml)
-
-### Supported Documentation Generators
-
-| Generator | Language | Source Format |
-|-----------|----------|---------------|
-| Redocly | OpenAPI/Swagger | YAML/JSON |
-| TypeDoc | TypeScript/JavaScript | Source code |
-| Sphinx | Python | RST/autodoc |
-| Rustdoc | Rust | Source code |
-| Javadoc | Java | Source code |
-
-### OpenAPI/Swagger (Default)
-
-The workflow automatically finds and builds documentation from:
-- `openapi.yaml` / `openapi.json`
-- `swagger.yaml` / `swagger.json`
-- `docs/openapi.yaml`
-
-Features:
-- Lint validation with Redocly
-- Beautiful HTML output with Redoc
-- Automatic deployment to GitHub Pages
-
-### Setup
-
-1. Enable GitHub Pages in repository settings
-2. Set source to "GitHub Actions"
-3. Place your OpenAPI spec in the root or `docs/` directory
-4. Push to main branch to trigger build
-
-### Other Generators
-
-Uncomment the relevant section in the workflow for:
-- **TypeDoc** — Requires `npm ci` and TypeDoc configuration
-- **Sphinx** — Requires Python and `docs/source/` structure
-- **Rustdoc** — Requires Cargo project
-- **Javadoc** — Requires Maven or Gradle project
-
-### Example OpenAPI Spec Location
-
-```text
-my-project/
-├── openapi.yaml      # ← Workflow finds this
-├── src/
-└── .github/
-    └── workflows/
-        └── docs-api.yml
-```
-
----
-
-## 22. Serena Code Intelligence
+### Serena Code Intelligence
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
 **Full Documentation:** [docs/SERENA.md](docs/SERENA.md)
 
-### Quick Setup
+#### Quick Setup
 
 1. Add to Claude Code MCP configuration:
 
@@ -1344,7 +1319,7 @@ Serena: activate_project /path/to/project
 cp -r templates/serena/ .serena/
 ```
 
-### Key Features
+#### Key Features
 
 | Feature | Description |
 |---------|-------------|
@@ -1353,21 +1328,19 @@ cp -r templates/serena/ .serena/
 | **Memory System** | Persistent markdown notes across sessions |
 | **Multi-Language** | TypeScript, Python, Go, Java, C/C++ via LSP |
 
-### Templates
+#### Templates
 
 - [`templates/serena/project.yml`](templates/serena/project.yml) — Project configuration
 - [`templates/serena/.gitignore`](templates/serena/.gitignore) — Cache exclusion
 - [`templates/serena/memories/README.md`](templates/serena/memories/README.md) — Memory system guide
 
----
-
-## 23. Zotero Research Library
+### Zotero Research Library
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
 **Full Documentation:** [docs/ZOTERO_MCP.md](docs/ZOTERO_MCP.md)
 
-### Quick Setup
+#### Quick Setup
 
 1. Install Zotero MCP:
 
@@ -1397,7 +1370,7 @@ zotero-mcp setup
 zotero-mcp update-db --fulltext
 ```
 
-### Key Features
+#### Key Features
 
 | Feature | Description |
 |---------|-------------|
@@ -1406,26 +1379,26 @@ zotero-mcp update-db --fulltext
 | **PDF Annotations** | Extract highlights and notes from PDFs |
 | **Collection Management** | Browse and search by tags, collections |
 
-### When to Use
+#### When to Use
 
 **Good fit:**
+
 - Academic/research projects with citations
 - Books/treatises with bibliography (like `references.bib`)
 - Literature reviews and research synthesis
 
 **Not needed:**
+
 - Software projects without academic references
 - Small reference lists (manual BibTeX works fine)
 
----
-
-## 24. Obsidian Knowledge Base
+### Obsidian Knowledge Base
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
 **Full Documentation:** [docs/OBSIDIAN_MCP.md](docs/OBSIDIAN_MCP.md)
 
-### Quick Setup
+#### Quick Setup
 
 Install the Obsidian plugin (recommended for Claude Code users):
 
@@ -1435,7 +1408,7 @@ Install the Obsidian plugin (recommended for Claude Code users):
 
 Claude Code automatically discovers vaults via WebSocket.
 
-### Key Features
+#### Key Features
 
 | Feature | Description |
 |---------|-------------|
@@ -1444,16 +1417,54 @@ Claude Code automatically discovers vaults via WebSocket.
 | **Auto-Discovery** | No manual config needed with plugin |
 | **Cross-Linking** | Find connections across your notes |
 
-### When to Use
+#### When to Use
 
 **Good fit:**
+
 - Research projects with extensive notes
 - Knowledge management workflows
 - Projects with related Obsidian vaults
 
 **Not needed:**
+
 - Projects without associated notes
 - Simple documentation needs
+
+---
+
+## 11. Specialty: Book Publishing
+
+> This section covers specialized workflows for book/ebook projects. Most repositories won't need this.
+
+### Amazon KDP Automation
+
+For book/ebook projects, automate EPUB generation on release:
+
+**Workflow:** [`templates/workflows/amazon-kdp-publish.yml`](templates/workflows/amazon-kdp-publish.yml)
+
+**What it does:**
+
+1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
+2. Attaches EPUB to GitHub release
+3. Creates issue with KDP upload checklist
+
+**Why semi-automated?**
+Amazon KDP has no public API. The workflow automates everything possible while the actual upload requires manual action.
+
+> **KDP Select Warning:** Do NOT enroll in KDP Select if you also distribute free EPUB/PDF on GitHub. KDP Select requires exclusivity—you cannot distribute the ebook elsewhere. Use standard KDP publishing instead.
+
+**Customization:**
+
+```yaml
+env:
+  BOOK_TITLE: "Your Book Title"
+  BOOK_SUBTITLE: "Your Subtitle"
+  BOOK_AUTHOR: "Your Name"
+  SOURCE_FILE: "book.tex"
+  COVER_IMAGE: "cover.jpg"
+```
+
+**Best Practice:** Build EPUB in `release-please.yml` post-release job (not just `amazon-kdp-publish.yml`) to ensure it's always attached to releases. The `amazon-kdp-publish.yml` workflow may not trigger reliably from Release Please-created releases.
 
 ---
 
@@ -1571,177 +1582,6 @@ Claude Code automatically discovers vaults via WebSocket.
 - [ ] Serena MCP configured (code intelligence)
 - [ ] Zotero MCP configured (research/academic projects)
 - [ ] Obsidian MCP configured (knowledge management)
-
----
-
-## Workflow Reference
-
-### Quality & Automation
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `release-please.yml` | Push to main | Auto-create release PRs |
-| `commitlint.yml` | PR opened | Validate commit messages |
-| `spell-check.yml` | Push/PR with docs | Check spelling |
-| `link-checker.yml` | Push/PR + weekly | Validate links |
-| `markdown-lint.yml` | Push/PR with .md | Lint markdown |
-| `format-check.yml` | Push/PR | Multi-language format check |
-| `stale.yml` | Daily schedule | Mark inactive issues |
-| `welcome.yml` | First issue/PR | Welcome contributors |
-| `all-contributors.yml` | Issue comment | Add contributors |
-
-### CI Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `ci.yml` | Push/PR | Generic build and test |
-| `ci-nodejs.yml` | Push/PR | Node.js CI (18, 20, 22) |
-| `ci-python.yml` | Push/PR | Python CI (3.10, 3.11, 3.12) |
-| `ci-go.yml` | Push/PR | Go CI (1.21, 1.22) |
-| `ci-rust.yml` | Push/PR | Rust CI (stable, nightly) |
-| `ci-java.yml` | Push/PR | Java CI (17, 21) |
-| `ci-ruby.yml` | Push/PR | Ruby CI (3.2, 3.3) |
-| `ci-php.yml` | Push/PR | PHP CI (8.2, 8.3) |
-| `ci-dotnet.yml` | Push/PR | .NET CI (8, 9) |
-| `ci-cross-os.yml` | Push/PR | Multi-platform (Ubuntu/macOS/Windows) |
-| `coverage.yml` | Push/PR | Upload coverage to Codecov |
-| `dependency-review.yml` | PR | Check for vulnerabilities |
-
-### E2E Testing Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `e2e-playwright.yml` | Push/PR | Playwright E2E testing |
-| `e2e-cypress.yml` | Push/PR | Cypress E2E testing |
-| `lighthouse.yml` | Push/PR | Lighthouse performance testing |
-
-### Security Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `codeql.yml` | Push/PR + Weekly | CodeQL SAST scanning |
-| `trivy.yml` | Push/PR + Weekly | Vulnerability scanning |
-| `scorecard.yml` | Push + Weekly | OpenSSF Scorecard |
-| `sbom.yml` | Push/Release | SBOM generation |
-
-### Publishing Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `publish-npm.yml` | Release | Publish to npm |
-| `publish-pypi.yml` | Release | Publish to PyPI (OIDC) |
-| `publish-docker.yml` | Release/Push | Publish Docker image |
-| `publish-crates.yml` | Release | Publish to crates.io |
-| `amazon-kdp-publish.yml` | Release | Build EPUB for KDP |
-
-### Deployment Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `deploy-github-pages.yml` | Push to main | Deploy to GitHub Pages |
-| `deploy-vercel.yml` | Push/PR | Deploy to Vercel |
-| `deploy-netlify.yml` | Push/PR | Deploy to Netlify |
-| `deploy-aws-s3.yml` | Push to main | Deploy to AWS S3 + CloudFront |
-| `deploy-aws-lambda.yml` | Push to main | Deploy to AWS Lambda |
-| `deploy-kubernetes.yml` | Push to main | Deploy to Kubernetes |
-| `deploy-railway.yml` | Push to main | Deploy to Railway |
-| `deploy-fly.yml` | Push to main | Deploy to Fly.io |
-| `deploy-render.yml` | Push to main | Deploy to Render |
-| `artifact-preview.yml` | PR | Upload build preview |
-
-### Notification Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `notify-slack.yml` | Release/CI failure | Slack notifications |
-| `notify-discord.yml` | Release/CI failure | Discord notifications |
-
-### Documentation Workflows
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `docs-api.yml` | Push to main | Generate and deploy API docs |
-
----
-
-## Claude Code Skills
-
-### Skill File Location
-
-> **Important:** Claude Code uses `.claude/commands/` (not `.claude/skills/`) for custom slash commands.
-
-```bash
-# Correct location for Claude Code to recognize skills
-~/.claude/commands/skill-name.md      # Global (all projects)
-.claude/commands/skill-name.md        # Project-level
-
-# This will NOT work (common mistake)
-~/.claude/skills/skill-name.md        # Wrong directory name
-```
-
-If you see `Unknown skill: skillname`, verify the file is in the `commands/` directory.
-
-### `/github-setup` — Repository Setup Wizard
-
-Install the `/github-setup` skill:
-
-```bash
-# Install in any repo (recommended)
-mkdir -p .claude/commands
-curl -o .claude/commands/github-setup.md \
-  https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/commands/github-setup.md
-
-# Or copy from local clone
-cp templates/commands/github-setup.md .claude/commands/
-
-# Or global installation (available in all projects)
-mkdir -p ~/.claude/commands
-curl -o ~/.claude/commands/github-setup.md \
-  https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/commands/github-setup.md
-```
-
-After installation, use the skill:
-
-```bash
-/github-setup              # Full setup wizard (auto-detects project type)
-/github-setup checklist    # Audit what's missing
-/github-setup nodejs       # Node.js preset
-/github-setup python       # Python preset
-```
-
-See [templates/commands/github-setup.md](templates/commands/github-setup.md) for full documentation.
-
-### `/github-release` — Create Releases via Playwright
-
-Automate GitHub release creation using Playwright browser automation:
-
-```bash
-/github-release v3.0.0
-/github-release v2.1.0 "Bug fixes and improvements"
-```
-
-**Prerequisites:** Tag pushed to remote, user authenticated to GitHub, Playwright MCP available.
-
-Install:
-
-```bash
-mkdir -p .claude/commands
-cp templates/commands/github-release.md .claude/commands/
-```
-
-See [templates/commands/github-release.md](templates/commands/github-release.md) for full documentation.
-
----
-
-## Contributing
-
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE).
 
 ---
 
@@ -1990,3 +1830,15 @@ show_summary() {
 - [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
 - [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
 - [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
+
+---
+
+## Contributing
+
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE).
