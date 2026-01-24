@@ -1,0 +1,82 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # Alternative: Deploy with Docker
+  # deploy-docker:
+  #   name: Deploy Docker to Railway
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: npm install -g @railway/cli
+  #     - run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --dockerfile Dockerfile
+  #       env:
+  #         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # Alternative: Deploy specific environment
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   runs-on: ubuntu-latest
+  #   environment: staging
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: npm install -g @railway/cli
+  #     - run: railway up --environment staging --service ${{ secrets.RAILWAY_SERVICE_ID }}
+  #       env:
+  #         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+# Required secrets:
+# - RAILWAY_TOKEN: Railway API token (generate at railway.app/account/tokens)
+# - RAILWAY_SERVICE_ID: Railway service ID (found in service settings)
+#
+# Getting Railway Service ID:
+# 1. Go to your Railway project
+# 2. Click on the service
+# 3. Go to Settings
+# 4. Copy the Service ID
+#
+# Environment Variables:
+# Set environment variables in Railway dashboard under service Variables tab
+# Railway automatically injects them during deployment
+#
+# Railway.json (optional, place in repo root):
+# {
+#   "$schema": "https://railway.app/railway.schema.json",
+#   "build": {
+#     "builder": "NIXPACKS",
+#     "buildCommand": "npm run build"
+#   },
+#   "deploy": {
+#     "startCommand": "npm start",
+#     "healthcheckPath": "/health",
+#     "healthcheckTimeout": 300,
+#     "restartPolicyType": "ON_FAILURE",
+#     "restartPolicyMaxRetries": 10
+#   }
+# }

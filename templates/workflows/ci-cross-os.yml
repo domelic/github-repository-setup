@@ -1,0 +1,101 @@
+name: CI (Cross-Platform)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Optional: Add Node.js version matrix
+        # node-version: ['18', '20', '22']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js example
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint --if-present
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Build
+        run: npm run build --if-present
+
+      # Optional: Upload platform-specific artifacts
+      # - name: Upload artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: build-${{ matrix.os }}
+      #     path: dist/
+
+  # Alternative: Python cross-platform
+  # build-python:
+  #   name: Build Python (${{ matrix.os }})
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-latest, macos-latest, windows-latest]
+  #       python-version: ['3.10', '3.11', '3.12']
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #         cache: 'pip'
+  #     - run: pip install -e ".[dev]"
+  #     - run: pytest
+
+  # Alternative: Rust cross-platform
+  # build-rust:
+  #   name: Build Rust (${{ matrix.os }})
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-latest, macos-latest, windows-latest]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - uses: Swatinem/rust-cache@v2
+  #     - run: cargo build --release
+  #     - run: cargo test
+
+  # Alternative: Go cross-platform
+  # build-go:
+  #   name: Build Go (${{ matrix.os }})
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-latest, macos-latest, windows-latest]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-go@v5
+  #       with:
+  #         go-version: '1.22'
+  #     - run: go build ./...
+  #     - run: go test ./...

@@ -1,0 +1,50 @@
+# pnpm workspace configuration
+# https://pnpm.io/workspaces
+
+packages:
+  # Include all packages in the packages directory
+  - 'packages/*'
+
+  # Include all apps in the apps directory
+  - 'apps/*'
+
+  # Include shared libraries
+  - 'libs/*'
+
+  # Include tooling packages
+  - 'tools/*'
+
+  # Exclude test fixtures and examples
+  # - '!**/test/**'
+  # - '!**/tests/**'
+  # - '!**/fixtures/**'
+  # - '!**/__tests__/**'
+
+# Example directory structure:
+#
+# my-monorepo/
+# ├── apps/
+# │   ├── web/           # Next.js web app
+# │   │   └── package.json
+# │   ├── api/           # Express/Fastify API
+# │   │   └── package.json
+# │   └── mobile/        # React Native app
+# │       └── package.json
+# ├── packages/
+# │   ├── ui/            # Shared UI components
+# │   │   └── package.json
+# │   ├── utils/         # Shared utilities
+# │   │   └── package.json
+# │   ├── config/        # Shared configs (eslint, tsconfig)
+# │   │   └── package.json
+# │   └── types/         # Shared TypeScript types
+# │       └── package.json
+# ├── libs/
+# │   └── database/      # Database client/models
+# │       └── package.json
+# ├── tools/
+# │   └── scripts/       # Build/deploy scripts
+# │       └── package.json
+# ├── pnpm-workspace.yaml
+# ├── package.json       # Root package.json
+# └── turbo.json         # Turborepo config

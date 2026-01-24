@@ -63,6 +63,11 @@ This guide covers everything needed to set up a professional GitHub repository:
 /github-setup ci                 # CI workflows only
 /github-setup security           # Security workflows only
 /github-setup deploy             # Deployment workflows only
+/github-setup testing            # E2E testing (Playwright, Cypress)
+/github-setup cross-os           # Multi-OS CI (Ubuntu, macOS, Windows)
+/github-setup aws                # AWS deployments (S3, Lambda)
+/github-setup kubernetes         # Kubernetes deployment
+/github-setup monorepo           # Monorepo setup (Turborepo, pnpm)
 ```
 
 ### Manual Setup
@@ -82,21 +87,23 @@ This guide covers everything needed to set up a professional GitHub repository:
 5. [Release Automation](#5-release-automation)
 6. [CI/CD Workflows](#6-cicd-workflows)
 7. [Language-Specific CI](#7-language-specific-ci)
-8. [Security Workflows](#8-security-workflows)
-9. [Publishing Workflows](#9-publishing-workflows)
-10. [Deployment Templates](#10-deployment-templates)
-11. [Dev Containers](#11-dev-containers)
-12. [Editor Configuration](#12-editor-configuration)
-13. [Config Templates](#13-config-templates)
-14. [Gitignore Templates](#14-gitignore-templates)
-15. [Discovery & Sponsorship](#15-discovery--sponsorship)
-16. [Publishing (Books/eBooks)](#16-publishing-booksebooks)
-17. [Serena Code Intelligence](#17-serena-code-intelligence)
-18. [Zotero Research Library](#18-zotero-research-library)
-19. [Obsidian Knowledge Base](#19-obsidian-knowledge-base)
-20. [Complete Setup Checklist](#complete-setup-checklist)
-21. [Workflow Reference](#workflow-reference)
-22. [Troubleshooting](#troubleshooting)
+8. [E2E Testing Workflows](#8-e2e-testing-workflows)
+9. [Security Workflows](#9-security-workflows)
+10. [Publishing Workflows](#10-publishing-workflows)
+11. [Deployment Templates](#11-deployment-templates)
+12. [Modern Tooling Configs](#12-modern-tooling-configs)
+13. [Dev Containers](#13-dev-containers)
+14. [Editor Configuration](#14-editor-configuration)
+15. [Config Templates](#15-config-templates)
+16. [Gitignore Templates](#16-gitignore-templates)
+17. [Discovery & Sponsorship](#17-discovery--sponsorship)
+18. [Publishing (Books/eBooks)](#18-publishing-booksebooks)
+19. [Serena Code Intelligence](#19-serena-code-intelligence)
+20. [Zotero Research Library](#20-zotero-research-library)
+21. [Obsidian Knowledge Base](#21-obsidian-knowledge-base)
+22. [Complete Setup Checklist](#complete-setup-checklist)
+23. [Workflow Reference](#workflow-reference)
+24. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -535,7 +542,79 @@ All language-specific CI workflows include:
 
 ---
 
-## 8. Security Workflows
+## 8. E2E Testing Workflows
+
+End-to-end testing workflows for comprehensive UI and performance testing.
+
+### Playwright E2E Testing
+
+**Workflow:** [`templates/workflows/e2e-playwright.yml`](templates/workflows/e2e-playwright.yml)
+
+| Feature | Details |
+|---------|---------|
+| Browser support | Chromium, Firefox, WebKit |
+| Artifact upload | Test reports and screenshots |
+| Parallel execution | Sharded test runs for large suites |
+| Multi-browser matrix | Optional parallel browser testing |
+
+Features:
+- Automatic browser installation with `--with-deps`
+- Test report artifacts uploaded on any outcome
+- Optional sharding for large test suites (e.g., 4 shards)
+
+### Cypress E2E Testing
+
+**Workflow:** [`templates/workflows/e2e-cypress.yml`](templates/workflows/e2e-cypress.yml)
+
+| Feature | Details |
+|---------|---------|
+| Dev server | Automatic start with wait-on |
+| Artifacts | Screenshots and videos on failure |
+| Parallel | Optional Cypress Cloud integration |
+| Component testing | Optional component test support |
+
+Features:
+- Automatic dev server startup with configurable wait
+- Screenshot and video artifacts on failure
+- Optional parallel execution with Cypress Cloud
+
+### Cross-Platform CI
+
+**Workflow:** [`templates/workflows/ci-cross-os.yml`](templates/workflows/ci-cross-os.yml)
+
+Run CI across multiple operating systems:
+
+| Platform | Runner |
+|----------|--------|
+| Linux | `ubuntu-latest` |
+| macOS | `macos-latest` |
+| Windows | `windows-latest` |
+
+Features:
+- Fail-fast disabled (all platforms complete)
+- Optional language version matrix
+- Platform-specific artifact uploads
+- Examples for Node.js, Python, Rust, Go
+
+### Lighthouse Performance Testing
+
+**Workflow:** [`templates/workflows/lighthouse.yml`](templates/workflows/lighthouse.yml)
+
+| Feature | Details |
+|---------|---------|
+| Audits | Performance, accessibility, SEO, best practices |
+| Thresholds | Configurable score requirements |
+| Reports | Temporary public storage upload |
+| Budgets | Optional performance budget assertions |
+
+Features:
+- Lighthouse CI with configurable thresholds
+- Performance budgets for CI enforcement
+- Supports both local builds and deployed URLs
+
+---
+
+## 9. Security Workflows
 
 Comprehensive security scanning and supply chain protection.
 
@@ -598,7 +677,7 @@ Software Bill of Materials generation:
 
 ---
 
-## 9. Publishing Workflows
+## 10. Publishing Workflows
 
 Automated package publishing on GitHub release.
 
@@ -644,11 +723,13 @@ Automated package publishing on GitHub release.
 
 ---
 
-## 10. Deployment Templates
+## 11. Deployment Templates
 
-Automated deployment workflows for static sites and applications.
+Automated deployment workflows for static sites, serverless, and containerized applications.
 
-### GitHub Pages
+### Static Site Deployments
+
+#### GitHub Pages
 
 **Workflow:** [`templates/workflows/deploy-github-pages.yml`](templates/workflows/deploy-github-pages.yml)
 
@@ -656,7 +737,7 @@ Automated deployment workflows for static sites and applications.
 - Uses GitHub Pages official actions
 - Configurable build output directory
 
-### Vercel
+#### Vercel
 
 **Workflow:** [`templates/workflows/deploy-vercel.yml`](templates/workflows/deploy-vercel.yml)
 
@@ -666,7 +747,7 @@ Automated deployment workflows for static sites and applications.
 
 **Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
-### Netlify
+#### Netlify
 
 **Workflow:** [`templates/workflows/deploy-netlify.yml`](templates/workflows/deploy-netlify.yml)
 
@@ -676,9 +757,185 @@ Automated deployment workflows for static sites and applications.
 
 **Required secrets:** `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`
 
+### AWS Deployments
+
+#### AWS S3 + CloudFront
+
+**Workflow:** [`templates/workflows/deploy-aws-s3.yml`](templates/workflows/deploy-aws-s3.yml)
+
+| Feature | Details |
+|---------|---------|
+| Authentication | OIDC (no long-lived secrets) |
+| Caching | Cache-Control headers for immutable assets |
+| Invalidation | Automatic CloudFront cache invalidation |
+
+**Required secrets:** `AWS_ROLE_ARN`, `S3_BUCKET`, `CLOUDFRONT_DISTRIBUTION_ID`
+
+#### AWS Lambda
+
+**Workflow:** [`templates/workflows/deploy-aws-lambda.yml`](templates/workflows/deploy-aws-lambda.yml)
+
+| Feature | Details |
+|---------|---------|
+| Deployment | Function code with versioning |
+| Blue-green | Optional alias updates |
+| Alternatives | SAM, Serverless Framework examples |
+
+**Required secrets:** `AWS_ROLE_ARN`, `LAMBDA_FUNCTION_NAME`
+
+### Container & Kubernetes Deployments
+
+#### Kubernetes
+
+**Workflow:** [`templates/workflows/deploy-kubernetes.yml`](templates/workflows/deploy-kubernetes.yml)
+
+| Feature | Details |
+|---------|---------|
+| Registry | GitHub Container Registry (GHCR) |
+| Manifests | Kustomize-based management |
+| Verification | Rollout status checks |
+| Alternatives | Helm, EKS, GKE examples |
+
+**Required secrets:** `KUBE_CONFIG` (base64-encoded kubeconfig)
+
+### Platform-as-a-Service Deployments
+
+#### Railway
+
+**Workflow:** [`templates/workflows/deploy-railway.yml`](templates/workflows/deploy-railway.yml)
+
+**Required secrets:** `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID`
+
+#### Fly.io
+
+**Workflow:** [`templates/workflows/deploy-fly.yml`](templates/workflows/deploy-fly.yml)
+
+**Required secrets:** `FLY_API_TOKEN`
+
+**Required file:** `fly.toml` in repository root
+
+#### Render
+
+**Workflow:** [`templates/workflows/deploy-render.yml`](templates/workflows/deploy-render.yml)
+
+**Required secrets:** `RENDER_DEPLOY_HOOK_URL`
+
+### Platform Comparison
+
+| Platform | Best For | Auth Method | Free Tier |
+|----------|----------|-------------|-----------|
+| GitHub Pages | Static sites | Built-in | ✅ |
+| Vercel | Next.js, React | Token | ✅ |
+| Netlify | JAMstack | Token | ✅ |
+| AWS S3 | Enterprise static | OIDC | Pay-as-you-go |
+| AWS Lambda | Serverless functions | OIDC | Free tier |
+| Kubernetes | Complex applications | kubeconfig | Self-hosted |
+| Railway | Full-stack apps | Token | Limited |
+| Fly.io | Containers, global edge | Token | ✅ |
+| Render | Full-stack apps | Webhook | ✅ |
+
 ---
 
-## 11. Dev Containers
+## 12. Modern Tooling Configs
+
+Pre-configured templates for modern JavaScript/TypeScript tooling.
+
+### Biome (ESLint + Prettier Alternative)
+
+**File:** [`templates/biome.json`](templates/biome.json)
+
+| Feature | Details |
+|---------|---------|
+| Speed | ~100x faster than ESLint + Prettier |
+| Config | Single file for linting + formatting |
+| Languages | JavaScript, TypeScript, JSON |
+
+### Vitest (Modern Test Runner)
+
+**File:** [`templates/vitest.config.js`](templates/vitest.config.js)
+
+| Feature | Details |
+|---------|---------|
+| Speed | Native ESM, faster than Jest |
+| Coverage | V8 or Istanbul provider |
+| Compatibility | Vite-compatible configuration |
+| TypeScript | Native support |
+
+### Jest (Traditional Test Runner)
+
+**File:** [`templates/jest.config.js`](templates/jest.config.js)
+
+| Feature | Details |
+|---------|---------|
+| Transform | SWC for fast TypeScript |
+| Coverage | Coverlet integration |
+| Watch | Typeahead plugins |
+
+### Turborepo (Monorepo Build System)
+
+**File:** [`templates/turbo.json`](templates/turbo.json)
+
+| Feature | Details |
+|---------|---------|
+| Caching | Remote and local caching |
+| Parallelization | Intelligent task scheduling |
+| Dependencies | Automatic dependency detection |
+
+Tasks configured:
+- `build` — Depends on upstream builds, cached
+- `test` — Depends on build, cached
+- `lint` — Depends on upstream lints
+- `dev` — No caching, persistent
+
+### pnpm Workspace
+
+**File:** [`templates/pnpm-workspace.yaml`](templates/pnpm-workspace.yaml)
+
+Standard monorepo structure:
+
+```text
+my-monorepo/
+├── apps/           # Applications
+├── packages/       # Shared libraries
+├── libs/           # Domain libraries
+└── tools/          # Build tools
+```
+
+### Deno Runtime
+
+**File:** [`templates/deno.json`](templates/deno.json)
+
+| Feature | Details |
+|---------|---------|
+| Tasks | dev, start, test, lint, fmt |
+| Imports | JSR standard library |
+| Permissions | Explicit per-task |
+
+### Docker Compose (Local Development)
+
+**File:** [`templates/docker-compose.yml`](templates/docker-compose.yml)
+
+Pre-configured services:
+- **app** — Application with hot reload
+- **db** — PostgreSQL 16 with health checks
+- **redis** — Redis 7 with persistence
+
+Optional services (commented):
+- MySQL, MongoDB, Elasticsearch, MinIO, Mailpit
+
+### npm Configuration
+
+**File:** [`templates/.npmrc`](templates/.npmrc)
+
+| Setting | Value |
+|---------|-------|
+| `save-exact` | `true` |
+| `engine-strict` | `true` |
+| `audit-level` | `moderate` |
+
+---
+
+## 13. Dev Containers
 
 Pre-configured development containers for consistent environments.
 
@@ -711,7 +968,7 @@ Pre-configured development containers for consistent environments.
 
 ---
 
-## 12. Editor Configuration
+## 14. Editor Configuration
 
 Consistent editor settings across the team.
 
@@ -746,7 +1003,7 @@ Language-specific formatters configured:
 
 ---
 
-## 13. Config Templates
+## 15. Config Templates
 
 Pre-configured files for common development tools.
 
@@ -775,7 +1032,7 @@ cp templates/tsconfig.json tsconfig.json
 
 ---
 
-## 14. Gitignore Templates
+## 16. Gitignore Templates
 
 Language-specific `.gitignore` files with comprehensive ignore patterns.
 
@@ -800,7 +1057,7 @@ Or merge with existing `.gitignore` using your editor.
 
 ---
 
-## 15. Discovery & Sponsorship
+## 17. Discovery & Sponsorship
 
 ### Repository Topics
 
@@ -841,7 +1098,7 @@ EOF
 
 ---
 
-## 16. Publishing (Books/eBooks)
+## 18. Publishing (Books/eBooks)
 
 ### Amazon KDP Automation
 
@@ -875,7 +1132,7 @@ env:
 
 ---
 
-## 17. Serena Code Intelligence
+## 19. Serena Code Intelligence
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
@@ -925,7 +1182,7 @@ cp -r templates/serena/ .serena/
 
 ---
 
-## 18. Zotero Research Library
+## 20. Zotero Research Library
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
@@ -983,7 +1240,7 @@ zotero-mcp update-db --fulltext
 
 ---
 
-## 19. Obsidian Knowledge Base
+## 21. Obsidian Knowledge Base
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
@@ -1075,6 +1332,9 @@ Claude Code automatically discovers vaults via WebSocket.
 ### CI/CD
 
 - [ ] Language-specific CI workflow (nodejs, python, go, rust)
+- [ ] Cross-platform CI workflow (if needed)
+- [ ] E2E testing workflow (Playwright or Cypress)
+- [ ] Lighthouse performance testing (if web project)
 - [ ] Coverage workflow with Codecov
 - [ ] Dependabot for Actions + packages
 - [ ] Artifact preview on PRs (if applicable)
@@ -1100,11 +1360,23 @@ Claude Code automatically discovers vaults via WebSocket.
 - [ ] GitHub Pages deployment
 - [ ] Vercel deployment
 - [ ] Netlify deployment
+- [ ] AWS S3 + CloudFront deployment
+- [ ] AWS Lambda deployment
+- [ ] Kubernetes deployment
+- [ ] Railway/Fly.io/Render deployment
 
 ### Dev Experience
 
 - [ ] Dev container configured
 - [ ] All-contributors bot (optional)
+
+### Monorepo/Modern Tooling (if applicable)
+
+- [ ] Turborepo configured (monorepo)
+- [ ] pnpm workspace configured (monorepo)
+- [ ] Biome or ESLint + Prettier configured
+- [ ] Vitest or Jest configured
+- [ ] Docker Compose for local development
 
 ### Discovery
 
@@ -1151,8 +1423,17 @@ Claude Code automatically discovers vaults via WebSocket.
 | `ci-ruby.yml` | Push/PR | Ruby CI (3.2, 3.3) |
 | `ci-php.yml` | Push/PR | PHP CI (8.2, 8.3) |
 | `ci-dotnet.yml` | Push/PR | .NET CI (8, 9) |
+| `ci-cross-os.yml` | Push/PR | Multi-platform (Ubuntu/macOS/Windows) |
 | `coverage.yml` | Push/PR | Upload coverage to Codecov |
 | `dependency-review.yml` | PR | Check for vulnerabilities |
+
+### E2E Testing Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `e2e-playwright.yml` | Push/PR | Playwright E2E testing |
+| `e2e-cypress.yml` | Push/PR | Cypress E2E testing |
+| `lighthouse.yml` | Push/PR | Lighthouse performance testing |
 
 ### Security Workflows
 
@@ -1180,6 +1461,12 @@ Claude Code automatically discovers vaults via WebSocket.
 | `deploy-github-pages.yml` | Push to main | Deploy to GitHub Pages |
 | `deploy-vercel.yml` | Push/PR | Deploy to Vercel |
 | `deploy-netlify.yml` | Push/PR | Deploy to Netlify |
+| `deploy-aws-s3.yml` | Push to main | Deploy to AWS S3 + CloudFront |
+| `deploy-aws-lambda.yml` | Push to main | Deploy to AWS Lambda |
+| `deploy-kubernetes.yml` | Push to main | Deploy to Kubernetes |
+| `deploy-railway.yml` | Push to main | Deploy to Railway |
+| `deploy-fly.yml` | Push to main | Deploy to Fly.io |
+| `deploy-render.yml` | Push to main | Deploy to Render |
 | `artifact-preview.yml` | PR | Upload build preview |
 
 ---

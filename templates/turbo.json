@@ -1,0 +1,64 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "globalEnv": ["NODE_ENV", "CI"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"],
+      "env": ["NODE_ENV"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"],
+      "env": ["CI", "NODE_ENV"]
+    },
+    "test:unit": {
+      "dependsOn": [],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["playwright-report/**", "test-results/**"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
+    }
+  },
+  "ui": "tui"
+}

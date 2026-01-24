@@ -15,6 +15,11 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup publishing         # Amazon KDP automation (for books)
 /github-setup discovery          # Topics, social preview, funding
 /github-setup checklist          # Audit what's missing
+/github-setup testing            # E2E testing workflows (Playwright, Cypress)
+/github-setup cross-os           # Multi-OS CI matrix (Ubuntu, macOS, Windows)
+/github-setup aws                # AWS deployment workflows (S3, Lambda)
+/github-setup kubernetes         # Kubernetes deployment (kubectl, Helm)
+/github-setup monorepo           # Monorepo setup (Turborepo, pnpm)
 ```
 
 ### Language Presets
@@ -834,6 +839,302 @@ Report missing items grouped by priority:
 
 ---
 
+## Mode: E2E Testing (`/github-setup testing`)
+
+Set up end-to-end testing workflows:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/e2e-playwright.yml` | Playwright E2E testing with artifacts |
+| `.github/workflows/e2e-cypress.yml` | Cypress E2E testing with artifacts |
+| `.github/workflows/lighthouse.yml` | Lighthouse performance testing |
+
+### Playwright Features
+
+- Automatic browser installation
+- Test report artifacts on failure
+- Optional multi-browser matrix (chromium, firefox, webkit)
+- Optional sharded test execution for large suites
+
+### Cypress Features
+
+- Automatic dev server startup with wait-on
+- Screenshot and video artifacts on failure
+- Optional parallel execution with Cypress Cloud
+- Optional component testing
+
+### Lighthouse Features
+
+- Performance, accessibility, SEO, and best practices audits
+- Configurable thresholds and budgets
+- Temporary public storage for reports
+- Supports local builds and deployed URLs
+
+---
+
+## Mode: Cross-OS CI (`/github-setup cross-os`)
+
+Set up multi-platform CI workflows:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-cross-os.yml` | Multi-OS matrix (Ubuntu, macOS, Windows) |
+
+### Supported Platforms
+
+| OS | Runner |
+|----|--------|
+| Linux | `ubuntu-latest` |
+| macOS | `macos-latest` |
+| Windows | `windows-latest` |
+
+### Features
+
+- Fail-fast disabled (all platforms run even if one fails)
+- Optional version matrix (e.g., Node.js 18, 20, 22)
+- Platform-specific artifact uploads
+- Examples for Node.js, Python, Rust, and Go
+
+### Use Cases
+
+- CLI tools that need cross-platform compatibility
+- Desktop applications (Electron, Tauri)
+- Libraries with platform-specific code
+- Native addons (N-API, PyO3, etc.)
+
+---
+
+## Mode: AWS Deployments (`/github-setup aws`)
+
+Set up AWS deployment workflows:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/deploy-aws-s3.yml` | S3 + CloudFront static site deployment |
+| `.github/workflows/deploy-aws-lambda.yml` | Lambda serverless deployment |
+
+### S3 + CloudFront Features
+
+- OIDC authentication (no long-lived secrets)
+- Cache-Control headers for immutable assets
+- Automatic CloudFront cache invalidation
+- Separate handling for HTML/JSON (no-cache)
+
+### Lambda Features
+
+- Function code deployment with versioning
+- Optional alias updates for blue-green deployments
+- Support for SAM and Serverless Framework alternatives
+
+### Required Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ROLE_ARN` | IAM role ARN for OIDC authentication |
+| `S3_BUCKET` | S3 bucket name (for S3 deployment) |
+| `CLOUDFRONT_DISTRIBUTION_ID` | CloudFront distribution (for S3 deployment) |
+| `LAMBDA_FUNCTION_NAME` | Lambda function name (for Lambda deployment) |
+
+### OIDC Setup
+
+Workflows use OIDC for authentication. Set up trust policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringLike": {
+        "token.actions.githubusercontent.com:sub": "repo:OWNER/REPO:*"
+      }
+    }
+  }]
+}
+```
+
+---
+
+## Mode: Kubernetes (`/github-setup kubernetes`)
+
+Set up Kubernetes deployment workflows:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/deploy-kubernetes.yml` | Kubernetes deployment with kubectl/Helm |
+
+### Features
+
+- Docker image build and push to GHCR
+- Kustomize-based manifest management
+- Rollout status verification
+- Support for EKS, GKE, and generic clusters
+
+### Deployment Options
+
+| Option | Use Case |
+|--------|----------|
+| kubectl + Kustomize | Simple deployments |
+| Helm | Complex applications with charts |
+| EKS | AWS-managed Kubernetes |
+| GKE | Google Cloud Kubernetes |
+
+### Required Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `KUBE_CONFIG` | Base64-encoded kubeconfig file |
+
+For EKS:
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ROLE_ARN` | IAM role for OIDC |
+| `EKS_CLUSTER_NAME` | EKS cluster name |
+
+For GKE:
+| Secret | Purpose |
+|--------|---------|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload identity provider |
+| `GCP_SERVICE_ACCOUNT` | Service account email |
+| `GKE_CLUSTER_NAME` | GKE cluster name |
+| `GKE_CLUSTER_LOCATION` | Cluster zone or region |
+
+---
+
+## Mode: Cloud Deployments (`/github-setup deploy`)
+
+Install deployment workflows for various platforms:
+
+### Available Deployments
+
+| Workflow | Platform |
+|----------|----------|
+| `deploy-github-pages.yml` | GitHub Pages |
+| `deploy-vercel.yml` | Vercel |
+| `deploy-netlify.yml` | Netlify |
+| `deploy-aws-s3.yml` | AWS S3 + CloudFront |
+| `deploy-aws-lambda.yml` | AWS Lambda |
+| `deploy-kubernetes.yml` | Kubernetes |
+| `deploy-railway.yml` | Railway |
+| `deploy-fly.yml` | Fly.io |
+| `deploy-render.yml` | Render |
+
+### Platform Comparison
+
+| Platform | Best For | Free Tier |
+|----------|----------|-----------|
+| GitHub Pages | Static sites | Yes |
+| Vercel | Next.js, React | Yes |
+| Netlify | JAMstack | Yes |
+| Railway | Full-stack apps | Limited |
+| Fly.io | Containers, global | Yes |
+| Render | Full-stack apps | Yes |
+| AWS S3 | Static sites (enterprise) | Pay-as-you-go |
+| AWS Lambda | Serverless functions | Free tier |
+| Kubernetes | Enterprise, complex apps | Self-hosted |
+
+---
+
+## Mode: Monorepo Setup (`/github-setup monorepo`)
+
+Set up monorepo tooling:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `turbo.json` | Turborepo task configuration |
+| `pnpm-workspace.yaml` | pnpm workspace packages |
+
+### Turborepo Features
+
+- Task dependency graph (build, test, lint)
+- Remote caching support
+- Parallel task execution
+- Incremental builds
+
+### pnpm Workspace Structure
+
+```text
+my-monorepo/
+├── apps/
+│   ├── web/           # Next.js web app
+│   └── api/           # Express/Fastify API
+├── packages/
+│   ├── ui/            # Shared UI components
+│   ├── utils/         # Shared utilities
+│   └── config/        # Shared configs
+├── pnpm-workspace.yaml
+├── package.json
+└── turbo.json
+```
+
+### Task Configuration
+
+| Task | Depends On | Cached |
+|------|------------|--------|
+| `build` | `^build` | Yes |
+| `test` | `build` | Yes |
+| `lint` | `^lint` | Yes |
+| `dev` | - | No |
+
+---
+
+## Modern Tooling Configs
+
+### Files Available
+
+| File | Purpose |
+|------|---------|
+| `biome.json` | Biome linter/formatter (ESLint + Prettier alternative) |
+| `vitest.config.js` | Vitest testing configuration |
+| `jest.config.js` | Jest testing configuration |
+| `turbo.json` | Turborepo monorepo configuration |
+| `pnpm-workspace.yaml` | pnpm workspace configuration |
+| `deno.json` | Deno runtime configuration |
+| `.npmrc` | npm registry configuration |
+| `docker-compose.yml` | Multi-service local development |
+
+### Biome vs ESLint + Prettier
+
+| Feature | Biome | ESLint + Prettier |
+|---------|-------|-------------------|
+| Speed | ~100x faster | Baseline |
+| Config | Single file | Multiple files |
+| Language support | JS/TS/JSON | More languages |
+| Ecosystem | Growing | Mature |
+
+### Vitest vs Jest
+
+| Feature | Vitest | Jest |
+|---------|--------|------|
+| Speed | Faster (native ESM) | Baseline |
+| Config | Vite-compatible | Standalone |
+| Watch mode | Better | Good |
+| TypeScript | Native | Transform needed |
+
+### Docker Compose Services
+
+| Service | Image | Purpose |
+|---------|-------|---------|
+| `app` | Custom | Application |
+| `db` | PostgreSQL 16 | Database |
+| `redis` | Redis 7 | Cache |
+
+---
+
 ## Templates Reference
 
 All templates available at: https://github.com/domelic/github-repository-setup/tree/main/templates
@@ -858,6 +1159,16 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `deploy-github-pages.yml` | GitHub Pages deployment |
 | `deploy-vercel.yml` | Vercel deployment |
 | `deploy-netlify.yml` | Netlify deployment |
+| `deploy-aws-s3.yml` | AWS S3 + CloudFront deployment |
+| `deploy-aws-lambda.yml` | AWS Lambda serverless deployment |
+| `deploy-kubernetes.yml` | Kubernetes deployment |
+| `deploy-railway.yml` | Railway deployment |
+| `deploy-fly.yml` | Fly.io deployment |
+| `deploy-render.yml` | Render deployment |
+| `e2e-playwright.yml` | Playwright E2E testing |
+| `e2e-cypress.yml` | Cypress E2E testing |
+| `ci-cross-os.yml` | Cross-platform CI (Ubuntu/macOS/Windows) |
+| `lighthouse.yml` | Lighthouse performance testing |
 | `dependency-review.yml` | PR vulnerability check |
 | `codeql.yml` | CodeQL SAST scanning |
 | `trivy.yml` | Trivy vulnerability scanning |
@@ -897,6 +1208,14 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `.gitignore-python` | Python .gitignore |
 | `.gitignore-go` | Go .gitignore |
 | `.gitignore-rust` | Rust .gitignore |
+| `biome.json` | Biome linter/formatter config |
+| `vitest.config.js` | Vitest testing config |
+| `jest.config.js` | Jest testing config |
+| `turbo.json` | Turborepo monorepo config |
+| `pnpm-workspace.yaml` | pnpm workspace config |
+| `deno.json` | Deno runtime config |
+| `.npmrc` | npm registry config |
+| `docker-compose.yml` | Multi-service local dev |
 
 ### Dev Containers
 
