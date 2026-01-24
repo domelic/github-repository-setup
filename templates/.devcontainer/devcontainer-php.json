@@ -1,0 +1,76 @@
+{
+  "name": "PHP Development Container",
+  "image": "mcr.microsoft.com/devcontainers/php:8.3",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "junstyle.php-cs-fixer",
+        "neilbrayfield.php-docblocker",
+        "recca0120.vscode-phpunit",
+        "MehediDrawormo.php-namespace-resolver",
+        "onecentlin.laravel-blade"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "[php]": {
+          "editor.defaultFormatter": "junstyle.php-cs-fixer",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 4
+        },
+        "php.validate.enable": true,
+        "php.suggest.basic": false,
+        "intelephense.format.enable": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      }
+    }
+  },
+
+  "postCreateCommand": "composer install",
+
+  "remoteUser": "vscode",
+
+  "forwardPorts": [8000, 8080, 9000],
+
+  "portsAttributes": {
+    "8000": {
+      "label": "Laravel/Symfony Server",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "PHP Built-in Server",
+      "onAutoForward": "notify"
+    },
+    "9000": {
+      "label": "Xdebug",
+      "onAutoForward": "silent"
+    }
+  }
+}

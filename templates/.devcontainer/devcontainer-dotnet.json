@@ -1,0 +1,79 @@
+{
+  "name": ".NET Development Container",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0",
+      "additionalVersions": "9.0"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "formulahendry.dotnet-test-explorer",
+        "kreativ-software.csharpextensions",
+        "patcx.vscode-nuget-gallery"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "[csharp]": {
+          "editor.defaultFormatter": "ms-dotnettools.csharp",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 4
+        },
+        "[fsharp]": {
+          "editor.tabSize": 4
+        },
+        "omnisharp.enableRoslynAnalyzers": true,
+        "omnisharp.enableEditorConfigSupport": true,
+        "dotnet.defaultSolution": "disable",
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      }
+    }
+  },
+
+  "postCreateCommand": "dotnet restore",
+
+  "remoteUser": "vscode",
+
+  "forwardPorts": [5000, 5001, 7000],
+
+  "portsAttributes": {
+    "5000": {
+      "label": "Application (HTTP)",
+      "onAutoForward": "notify"
+    },
+    "5001": {
+      "label": "Application (HTTPS)",
+      "onAutoForward": "notify"
+    },
+    "7000": {
+      "label": "Kestrel Alt",
+      "onAutoForward": "silent"
+    }
+  }
+}

@@ -1,0 +1,79 @@
+# Go .gitignore template
+# https://github.com/github/gitignore/blob/main/Go.gitignore
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories
+vendor/
+
+# Build output directory
+bin/
+dist/
+build/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Air live reload
+tmp/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Debug
+debug
+debug.test
+__debug_bin*
+
+# Profiling
+*.prof
+*.pprof
+cpu.out
+mem.out
+trace.out
+
+# Goreleaser
+dist/
+
+# golangci-lint
+.golangci.yml.backup
+
+# Delve
+__debug_bin
+
+# Local configuration
+config.local.yaml
+config.local.json
+
+# Logs
+*.log
+logs/

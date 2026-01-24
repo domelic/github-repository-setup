@@ -24,6 +24,10 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup python             # Python preset
 /github-setup go                 # Go preset
 /github-setup rust               # Rust preset
+/github-setup java               # Java preset (Maven/Gradle)
+/github-setup ruby               # Ruby preset
+/github-setup php                # PHP preset (Composer)
+/github-setup dotnet             # .NET preset
 ```
 
 ### Category Presets
@@ -32,6 +36,9 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup ci                 # CI workflows only
 /github-setup security           # Security workflows only
 /github-setup deploy             # Deployment workflows only
+/github-setup devcontainer       # Dev container setup
+/github-setup editor             # Editor config (.editorconfig, VSCode)
+/github-setup gitignore          # Language-specific .gitignore
 ```
 
 ---
@@ -48,6 +55,10 @@ When running `/github-setup` without arguments, automatically detect the project
 | `pyproject.toml` or `requirements.txt` or `setup.py` | Python | `python` |
 | `go.mod` | Go | `go` |
 | `Cargo.toml` | Rust | `rust` |
+| `pom.xml` or `build.gradle` | Java | `java` |
+| `Gemfile` | Ruby | `ruby` |
+| `composer.json` | PHP | `php` |
+| `*.csproj` or `*.fsproj` or `*.sln` | .NET | `dotnet` |
 
 ### Auto-Detection Implementation
 
@@ -61,6 +72,14 @@ elif [ -f "go.mod" ]; then
     PROJECT_TYPE="go"
 elif [ -f "Cargo.toml" ]; then
     PROJECT_TYPE="rust"
+elif [ -f "pom.xml" ] || [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then
+    PROJECT_TYPE="java"
+elif [ -f "Gemfile" ]; then
+    PROJECT_TYPE="ruby"
+elif [ -f "composer.json" ]; then
+    PROJECT_TYPE="php"
+elif ls *.csproj >/dev/null 2>&1 || ls *.fsproj >/dev/null 2>&1 || ls *.sln >/dev/null 2>&1; then
+    PROJECT_TYPE="dotnet"
 else
     PROJECT_TYPE="generic"
 fi
@@ -188,6 +207,98 @@ Installs the complete Rust development setup:
 
 ---
 
+## Language Preset: Java (`/github-setup java`)
+
+Installs the complete Java development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-java.yml` | CI with JDK 17, 21 matrix (Maven/Gradle) |
+| `.github/dependabot.yml` | maven/gradle + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Java dev container (JDK 21) |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with JaCoCo
+- CodeQL security scanning
+- Checkstyle/SpotBugs linting
+
+---
+
+## Language Preset: Ruby (`/github-setup ruby`)
+
+Installs the complete Ruby development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-ruby.yml` | CI with Ruby 3.2, 3.3 matrix |
+| `.github/dependabot.yml` | bundler + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Ruby dev container (3.3) |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (RuboCop, Solargraph) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with SimpleCov
+- RuboCop linting workflow
+- Rails-specific templates
+
+---
+
+## Language Preset: PHP (`/github-setup php`)
+
+Installs the complete PHP development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-php.yml` | CI with PHP 8.2, 8.3 matrix |
+| `.github/dependabot.yml` | composer + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | PHP dev container (8.3) |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (Intelephense, PHP-CS-Fixer) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with PHPUnit
+- PHP-CS-Fixer/PHPStan workflow
+- Laravel/Symfony-specific templates
+
+---
+
+## Language Preset: .NET (`/github-setup dotnet`)
+
+Installs the complete .NET development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-dotnet.yml` | CI with .NET 8, 9 matrix |
+| `.github/dependabot.yml` | nuget + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | .NET dev container (8.0) |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (OmniSharp) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with Coverlet
+- Format check workflow (dotnet format)
+- NuGet publishing workflow
+
+---
+
 ## Category Preset: CI (`/github-setup ci`)
 
 Install CI workflows without publishing:
@@ -200,6 +311,10 @@ Install CI workflows without publishing:
 | `ci-python.yml` | Python 3.10, 3.11, 3.12 |
 | `ci-go.yml` | Go 1.21, 1.22 |
 | `ci-rust.yml` | Rust stable, nightly |
+| `ci-java.yml` | Java 17, 21 (Maven/Gradle) |
+| `ci-ruby.yml` | Ruby 3.2, 3.3 |
+| `ci-php.yml` | PHP 8.2, 8.3 |
+| `ci-dotnet.yml` | .NET 8, 9 |
 
 ### Shared Features
 
@@ -221,14 +336,38 @@ Install security-focused workflows:
 | File | Purpose |
 |------|---------|
 | `.github/workflows/dependency-review.yml` | PR dependency vulnerability check |
+| `.github/workflows/codeql.yml` | CodeQL SAST scanning |
+| `.github/workflows/trivy.yml` | Container/filesystem vulnerability scanning |
+| `.github/workflows/scorecard.yml` | OpenSSF Scorecard supply chain security |
+| `.github/workflows/sbom.yml` | SBOM generation with Syft |
 | `.github/dependabot.yml` | Automated dependency updates |
-| `codecov.yml` | Coverage configuration |
 
-### Dependency Review Features
+### CodeQL Features
 
-- Fails on high/critical vulnerabilities
-- Comments on PR with findings
-- Optional license compliance checking
+- Weekly scheduled scans + PR checks
+- Multi-language support (JS, Python, Java, C#, Go, Ruby)
+- Results in GitHub Security tab
+- Custom queries support
+
+### Trivy Features
+
+- Filesystem vulnerability scanning
+- Container image scanning (optional)
+- IaC configuration scanning (optional)
+- SARIF output for GitHub integration
+
+### Scorecard Features
+
+- Supply chain security assessment
+- OpenSSF badge eligibility
+- Automated weekly checks
+- Actionable security recommendations
+
+### SBOM Features
+
+- SPDX and CycloneDX format generation
+- Automatic attachment to releases
+- Optional Grype vulnerability scanning
 
 ---
 
@@ -249,6 +388,89 @@ Install deployment workflows:
 - Preview deployments on PRs
 - Production deployments on merge to main
 - Automatic PR comments with preview URLs
+
+---
+
+## Category Preset: Dev Container (`/github-setup devcontainer`)
+
+Set up development containers for consistent environments:
+
+### Available Containers
+
+| File | Language | Base Image |
+|------|----------|------------|
+| `devcontainer.json` | Generic | Ubuntu base |
+| `devcontainer-nodejs.json` | Node.js | Node 22 |
+| `devcontainer-python.json` | Python | Python 3.12 |
+| `devcontainer-go.json` | Go | Go 1.22 |
+| `devcontainer-rust.json` | Rust | Rust latest |
+| `devcontainer-java.json` | Java | JDK 21 |
+| `devcontainer-ruby.json` | Ruby | Ruby 3.3 |
+| `devcontainer-php.json` | PHP | PHP 8.3 |
+| `devcontainer-dotnet.json` | .NET | .NET 8 |
+
+### Features Included
+
+- Common utilities (zsh, Oh My Zsh, git, GitHub CLI)
+- Language-specific tools and extensions
+- VS Code extensions pre-installed
+- Port forwarding configured
+
+---
+
+## Category Preset: Editor Config (`/github-setup editor`)
+
+Set up editor configuration files:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.editorconfig` | Universal formatting rules |
+| `.vscode/settings.json` | VSCode workspace settings |
+| `.vscode/extensions.json` | Recommended extensions |
+| `.prettierrc` | Prettier config (JS/TS) |
+| `.eslintrc.json` | ESLint config (JS/TS) |
+| `tsconfig.json` | TypeScript config |
+| `pyproject.toml` | Python tooling config (ruff, mypy, pytest) |
+
+### Language-Specific Formatters
+
+| Language | Formatter |
+|----------|-----------|
+| JavaScript/TypeScript | Prettier |
+| Python | Black + Ruff |
+| Go | gofmt |
+| Rust | rustfmt |
+| Java | Google Java Format |
+| PHP | PHP-CS-Fixer |
+| Ruby | RuboCop |
+| C# | dotnet format |
+
+---
+
+## Category Preset: Gitignore (`/github-setup gitignore`)
+
+Install language-specific .gitignore files:
+
+### Available Templates
+
+| File | Language |
+|------|----------|
+| `.gitignore-nodejs` | Node.js (node_modules, dist, .env) |
+| `.gitignore-python` | Python (__pycache__, .venv, .egg-info) |
+| `.gitignore-go` | Go (vendor, binaries) |
+| `.gitignore-rust` | Rust (target/, Cargo.lock for libs) |
+
+### Usage
+
+Copy and rename to `.gitignore`:
+
+```bash
+cp templates/.gitignore-nodejs .gitignore
+```
+
+Or merge with existing .gitignore.
 
 ---
 
@@ -625,6 +847,10 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `ci-python.yml` | Python CI (3.10, 3.11, 3.12) |
 | `ci-go.yml` | Go CI (1.21, 1.22) |
 | `ci-rust.yml` | Rust CI (stable, nightly) |
+| `ci-java.yml` | Java CI (17, 21) |
+| `ci-ruby.yml` | Ruby CI (3.2, 3.3) |
+| `ci-php.yml` | PHP CI (8.2, 8.3) |
+| `ci-dotnet.yml` | .NET CI (8, 9) |
 | `publish-npm.yml` | npm publishing |
 | `publish-pypi.yml` | PyPI publishing (OIDC) |
 | `publish-docker.yml` | Docker image publishing |
@@ -633,6 +859,10 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `deploy-vercel.yml` | Vercel deployment |
 | `deploy-netlify.yml` | Netlify deployment |
 | `dependency-review.yml` | PR vulnerability check |
+| `codeql.yml` | CodeQL SAST scanning |
+| `trivy.yml` | Trivy vulnerability scanning |
+| `scorecard.yml` | OpenSSF Scorecard |
+| `sbom.yml` | SBOM generation |
 | `format-check.yml` | Multi-language formatting |
 | `coverage.yml` | Test coverage upload |
 | `all-contributors.yml` | Contributor recognition |
@@ -659,6 +889,14 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `dependabot.yml` | Basic dependabot |
 | `dependabot-full.yml` | Full ecosystem dependabot |
 | `.all-contributorsrc` | Contributor config |
+| `.prettierrc` | Prettier config (JS/TS) |
+| `.eslintrc.json` | ESLint config (JS/TS) |
+| `tsconfig.json` | TypeScript config |
+| `pyproject.toml` | Python project config |
+| `.gitignore-nodejs` | Node.js .gitignore |
+| `.gitignore-python` | Python .gitignore |
+| `.gitignore-go` | Go .gitignore |
+| `.gitignore-rust` | Rust .gitignore |
 
 ### Dev Containers
 
@@ -669,6 +907,10 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `devcontainer-python.json` | Python container |
 | `devcontainer-go.json` | Go container |
 | `devcontainer-rust.json` | Rust container |
+| `devcontainer-java.json` | Java container |
+| `devcontainer-ruby.json` | Ruby container |
+| `devcontainer-php.json` | PHP container |
+| `devcontainer-dotnet.json` | .NET container |
 
 ### Templates
 
@@ -689,6 +931,8 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `RELEASING.md` | Release process |
 | `CITATION.cff` | Citation file |
 | `CLAUDE.md` | Claude Code guide |
+| `SECRETS_MANAGEMENT.md` | Secrets management guide |
+| `MONOREPO_PATTERNS.md` | Monorepo patterns guide |
 
 ### Scripts
 

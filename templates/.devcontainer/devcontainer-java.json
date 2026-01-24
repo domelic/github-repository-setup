@@ -1,0 +1,74 @@
+{
+  "name": "Java Development Container",
+  "image": "mcr.microsoft.com/devcontainers/java:21",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": true,
+      "installGradle": true
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "redhat.java",
+        "vscjava.vscode-java-debug",
+        "vscjava.vscode-java-dependency",
+        "vscjava.vscode-java-test",
+        "vscjava.vscode-maven",
+        "vscjava.vscode-gradle",
+        "sonarsource.sonarlint-vscode"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+        "java.saveActions.organizeImports": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      }
+    }
+  },
+
+  "postCreateCommand": "if [ -f pom.xml ]; then mvn dependency:resolve; elif [ -f build.gradle ]; then ./gradlew dependencies; fi",
+
+  "remoteUser": "vscode",
+
+  "forwardPorts": [8080, 8443, 9090],
+
+  "portsAttributes": {
+    "8080": {
+      "label": "Application",
+      "onAutoForward": "notify"
+    },
+    "8443": {
+      "label": "Application (HTTPS)",
+      "onAutoForward": "notify"
+    },
+    "9090": {
+      "label": "Debug/Actuator",
+      "onAutoForward": "silent"
+    }
+  }
+}

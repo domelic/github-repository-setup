@@ -1,0 +1,73 @@
+{
+  "name": "Ruby Development Container",
+  "image": "mcr.microsoft.com/devcontainers/ruby:3.3",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "editorconfig.editorconfig",
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "shopify.ruby-lsp",
+        "castwide.solargraph",
+        "misogi.ruby-rubocop",
+        "kaiwood.endwise",
+        "aki77.rails-db-schema"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "shopify.ruby-lsp",
+        "[ruby]": {
+          "editor.defaultFormatter": "shopify.ruby-lsp",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "rubyLsp.formatter": "rubocop",
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true
+      }
+    }
+  },
+
+  "postCreateCommand": "bundle install",
+
+  "remoteUser": "vscode",
+
+  "forwardPorts": [3000, 4000, 5000],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Rails Server",
+      "onAutoForward": "notify"
+    },
+    "4000": {
+      "label": "Jekyll/Other",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Alt Application",
+      "onAutoForward": "silent"
+    }
+  }
+}

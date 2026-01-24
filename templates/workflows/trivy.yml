@@ -1,0 +1,98 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Monday at 7:00 AM UTC
+    - cron: '0 7 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan-filesystem:
+    name: Filesystem Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
+  # Optional: Container image scanning (uncomment if you have a Dockerfile)
+  # scan-image:
+  #   name: Container Image Scan
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     security-events: write
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Build container image
+  #       run: docker build -t ${{ github.repository }}:${{ github.sha }} .
+  #
+  #     - name: Run Trivy vulnerability scanner (image)
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         scan-type: 'image'
+  #         image-ref: '${{ github.repository }}:${{ github.sha }}'
+  #         severity: 'CRITICAL,HIGH'
+  #         format: 'sarif'
+  #         output: 'trivy-image-results.sarif'
+  #
+  #     - name: Upload Trivy scan results to GitHub Security tab
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       if: always()
+  #       with:
+  #         sarif_file: 'trivy-image-results.sarif'
+
+  # Optional: IaC (Infrastructure as Code) scanning
+  # scan-config:
+  #   name: IaC Config Scan
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     security-events: write
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Run Trivy config scanner
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         scan-type: 'config'
+  #         scan-ref: '.'
+  #         severity: 'CRITICAL,HIGH,MEDIUM'
+  #         format: 'sarif'
+  #         output: 'trivy-config-results.sarif'
+  #
+  #     - name: Upload Trivy scan results to GitHub Security tab
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       if: always()
+  #       with:
+  #         sarif_file: 'trivy-config-results.sarif'

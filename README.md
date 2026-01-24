@@ -51,6 +51,10 @@ This guide covers everything needed to set up a professional GitHub repository:
 /github-setup python             # Python preset
 /github-setup go                 # Go preset
 /github-setup rust               # Rust preset
+/github-setup java               # Java preset (Maven/Gradle)
+/github-setup ruby               # Ruby preset
+/github-setup php                # PHP preset (Composer)
+/github-setup dotnet             # .NET preset
 ```
 
 ### Category Presets
@@ -78,18 +82,21 @@ This guide covers everything needed to set up a professional GitHub repository:
 5. [Release Automation](#5-release-automation)
 6. [CI/CD Workflows](#6-cicd-workflows)
 7. [Language-Specific CI](#7-language-specific-ci)
-8. [Publishing Workflows](#8-publishing-workflows)
-9. [Deployment Templates](#9-deployment-templates)
-10. [Dev Containers](#10-dev-containers)
-11. [Editor Configuration](#11-editor-configuration)
-12. [Discovery & Sponsorship](#12-discovery--sponsorship)
-13. [Publishing (Books/eBooks)](#13-publishing-booksebooks)
-14. [Serena Code Intelligence](#14-serena-code-intelligence)
-15. [Zotero Research Library](#15-zotero-research-library)
-16. [Obsidian Knowledge Base](#16-obsidian-knowledge-base)
-17. [Complete Setup Checklist](#complete-setup-checklist)
-18. [Workflow Reference](#workflow-reference)
-19. [Troubleshooting](#troubleshooting)
+8. [Security Workflows](#8-security-workflows)
+9. [Publishing Workflows](#9-publishing-workflows)
+10. [Deployment Templates](#10-deployment-templates)
+11. [Dev Containers](#11-dev-containers)
+12. [Editor Configuration](#12-editor-configuration)
+13. [Config Templates](#13-config-templates)
+14. [Gitignore Templates](#14-gitignore-templates)
+15. [Discovery & Sponsorship](#15-discovery--sponsorship)
+16. [Publishing (Books/eBooks)](#16-publishing-booksebooks)
+17. [Serena Code Intelligence](#17-serena-code-intelligence)
+18. [Zotero Research Library](#18-zotero-research-library)
+19. [Obsidian Knowledge Base](#19-obsidian-knowledge-base)
+20. [Complete Setup Checklist](#complete-setup-checklist)
+21. [Workflow Reference](#workflow-reference)
+22. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -475,6 +482,48 @@ Pre-configured CI workflows for major programming languages with version matrix 
 | Formatting | rustfmt |
 | Caching | Swatinem/rust-cache |
 
+### Java CI
+
+**Workflow:** [`templates/workflows/ci-java.yml`](templates/workflows/ci-java.yml)
+
+| Feature | Details |
+|---------|---------|
+| JDK versions | 17, 21 (Temurin) |
+| Build tools | Maven, Gradle support |
+| Caching | Maven/Gradle dependencies |
+
+### Ruby CI
+
+**Workflow:** [`templates/workflows/ci-ruby.yml`](templates/workflows/ci-ruby.yml)
+
+| Feature | Details |
+|---------|---------|
+| Ruby versions | 3.2, 3.3 |
+| Package manager | Bundler with caching |
+| Linting | RuboCop |
+| Testing | RSpec, Minitest support |
+
+### PHP CI
+
+**Workflow:** [`templates/workflows/ci-php.yml`](templates/workflows/ci-php.yml)
+
+| Feature | Details |
+|---------|---------|
+| PHP versions | 8.2, 8.3 |
+| Package manager | Composer with caching |
+| Linting | PHP-CS-Fixer, PHPStan |
+| Testing | PHPUnit |
+
+### .NET CI
+
+**Workflow:** [`templates/workflows/ci-dotnet.yml`](templates/workflows/ci-dotnet.yml)
+
+| Feature | Details |
+|---------|---------|
+| .NET versions | 8.0, 9.0 |
+| Caching | NuGet packages |
+| Format check | dotnet format |
+
 ### Shared Features
 
 All language-specific CI workflows include:
@@ -486,7 +535,70 @@ All language-specific CI workflows include:
 
 ---
 
-## 8. Publishing Workflows
+## 8. Security Workflows
+
+Comprehensive security scanning and supply chain protection.
+
+### CodeQL (SAST)
+
+**Workflow:** [`templates/workflows/codeql.yml`](templates/workflows/codeql.yml)
+
+Static Application Security Testing for:
+- JavaScript/TypeScript
+- Python
+- Java
+- C/C++
+- C#
+- Go
+- Ruby
+- Swift/Kotlin
+
+Features:
+- Weekly scheduled scans + PR checks
+- Results in GitHub Security tab
+- Custom queries support
+
+### Trivy Vulnerability Scanner
+
+**Workflow:** [`templates/workflows/trivy.yml`](templates/workflows/trivy.yml)
+
+| Scan Type | Purpose |
+|-----------|---------|
+| Filesystem | Dependency vulnerabilities |
+| Container | Docker image scanning |
+| Config | IaC misconfigurations |
+
+Features:
+- SARIF output for GitHub integration
+- Severity filtering (CRITICAL, HIGH)
+- Container and IaC scanning options
+
+### OpenSSF Scorecard
+
+**Workflow:** [`templates/workflows/scorecard.yml`](templates/workflows/scorecard.yml)
+
+Supply chain security assessment:
+- Branch protection checks
+- Dependency update monitoring
+- Token permissions analysis
+- Code review practices
+- Vulnerability disclosure process
+
+Enables the OpenSSF Scorecard badge for your repository.
+
+### SBOM Generation
+
+**Workflow:** [`templates/workflows/sbom.yml`](templates/workflows/sbom.yml)
+
+Software Bill of Materials generation:
+- SPDX format
+- CycloneDX format
+- Automatic attachment to releases
+- Optional Grype vulnerability scanning
+
+---
+
+## 9. Publishing Workflows
 
 Automated package publishing on GitHub release.
 
@@ -532,7 +644,7 @@ Automated package publishing on GitHub release.
 
 ---
 
-## 9. Deployment Templates
+## 10. Deployment Templates
 
 Automated deployment workflows for static sites and applications.
 
@@ -566,7 +678,7 @@ Automated deployment workflows for static sites and applications.
 
 ---
 
-## 10. Dev Containers
+## 11. Dev Containers
 
 Pre-configured development containers for consistent environments.
 
@@ -579,6 +691,10 @@ Pre-configured development containers for consistent environments.
 | [`devcontainer-python.json`](templates/.devcontainer/devcontainer-python.json) | Python | Python 3.12 |
 | [`devcontainer-go.json`](templates/.devcontainer/devcontainer-go.json) | Go | Go 1.22 |
 | [`devcontainer-rust.json`](templates/.devcontainer/devcontainer-rust.json) | Rust | Rust latest |
+| [`devcontainer-java.json`](templates/.devcontainer/devcontainer-java.json) | Java | JDK 21 |
+| [`devcontainer-ruby.json`](templates/.devcontainer/devcontainer-ruby.json) | Ruby | Ruby 3.3 |
+| [`devcontainer-php.json`](templates/.devcontainer/devcontainer-php.json) | PHP | PHP 8.3 |
+| [`devcontainer-dotnet.json`](templates/.devcontainer/devcontainer-dotnet.json) | .NET | .NET 8 |
 
 ### Usage
 
@@ -595,7 +711,7 @@ Pre-configured development containers for consistent environments.
 
 ---
 
-## 11. Editor Configuration
+## 12. Editor Configuration
 
 Consistent editor settings across the team.
 
@@ -630,7 +746,61 @@ Language-specific formatters configured:
 
 ---
 
-## 12. Discovery & Sponsorship
+## 13. Config Templates
+
+Pre-configured files for common development tools.
+
+### JavaScript/TypeScript
+
+| File | Purpose |
+|------|---------|
+| [`.prettierrc`](templates/.prettierrc) | Prettier formatting config |
+| [`.eslintrc.json`](templates/.eslintrc.json) | ESLint rules config |
+| [`tsconfig.json`](templates/tsconfig.json) | TypeScript compiler config |
+
+### Python
+
+| File | Purpose |
+|------|---------|
+| [`pyproject.toml`](templates/pyproject.toml) | Python project config (ruff, mypy, pytest) |
+
+### Usage
+
+Copy to your project root and customize:
+
+```bash
+cp templates/.prettierrc .prettierrc
+cp templates/tsconfig.json tsconfig.json
+```
+
+---
+
+## 14. Gitignore Templates
+
+Language-specific `.gitignore` files with comprehensive ignore patterns.
+
+### Available Templates
+
+| Template | Languages/Frameworks |
+|----------|---------------------|
+| [`.gitignore-nodejs`](templates/.gitignore-nodejs) | Node.js, npm, Yarn, pnpm |
+| [`.gitignore-python`](templates/.gitignore-python) | Python, pip, venv, Django, Flask |
+| [`.gitignore-go`](templates/.gitignore-go) | Go, vendor, binaries |
+| [`.gitignore-rust`](templates/.gitignore-rust) | Rust, Cargo, target |
+
+### Usage
+
+Copy and rename to `.gitignore`:
+
+```bash
+cp templates/.gitignore-nodejs .gitignore
+```
+
+Or merge with existing `.gitignore` using your editor.
+
+---
+
+## 15. Discovery & Sponsorship
 
 ### Repository Topics
 
@@ -671,7 +841,7 @@ EOF
 
 ---
 
-## 13. Publishing (Books/eBooks)
+## 16. Publishing (Books/eBooks)
 
 ### Amazon KDP Automation
 
@@ -705,7 +875,7 @@ env:
 
 ---
 
-## 14. Serena Code Intelligence
+## 17. Serena Code Intelligence
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
@@ -755,7 +925,7 @@ cp -r templates/serena/ .serena/
 
 ---
 
-## 15. Zotero Research Library
+## 18. Zotero Research Library
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
@@ -813,7 +983,7 @@ zotero-mcp update-db --fulltext
 
 ---
 
-## 16. Obsidian Knowledge Base
+## 19. Obsidian Knowledge Base
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
@@ -913,6 +1083,10 @@ Claude Code automatically discovers vaults via WebSocket.
 
 - [ ] Dependency review workflow (PR vulnerability check)
 - [ ] Dependabot configured for security updates
+- [ ] CodeQL scanning configured
+- [ ] Trivy vulnerability scanning
+- [ ] OpenSSF Scorecard (optional)
+- [ ] SBOM generation (optional)
 
 ### Publishing (if applicable)
 
@@ -973,8 +1147,21 @@ Claude Code automatically discovers vaults via WebSocket.
 | `ci-python.yml` | Push/PR | Python CI (3.10, 3.11, 3.12) |
 | `ci-go.yml` | Push/PR | Go CI (1.21, 1.22) |
 | `ci-rust.yml` | Push/PR | Rust CI (stable, nightly) |
+| `ci-java.yml` | Push/PR | Java CI (17, 21) |
+| `ci-ruby.yml` | Push/PR | Ruby CI (3.2, 3.3) |
+| `ci-php.yml` | Push/PR | PHP CI (8.2, 8.3) |
+| `ci-dotnet.yml` | Push/PR | .NET CI (8, 9) |
 | `coverage.yml` | Push/PR | Upload coverage to Codecov |
 | `dependency-review.yml` | PR | Check for vulnerabilities |
+
+### Security Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `codeql.yml` | Push/PR + Weekly | CodeQL SAST scanning |
+| `trivy.yml` | Push/PR + Weekly | Vulnerability scanning |
+| `scorecard.yml` | Push + Weekly | OpenSSF Scorecard |
+| `sbom.yml` | Push/Release | SBOM generation |
 
 ### Publishing Workflows
 
@@ -1307,3 +1494,5 @@ show_summary() {
 - [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
 - [Obsidian MCP Documentation](docs/OBSIDIAN_MCP.md)
 - [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
+- [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
+- [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
