@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.13",
-  "version": "0.1.13",
+  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.14",
+  "version": "0.1.14",
   "algorithm": "sha256",
   "checksums": {
     ".all-contributorsrc": "79661319e74f6adb6475a72b8ffdeeb387f545a775c40a367ae9901577317e17",
@@ -78,7 +78,7 @@
     "workflows/ci-ruby.yml": "044a32c470651b880d1c89793f630db4d453c8ae6233c4776a846a41812cf56b",
     "workflows/ci-rust.yml": "7322c3a384a60ea6ed2313d3d6f2ab152761eff8b3f50527b76910173cc95dc4",
     "workflows/ci.yml": "b848e32a66ae1472faec3b508fe8c11463537ef65f170967dbdc4a834adab155",
-    "workflows/codeql.yml": "cf430109df6cfeae666c1eb6c5a5edb410fa472137ae2ba6b4a614c7d4a42e7b",
+    "workflows/codeql.yml": "bfcea3a6b8237e1f769a90b2594f4d47fb94d781c79c8c6de97a98a0ca2c5ef5",
     "workflows/commitlint.yml": "d45a058199dd091e3bd14dc31b93d225c7d7c54bd4595f615a4516da6f4d1489",
     "workflows/coverage.yml": "af934b13fd4ba80c646800b7fc36c9ca48fbd91b151987a362193cd2472c283d",
     "workflows/dependency-review.yml": "43f428aecc5c2cc8b3da3b889b6489786326a0835f6cfdb789c56c47419d2899",
