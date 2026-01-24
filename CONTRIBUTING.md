@@ -34,6 +34,23 @@ Thank you for your interest in contributing!
 - Test CLI commands before submitting
 - Follow existing formatting patterns
 
+### Pre-commit Hooks
+
+This project uses pre-commit hooks. Install them after cloning:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+Hooks run automatically on commit and check:
+
+- Code formatting (Prettier, Ruff)
+- Commit message format (Conventional Commits)
+- No secrets committed
+- YAML/JSON validity
+
 ### Code of Conduct
 
 Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). Be respectful and constructive. We're all here to help each other build better repositories.

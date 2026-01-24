@@ -80,6 +80,20 @@ chore: update dependencies
 | `.github/` | GitHub-specific configs and workflows |
 | `README.md` | Main project documentation |
 
+## Using the /github-setup Skill
+
+This repository includes a Claude Code skill for setting up GitHub repositories:
+
+```bash
+/github-setup              # Full setup wizard (auto-detects project type)
+/github-setup checklist    # Audit what's missing
+/github-setup nodejs       # Node.js preset
+/github-setup python       # Python preset
+/github-setup precommit    # Pre-commit hooks setup
+```
+
+See `templates/commands/github-setup.md` for full documentation.
+
 ## For Claude: Working Style
 
 1. **Follow conventions**: Use the branch naming and commit conventions above

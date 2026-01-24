@@ -79,6 +79,19 @@ chore: update dependencies
 | `tests/` | Test files |
 | `docs/` | Documentation |
 
+## Pre-commit Hooks
+
+If this project uses pre-commit hooks:
+
+```bash
+# Install hooks after cloning
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Run manually
+pre-commit run --all-files
+```
+
 ## For Claude: Working Style
 
 1. **Follow conventions**: Use the branch naming and commit conventions above
