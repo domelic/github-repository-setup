@@ -7,13 +7,12 @@ A comprehensive guide and Claude Code skill for setting up GitHub repositories w
 [![GitHub release](https://img.shields.io/github/v/release/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/releases)
 [![Contributors](https://img.shields.io/github/contributors/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/graphs/contributors)
 
-> **Warning**
->
+> [!WARNING]
 > This repository is a collection of templates and workflows, many of which have **not been tested in production environments**. Templates are provided as starting points and may require modifications for your specific use case. Review and test thoroughly before using in critical projects.
 
 ---
 
-## Overview
+## 📋 Overview
 
 This guide covers everything needed to set up a professional GitHub repository:
 
@@ -89,7 +88,7 @@ flowchart TB
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Using the Claude Code Skill
 
@@ -172,31 +171,31 @@ flowchart TB
 ### Manual Setup
 
 1. Copy templates from [`templates/`](templates/) directory
-2. Follow the [Complete Setup Checklist](#complete-setup-checklist)
+2. Follow the [Complete Setup Checklist](#-complete-setup-checklist)
 3. Customize for your project
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
-1. [Documentation Files](#1-documentation-files)
-2. [Repository Settings](#2-repository-settings)
-3. [Quality Gates](#3-quality-gates)
-4. [Release Automation](#4-release-automation)
-5. [CI Workflows](#5-ci-workflows)
-6. [Security Workflows](#6-security-workflows)
-7. [Publishing & Deployment](#7-publishing--deployment)
-8. [Configuration Files](#8-configuration-files)
-9. [Discovery & Sponsorship](#9-discovery--sponsorship)
-10. [MCP Integrations](#10-mcp-integrations)
-11. [Specialty: Book Publishing](#11-specialty-book-publishing)
-12. [Complete Setup Checklist](#complete-setup-checklist)
-13. [Troubleshooting](#troubleshooting)
-14. [Resources](#resources)
+1. [📄 Documentation Files](#-1-documentation-files)
+2. [⚙️ Repository Settings](#️-2-repository-settings)
+3. [✅ Quality Gates](#-3-quality-gates)
+4. [📦 Release Automation](#-4-release-automation)
+5. [🔨 CI Workflows](#-5-ci-workflows)
+6. [🔒 Security Workflows](#-6-security-workflows)
+7. [🚀 Publishing & Deployment](#-7-publishing--deployment)
+8. [📁 Configuration Files](#-8-configuration-files)
+9. [🔍 Discovery & Sponsorship](#-9-discovery--sponsorship)
+10. [🔌 MCP Integrations](#-10-mcp-integrations)
+11. [📚 Specialty: Book Publishing](#-11-specialty-book-publishing)
+12. [✅ Complete Setup Checklist](#-complete-setup-checklist)
+13. [🔧 Troubleshooting](#-troubleshooting)
+14. [📚 Resources](#-resources)
 
 ---
 
-## 1. Documentation Files
+## 📄 1. Documentation Files
 
 ### Required Files
 
@@ -237,7 +236,7 @@ GitHub displays a "Cite this repository" button when this file exists.
 
 ---
 
-## 2. Repository Settings
+## ⚙️ 2. Repository Settings
 
 ### Branch Protection
 
@@ -444,7 +443,7 @@ Also supports path-based labeling via `.github/labeler.yml` configuration.
 
 ---
 
-## 3. Quality Gates
+## ✅ 3. Quality Gates
 
 <details>
 <summary>View diagram</summary>
@@ -605,7 +604,7 @@ All-in-one linting solution that validates 50+ languages in parallel. Ideal for 
 
 ---
 
-## 4. Release Automation
+## 📦 4. Release Automation
 
 ### Release Please (Recommended)
 
@@ -687,7 +686,7 @@ git push origin v1.0.0
 
 ---
 
-## 5. CI Workflows
+## 🔨 5. CI Workflows
 
 ### Generic CI
 
@@ -883,7 +882,7 @@ Features:
 
 ---
 
-## 6. Security Workflows
+## 🔒 6. Security Workflows
 
 Comprehensive security scanning and supply chain protection.
 
@@ -995,7 +994,7 @@ Software Bill of Materials generation:
 
 ---
 
-## 7. Publishing & Deployment
+## 🚀 7. Publishing & Deployment
 
 <details>
 <summary>View diagram</summary>
@@ -1301,7 +1300,7 @@ my-project/
 
 ---
 
-## 8. Configuration Files
+## 📁 8. Configuration Files
 
 ### Modern Tooling Configs
 
@@ -1566,7 +1565,7 @@ git config --global core.excludesfile ~/.gitignore_global
 
 ---
 
-## 9. Discovery & Sponsorship
+## 🔍 9. Discovery & Sponsorship
 
 ### Repository Topics
 
@@ -1607,7 +1606,7 @@ EOF
 
 ---
 
-## 10. MCP Integrations
+## 🔌 10. MCP Integrations
 
 MCP (Model Context Protocol) servers extend Claude Code with additional capabilities. This section covers integrations for code intelligence, research, and knowledge management.
 
@@ -1757,7 +1756,7 @@ Claude Code automatically discovers vaults via WebSocket.
 
 ---
 
-## 11. Specialty: Book Publishing
+## 📚 11. Specialty: Book Publishing
 
 > This section covers specialized workflows for book/ebook projects. Most repositories won't need this.
 
@@ -1793,7 +1792,7 @@ env:
 
 ---
 
-## Complete Setup Checklist
+## ✅ Complete Setup Checklist
 
 ### Documentation
 
@@ -1910,7 +1909,7 @@ env:
 
 ---
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Release Please: "GitHub Actions is not permitted to create or approve pull requests"
 
@@ -2142,7 +2141,7 @@ show_summary() {
 
 ---
 
-## Resources
+## 📚 Resources
 
 - [GitHub Docs](https://docs.github.com)
 - [Conventional Commits](https://www.conventionalcommits.org/)
@@ -2158,12 +2157,12 @@ show_summary() {
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## License
+## 📜 License
 
 MIT License - see [LICENSE](LICENSE).
