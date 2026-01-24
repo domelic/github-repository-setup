@@ -36,7 +36,7 @@ Thank you for your interest in contributing!
 
 ### Code of Conduct
 
-Be respectful and constructive. We're all here to help each other build better repositories.
+Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). Be respectful and constructive. We're all here to help each other build better repositories.
 
 ## Questions?
 

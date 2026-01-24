@@ -40,3 +40,4 @@ jobs:
             !templates/**
             !.claude/**
             !docs/SERENA.md
+            !CHANGELOG.md

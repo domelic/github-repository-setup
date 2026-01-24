@@ -3,6 +3,9 @@
 A comprehensive guide and Claude Code skill for setting up GitHub repositories with production-grade automation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/domelic/github-repository-setup/actions/workflows/release-please.yml/badge.svg)](https://github.com/domelic/github-repository-setup/actions/workflows/release-please.yml)
+[![GitHub release](https://img.shields.io/github/v/release/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/releases)
+[![Contributors](https://img.shields.io/github/contributors/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/graphs/contributors)
 
 ---
 

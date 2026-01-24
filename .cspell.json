@@ -48,7 +48,9 @@
     "Serena",
     "serena",
     "Obsidian",
-    "obsidian"
+    "obsidian",
+    "skillname",
+    "lycheeverse"
   ],
   "ignorePaths": [
     "node_modules/**",
