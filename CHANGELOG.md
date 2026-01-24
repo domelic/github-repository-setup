@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10](https://github.com/domelic/github-repository-setup/compare/v0.1.9...v0.1.10) (2026-01-24)
+
+
+### Documentation
+
+* add Mermaid diagrams for quality gates, releases, setup, and security ([#51](https://github.com/domelic/github-repository-setup/issues/51)) ([46341c8](https://github.com/domelic/github-repository-setup/commit/46341c8e836e46cba6a3878a04a0948d0e7e162f))
+
 ## [0.1.9](https://github.com/domelic/github-repository-setup/compare/v0.1.8...v0.1.9) (2026-01-24)
 
 
