@@ -112,6 +112,8 @@ Then use it:
 
 **Category presets:** `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`
 
+> **Note:** The skill fetches templates directly from this repository, ensuring you always get the latest tested configurations. Network access is required.
+
 #### Setup Decision Tree
 
 <details>
