@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11](https://github.com/domelic/github-repository-setup/compare/v0.1.10...v0.1.11) (2026-01-24)
+
+
+### Features
+
+* add global gitignore templates, auto-labeler, and super-linter workflows ([#53](https://github.com/domelic/github-repository-setup/issues/53)) ([7f8d91e](https://github.com/domelic/github-repository-setup/commit/7f8d91e4c274174c7b73c0c650fb56114394aae7))
+
 ## [0.1.10](https://github.com/domelic/github-repository-setup/compare/v0.1.9...v0.1.10) (2026-01-24)
 
 
