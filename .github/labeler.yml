@@ -1,0 +1,28 @@
+# Configuration for actions/labeler
+# Labels PRs based on file paths changed
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '*.md'
+          - '!CHANGELOG.md'
+
+workflows:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**'
+
+configuration:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.json'
+          - '*.yml'
+          - '*.yaml'
+          - '.github/**'
+          - '!.github/workflows/**'
+
+templates:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'templates/**'

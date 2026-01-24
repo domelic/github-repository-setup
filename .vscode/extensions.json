@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "davidanson.vscode-markdownlint",
+    "streetsidesoftware.code-spell-checker",
+    "redhat.vscode-yaml",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "github.vscode-github-actions",
+    "bierner.markdown-preview-github-styles"
+  ]
+}

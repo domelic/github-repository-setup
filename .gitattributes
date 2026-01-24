@@ -1,0 +1,36 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Documents
+*.md text diff=markdown
+*.txt text
+*.csv text
+
+# Scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Config files
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+*.xml text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+
+# Git files
+.gitattributes text
+.gitignore text
+.gitmodules text
+
+# GitHub linguistics
+*.md linguist-detectable
