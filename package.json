@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "lint": "npm run lint:md && npm run lint:spell",
-    "lint:md": "markdownlint '**/*.md' --ignore node_modules",
-    "lint:md:fix": "markdownlint '**/*.md' --ignore node_modules --fix",
+    "lint:md": "markdownlint '**/*.md' --ignore-path .markdownlintignore",
+    "lint:md:fix": "markdownlint '**/*.md' --ignore-path .markdownlintignore --fix",
     "lint:spell": "cspell '**/*.md' --no-progress",
     "lint:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
     "prepare": "echo 'Run: pip install pre-commit && pre-commit install' || true"

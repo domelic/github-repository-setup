@@ -32,6 +32,16 @@ This guide covers everything needed to set up a professional GitHub repository:
 
 ### Using the Claude Code Skill
 
+First, install the skill in your repository:
+
+```bash
+mkdir -p .claude/commands
+curl -o .claude/commands/github-setup.md \
+  https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/commands/github-setup.md
+```
+
+Then use it:
+
 ```bash
 /github-setup                    # Full setup wizard (auto-detects project type)
 /github-setup docs               # Documentation files
@@ -109,7 +119,8 @@ This guide covers everything needed to set up a professional GitHub repository:
 24. [Obsidian Knowledge Base](#24-obsidian-knowledge-base)
 25. [Complete Setup Checklist](#complete-setup-checklist)
 26. [Workflow Reference](#workflow-reference)
-27. [Troubleshooting](#troubleshooting)
+27. [Claude Code Skills](#claude-code-skills)
+28. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -1675,13 +1686,27 @@ If you see `Unknown skill: skillname`, verify the file is in the `commands/` dir
 Install the `/github-setup` skill:
 
 ```bash
-# Copy to project
+# Install in any repo (recommended)
 mkdir -p .claude/commands
+curl -o .claude/commands/github-setup.md \
+  https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/commands/github-setup.md
+
+# Or copy from local clone
 cp templates/commands/github-setup.md .claude/commands/
 
-# Or global installation
+# Or global installation (available in all projects)
 mkdir -p ~/.claude/commands
-cp templates/commands/github-setup.md ~/.claude/commands/
+curl -o ~/.claude/commands/github-setup.md \
+  https://raw.githubusercontent.com/domelic/github-repository-setup/main/templates/commands/github-setup.md
+```
+
+After installation, use the skill:
+
+```bash
+/github-setup              # Full setup wizard (auto-detects project type)
+/github-setup checklist    # Audit what's missing
+/github-setup nodejs       # Node.js preset
+/github-setup python       # Python preset
 ```
 
 See [templates/commands/github-setup.md](templates/commands/github-setup.md) for full documentation.

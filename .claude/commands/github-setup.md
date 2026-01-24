@@ -466,7 +466,7 @@ Install language-specific .gitignore files:
 | File | Language |
 |------|----------|
 | `.gitignore-nodejs` | Node.js (node_modules, dist, .env) |
-| `.gitignore-python` | Python (__pycache__, .venv, .egg-info) |
+| `.gitignore-python` | Python (`__pycache__`, `.venv`, `.egg-info`) |
 | `.gitignore-go` | Go (vendor, binaries) |
 | `.gitignore-rust` | Rust (target/, Cargo.lock for libs) |
 
@@ -1001,12 +1001,14 @@ Set up Kubernetes deployment workflows:
 | `KUBE_CONFIG` | Base64-encoded kubeconfig file |
 
 For EKS:
+
 | Secret | Purpose |
 |--------|---------|
 | `AWS_ROLE_ARN` | IAM role for OIDC |
 | `EKS_CLUSTER_NAME` | EKS cluster name |
 
 For GKE:
+
 | Secret | Purpose |
 |--------|---------|
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload identity provider |

@@ -53,7 +53,9 @@
     "lycheeverse",
     "pypi",
     "pyproject",
-    "lifecycles"
+    "lifecycles",
+    "pycache",
+    "venv"
   ],
   "ignorePaths": [
     "node_modules/**",
