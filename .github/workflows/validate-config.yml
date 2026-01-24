@@ -1,0 +1,57 @@
+# Configuration Validation Workflow
+# Validates YAML and JSON configuration files
+
+name: Validate Configuration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - "**.json"
+      - ".github/workflows/validate-config.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.yml"
+      - "**.yaml"
+      - "**.json"
+      - ".github/workflows/validate-config.yml"
+
+jobs:
+  validate:
+    name: Validate Config Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate YAML files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .github/
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 200
+                level: warning
+              truthy:
+                allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+              document-start: disable
+              comments:
+                min-spaces-from-content: 1
+              comments-indentation: disable
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" -not -path "./node_modules/*" -exec sh -c '
+            for file do
+              echo "Checking $file"
+              python3 -m json.tool "$file" > /dev/null || exit 1
+            done
+          ' sh {} +
+          echo "All JSON files are valid!"

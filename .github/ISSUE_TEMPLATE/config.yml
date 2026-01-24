@@ -1,5 +1,14 @@
 blank_issues_enabled: true
 contact_links:
-  - name: GitHub Docs
+  - name: GitHub Documentation
     url: https://docs.github.com
-    about: Official GitHub documentation
+    about: Official GitHub documentation for repository features
+  - name: GitHub Actions Documentation
+    url: https://docs.github.com/en/actions
+    about: Learn about GitHub Actions and CI/CD workflows
+  - name: Conventional Commits
+    url: https://www.conventionalcommits.org
+    about: Learn about the commit message convention used in this project
+  - name: Discussions
+    url: https://github.com/domelic/github-repository-setup/discussions
+    about: Ask questions and discuss ideas with the community

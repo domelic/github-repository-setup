@@ -1,0 +1,43 @@
+{
+  "name": "github-repository-setup",
+  "version": "0.1.0",
+  "description": "Documentation and templates for GitHub repository setup best practices",
+  "private": true,
+  "scripts": {
+    "lint": "npm run lint:md && npm run lint:spell",
+    "lint:md": "markdownlint '**/*.md' --ignore node_modules",
+    "lint:md:fix": "markdownlint '**/*.md' --ignore node_modules --fix",
+    "lint:spell": "cspell '**/*.md' --no-progress",
+    "lint:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "prepare": "echo 'Run: pip install pre-commit && pre-commit install' || true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/domelic/github-repository-setup.git"
+  },
+  "keywords": [
+    "github",
+    "repository",
+    "setup",
+    "templates",
+    "documentation",
+    "best-practices",
+    "ci-cd",
+    "workflows"
+  ],
+  "author": "domelic",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/domelic/github-repository-setup/issues"
+  },
+  "homepage": "https://github.com/domelic/github-repository-setup#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "cspell": "^8.17.3",
+    "markdownlint-cli": "^0.43.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

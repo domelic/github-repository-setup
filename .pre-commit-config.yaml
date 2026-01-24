@@ -1,0 +1,61 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+# See: https://pre-commit.com
+
+default_stages: [pre-commit]
+
+repos:
+  # Spell checking
+  - repo: local
+    hooks:
+      - id: spell-check
+        name: Spell Check
+        entry: npx cspell --no-progress --no-must-find-files
+        language: system
+        files: \.md$
+        pass_filenames: true
+
+  # Markdown linting
+  - repo: local
+    hooks:
+      - id: markdown-lint
+        name: Markdown Lint
+        entry: npx markdownlint --fix
+        language: system
+        files: \.md$
+        pass_filenames: true
+
+  # Commit message linting (commit-msg stage)
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: Commit Lint
+        entry: npx commitlint --edit
+        language: system
+        stages: [commit-msg]
+        pass_filenames: false
+
+  # YAML validation and general checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Shell script linting (if any shell scripts are added)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]

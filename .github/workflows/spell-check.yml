@@ -1,0 +1,36 @@
+# Spell Check Workflow
+# Catches typos and spelling errors in documentation
+
+name: Spell Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.md"
+      - ".cspell.json"
+      - ".github/workflows/spell-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.md"
+      - ".cspell.json"
+      - ".github/workflows/spell-check.yml"
+
+jobs:
+  spell-check:
+    name: Check Spelling
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run cspell
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          files: |
+            **/*.md
+          config: .cspell.json
+          inline: warning
+          strict: true
