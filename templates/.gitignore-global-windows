@@ -1,0 +1,42 @@
+# Windows Global .gitignore template
+# https://github.com/github/gitignore/blob/main/Global/Windows.gitignore
+#
+# USAGE: This is a GLOBAL gitignore template for user-level configuration.
+# Add to your global gitconfig:
+#   git config --global core.excludesfile ~/.gitignore_global
+#
+# Or combine with language-specific templates in your project .gitignore.
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Windows Explorer lock files
+~$*
+
+# Windows Search index files
+*.search-ms
+
+# Windows security/zone identifier
+*:Zone.Identifier

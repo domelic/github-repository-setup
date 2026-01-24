@@ -1,0 +1,188 @@
+# Super-Linter Workflow
+#
+# All-in-one linting solution that analyzes 50+ languages in parallel.
+# Ideal for polyglot repositories or when you want comprehensive coverage
+# without maintaining separate linter workflows.
+#
+# Documentation: https://github.com/super-linter/super-linter
+#
+# FEATURES:
+# - Supports 50+ languages/formats out of the box
+# - Parallel execution for speed
+# - Slim variant for faster CI (excludes Rust toolchains)
+# - Auto-fix mode (optional)
+# - SARIF output for GitHub Security tab
+#
+# CUSTOMIZATION:
+# - Enable/disable specific linters via environment variables
+# - Add custom configs (.eslintrc.json, .pylintrc, etc.) to your repo
+# - Use FILTER_REGEX_INCLUDE/EXCLUDE to target specific paths
+
+name: Super-Linter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read
+  # Uncomment for auto-fix mode (FIX_MODE: true)
+  # pull-requests: write
+  # statuses: write
+
+jobs:
+  lint:
+    name: Lint Code Base
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full git history needed for proper file diffing
+          fetch-depth: 0
+
+      - name: Run Super-Linter
+        uses: super-linter/super-linter/slim@v7
+        env:
+          # ===== CORE SETTINGS =====
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: main
+
+          # Only lint changed files (faster, recommended for PRs)
+          VALIDATE_ALL_CODEBASE: false
+
+          # ===== OUTPUT SETTINGS =====
+          # Create GitHub annotations for errors
+          CREATE_LOG_FILE: true
+          LOG_LEVEL: NOTICE
+
+          # ===== PATH FILTERING =====
+          # Uncomment to include/exclude specific paths
+          # FILTER_REGEX_INCLUDE: '^src/.*'
+          # FILTER_REGEX_EXCLUDE: '.*test.*|.*vendor.*|node_modules/.*'
+
+          # Ignore generated files and third-party code
+          IGNORE_GENERATED_FILES: true
+          IGNORE_GITIGNORED_FILES: true
+
+          # ===== LANGUAGE-SPECIFIC LINTERS =====
+          # By default, Super-Linter enables all applicable linters.
+          # Uncomment to disable specific linters:
+
+          # JavaScript/TypeScript (use one or configure)
+          # VALIDATE_JAVASCRIPT_ES: true
+          # VALIDATE_JAVASCRIPT_STANDARD: false
+          # VALIDATE_TYPESCRIPT_ES: true
+          # VALIDATE_TYPESCRIPT_STANDARD: false
+
+          # Python
+          # VALIDATE_PYTHON_PYLINT: true
+          # VALIDATE_PYTHON_FLAKE8: true
+          # VALIDATE_PYTHON_BLACK: true
+          # VALIDATE_PYTHON_ISORT: true
+          # VALIDATE_PYTHON_MYPY: true
+          # VALIDATE_PYTHON_RUFF: true
+
+          # Go
+          # VALIDATE_GO: true
+          # VALIDATE_GO_MODULES: true
+
+          # Disable if not using these languages (speeds up runs)
+          VALIDATE_CLOJURE: false
+          VALIDATE_CLOUDFORMATION: false
+          VALIDATE_COFFEESCRIPT: false
+          VALIDATE_DART: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_GOOGLE_JAVA_FORMAT: false
+          VALIDATE_GROOVY: false
+          VALIDATE_KOTLIN: false
+          VALIDATE_LATEX: false
+          VALIDATE_LUA: false
+          VALIDATE_PERL: false
+          VALIDATE_POWERSHELL: false
+          VALIDATE_R: false
+          VALIDATE_RAKU: false
+          VALIDATE_RUBY: false
+          VALIDATE_SCALA: false
+          VALIDATE_SNAKEMAKE_LINT: false
+          VALIDATE_SNAKEMAKE_SNAKEFMT: false
+          VALIDATE_TEKTON: false
+
+          # ===== COMMON LINTERS (usually want these) =====
+          VALIDATE_BASH: true
+          VALIDATE_BASH_EXEC: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_ENV: true
+          VALIDATE_GITLEAKS: true
+          VALIDATE_JSON: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+
+          # ===== AUTO-FIX MODE =====
+          # Uncomment to enable auto-fixing (creates commits)
+          # Requires pull-requests: write permission
+          # FIX_MODE: true
+
+  # Optional: Upload SARIF for GitHub Security tab
+  # security-upload:
+  #   name: Upload SARIF
+  #   needs: lint
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   permissions:
+  #     security-events: write
+  #   steps:
+  #     - name: Upload SARIF file
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: super-linter.sarif
+  #       continue-on-error: true
+
+# =============================================================================
+# CONFIGURATION FILES
+# =============================================================================
+# Super-Linter automatically picks up config files from your repository:
+#
+# JavaScript/TypeScript:
+#   .eslintrc.json, .eslintrc.js, .eslintrc.yml
+#   .prettierrc, .prettierrc.json
+#   tsconfig.json
+#
+# Python:
+#   .pylintrc, pyproject.toml (for ruff, black, isort)
+#   .flake8, setup.cfg
+#   mypy.ini, .mypy.ini
+#
+# Go:
+#   .golangci.yml
+#
+# Markdown:
+#   .markdownlint.json, .markdownlint.yaml
+#
+# YAML:
+#   .yamllint.yml, .yamllint.yaml
+#
+# Shell:
+#   .shellcheckrc
+#
+# =============================================================================
+# SLIM VS FULL IMAGE
+# =============================================================================
+# This workflow uses the SLIM variant (super-linter/slim) which:
+# - Is ~2GB smaller than the full image
+# - Excludes: Rust, Scala, Arm Assembly linters
+# - Faster to pull and run
+#
+# Use full image if you need Rust/Scala:
+#   uses: super-linter/super-linter@v7

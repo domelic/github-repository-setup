@@ -411,6 +411,25 @@ See [`templates/workflows/welcome.yml`](templates/workflows/welcome.yml)
 
 Greets first-time contributors with helpful information.
 
+#### Auto Labeler
+
+See [`templates/workflows/auto-labeler.yml`](templates/workflows/auto-labeler.yml)
+
+Automatically labels PRs based on conventional commit prefixes in the title:
+
+| Commit Prefix | Label Applied |
+|---------------|---------------|
+| `feat:` | `enhancement` |
+| `fix:` | `bug` |
+| `docs:` | `documentation` |
+| `chore:` | `chore` |
+| `ci:` | `github-actions` |
+| `test:` | `testing` |
+| `refactor:` | `refactor` |
+| `perf:` | `performance` |
+
+Also supports path-based labeling via `.github/labeler.yml` configuration.
+
 ---
 
 ## 3. Quality Gates
@@ -546,6 +565,31 @@ ci:
   autofix_commit_msg: "style: auto-fix from pre-commit hooks"
   autoupdate_schedule: monthly
 ```
+
+### Super-Linter (All-in-One)
+
+**Workflow:** [`templates/workflows/super-linter.yml`](templates/workflows/super-linter.yml)
+
+All-in-one linting solution that validates 50+ languages in parallel. Ideal for polyglot repositories.
+
+| Feature | Details |
+|---------|---------|
+| Languages | JavaScript, Python, Go, Rust, Java, Ruby, PHP, Shell, YAML, JSON, Markdown, and 40+ more |
+| Image variant | Slim (faster) or Full (includes Rust toolchains) |
+| Auto-fix | Optional mode that creates commits with fixes |
+| Path filtering | Include/exclude patterns for targeted linting |
+| SARIF output | Upload results to GitHub Security tab |
+
+**When to use Super-Linter vs individual linters:**
+
+| Scenario | Recommendation |
+|----------|---------------|
+| Polyglot codebase | Super-Linter (single workflow covers all) |
+| Fine-tuned control | Individual linters (more configuration options) |
+| Fastest CI | Individual linters (smaller, focused images) |
+| Quick setup | Super-Linter (works out of the box) |
+
+**Configuration:** Super-Linter automatically detects config files (`.eslintrc.json`, `.pylintrc`, `.markdownlint.json`, etc.) from your repository.
 
 ---
 
@@ -1440,9 +1484,9 @@ cp templates/tsconfig.json tsconfig.json
 
 ### Gitignore Templates
 
-Language-specific `.gitignore` files with comprehensive ignore patterns.
+Language-specific and global `.gitignore` files with comprehensive ignore patterns.
 
-#### Available Templates
+#### Language-Specific Templates
 
 | Template | Languages/Frameworks |
 |----------|---------------------|
@@ -1451,15 +1495,62 @@ Language-specific `.gitignore` files with comprehensive ignore patterns.
 | [`.gitignore-go`](templates/.gitignore-go) | Go, vendor, binaries |
 | [`.gitignore-rust`](templates/.gitignore-rust) | Rust, Cargo, target |
 
+#### Global Templates (OS/IDE)
+
+Global templates handle files created by operating systems and IDEs that shouldn't be in any repository.
+
+| Template | Purpose |
+|----------|---------|
+| [`.gitignore-global-macos`](templates/.gitignore-global-macos) | `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes` |
+| [`.gitignore-global-windows`](templates/.gitignore-global-windows) | `Thumbs.db`, `Desktop.ini`, `$RECYCLE.BIN/` |
+| [`.gitignore-global-jetbrains`](templates/.gitignore-global-jetbrains) | `.idea/` with selective whitelisting for shared configs |
+
+**Why separate global templates?**
+
+- **Security**: OS metadata files can leak information (usernames, paths)
+- **Repo cleanliness**: Prevents accidental commits of system files
+- **Merge conflicts**: Avoids conflicts from OS-specific files
+- **Team consistency**: Works regardless of individual developer setups
+
 #### Usage
 
-Copy and rename to `.gitignore`:
+**Option 1: Project-level (recommended for teams)**
+
+Copy and combine templates into your project's `.gitignore`:
 
 ```bash
+# Start with language-specific template
 cp templates/.gitignore-nodejs .gitignore
+
+# Append global templates
+cat templates/.gitignore-global-macos >> .gitignore
+cat templates/.gitignore-global-windows >> .gitignore
+cat templates/.gitignore-global-jetbrains >> .gitignore
 ```
 
-Or merge with existing `.gitignore` using your editor.
+**Option 2: User-level global gitignore**
+
+Configure git to use a global gitignore for all repositories:
+
+```bash
+# Copy global templates to home directory
+cat templates/.gitignore-global-macos > ~/.gitignore_global
+cat templates/.gitignore-global-windows >> ~/.gitignore_global
+cat templates/.gitignore-global-jetbrains >> ~/.gitignore_global
+
+# Configure git to use it
+git config --global core.excludesfile ~/.gitignore_global
+```
+
+#### Recommended Combinations
+
+| Project Type | Templates to Combine |
+|--------------|---------------------|
+| Node.js | `.gitignore-nodejs` + macOS + Windows |
+| Python | `.gitignore-python` + macOS + Windows + JetBrains |
+| Go | `.gitignore-go` + macOS + Windows + JetBrains |
+| Rust | `.gitignore-rust` + macOS + Windows |
+| Monorepo | Language template + all global templates |
 
 ---
 
