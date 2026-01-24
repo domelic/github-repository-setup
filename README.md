@@ -7,6 +7,10 @@ A comprehensive guide and Claude Code skill for setting up GitHub repositories w
 [![GitHub release](https://img.shields.io/github/v/release/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/releases)
 [![Contributors](https://img.shields.io/github/contributors/domelic/github-repository-setup)](https://github.com/domelic/github-repository-setup/graphs/contributors)
 
+> **Warning**
+>
+> This repository is a collection of templates and workflows, many of which have **not been tested in production environments**. Templates are provided as starting points and may require modifications for your specific use case. Review and test thoroughly before using in critical projects.
+
 ---
 
 ## Overview
