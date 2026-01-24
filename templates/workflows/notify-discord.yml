@@ -1,0 +1,113 @@
+# Discord Notifications Workflow
+# Sends notifications to Discord for releases and CI failures
+#
+# Required secrets:
+#   DISCORD_WEBHOOK - Discord Webhook URL
+#
+# Setup:
+#   1. In Discord, go to Server Settings > Integrations > Webhooks
+#   2. Create a new webhook or use an existing one
+#   3. Copy the webhook URL to your repository secrets as DISCORD_WEBHOOK
+#
+# Customization:
+#   - Change colors (hex values as decimal: 0x00ff00 = 65280)
+#   - Modify title, description, and fields
+#   - Add more workflow_run triggers for other workflows
+
+name: Notify Discord
+
+on:
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  # Notify on new releases
+  notify-release:
+    name: Release Notification
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord of Release
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: ":rocket: New Release: ${{ github.event.release.tag_name }}"
+          description: |
+            **${{ github.repository }}** has a new release!
+
+            ${{ github.event.release.body }}
+          url: ${{ github.event.release.html_url }}
+          color: 0x00ff00
+          username: GitHub Releases
+          avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+
+  # Notify on CI failures
+  notify-failure:
+    name: CI Failure Notification
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord of Failure
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: ":x: CI Failed"
+          description: |
+            CI workflow failed on **${{ github.repository }}**
+
+            **Branch:** `${{ github.event.workflow_run.head_branch }}`
+            **Commit:** `${{ github.event.workflow_run.head_sha }}`
+            **Triggered by:** ${{ github.event.workflow_run.actor.login }}
+          url: ${{ github.event.workflow_run.html_url }}
+          color: 0xff0000
+          status: failure
+          username: GitHub Actions
+          avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+
+  # Optional: Notify on CI success (uncomment if desired)
+  # notify-success:
+  #   name: CI Success Notification
+  #   if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Notify Discord of Success
+  #       uses: sarisia/actions-status-discord@v1
+  #       with:
+  #         webhook: ${{ secrets.DISCORD_WEBHOOK }}
+  #         title: ":white_check_mark: CI Passed"
+  #         description: |
+  #           CI workflow passed on **${{ github.repository }}**
+  #
+  #           **Branch:** `${{ github.event.workflow_run.head_branch }}`
+  #         url: ${{ github.event.workflow_run.html_url }}
+  #         color: 0x00ff00
+  #         status: success
+  #         username: GitHub Actions
+  #         avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+
+  # Optional: Custom embed notification example
+  # notify-custom:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Custom Discord Notification
+  #       env:
+  #         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+  #       run: |
+  #         curl -H "Content-Type: application/json" \
+  #           -X POST \
+  #           -d '{
+  #             "embeds": [{
+  #               "title": "Custom Notification",
+  #               "description": "Your custom message here",
+  #               "color": 5814783,
+  #               "fields": [
+  #                 {"name": "Field 1", "value": "Value 1", "inline": true},
+  #                 {"name": "Field 2", "value": "Value 2", "inline": true}
+  #               ],
+  #               "footer": {"text": "GitHub Actions"}
+  #             }]
+  #           }' \
+  #           $DISCORD_WEBHOOK

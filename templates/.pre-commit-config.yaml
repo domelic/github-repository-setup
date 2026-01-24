@@ -1,0 +1,130 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+# Docs: https://pre-commit.com/
+
+repos:
+  # =============================================================================
+  # General hooks (all languages)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # =============================================================================
+  # Python
+  # =============================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # =============================================================================
+  # JavaScript/TypeScript
+  # =============================================================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, typescript, json, yaml, markdown, css, scss]
+        exclude: |
+          (?x)^(
+            package-lock\.json|
+            pnpm-lock\.yaml|
+            yarn\.lock
+          )$
+
+  # =============================================================================
+  # Commit message validation
+  # =============================================================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert]
+
+  # =============================================================================
+  # Security scanning
+  # =============================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: |
+          (?x)^(
+            .*\.lock|
+            .*-lock\.json
+          )$
+
+  # =============================================================================
+  # Shell scripts
+  # =============================================================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+
+  # =============================================================================
+  # Markdown
+  # =============================================================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+        exclude: CHANGELOG\.md
+
+  # =============================================================================
+  # Go (uncomment if using Go)
+  # =============================================================================
+  # - repo: https://github.com/golangci/golangci-lint
+  #   rev: v1.59.1
+  #   hooks:
+  #     - id: golangci-lint
+
+  # =============================================================================
+  # Rust (uncomment if using Rust)
+  # =============================================================================
+  # - repo: local
+  #   hooks:
+  #     - id: cargo-fmt
+  #       name: cargo fmt
+  #       entry: cargo fmt --
+  #       language: system
+  #       types: [rust]
+  #     - id: cargo-clippy
+  #       name: cargo clippy
+  #       entry: cargo clippy --all-targets --all-features -- -D warnings
+  #       language: system
+  #       types: [rust]
+  #       pass_filenames: false
+
+# Configuration for CI environments
+ci:
+  autofix_commit_msg: "style: auto-fix from pre-commit hooks"
+  autofix_prs: true
+  autoupdate_branch: main
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autoupdate_schedule: monthly
+  skip: []
+  submodules: false

@@ -20,6 +20,9 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup aws                # AWS deployment workflows (S3, Lambda)
 /github-setup kubernetes         # Kubernetes deployment (kubectl, Helm)
 /github-setup monorepo           # Monorepo setup (Turborepo, pnpm)
+/github-setup precommit          # Pre-commit hooks setup
+/github-setup notifications      # Slack/Discord notifications
+/github-setup api-docs           # API documentation workflow
 ```
 
 ### Language Presets
@@ -1185,6 +1188,9 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `welcome.yml` | First-time contributor |
 | `release-please.yml` | Auto-releases |
 | `release-manual.yml` | Tag-triggered releases |
+| `notify-slack.yml` | Slack notifications |
+| `notify-discord.yml` | Discord notifications |
+| `docs-api.yml` | API documentation generation |
 
 ### Configs
 
@@ -1216,6 +1222,7 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 | `deno.json` | Deno runtime config |
 | `.npmrc` | npm registry config |
 | `docker-compose.yml` | Multi-service local dev |
+| `.pre-commit-config.yaml` | Pre-commit hooks configuration |
 
 ### Dev Containers
 
@@ -1265,3 +1272,138 @@ All templates available at: https://github.com/domelic/github-repository-setup/t
 |------|---------|
 | `release-please-config.json` | Release config |
 | `.release-please-manifest.json` | Version manifest |
+
+---
+
+## Mode: Pre-commit Hooks (`/github-setup precommit`)
+
+Set up pre-commit hooks for automated code quality:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.pre-commit-config.yaml` | Pre-commit hooks configuration |
+
+### Available Hooks
+
+| Hook | Languages | Purpose |
+|------|-----------|---------|
+| `pre-commit-hooks` | All | Trailing whitespace, file endings, YAML/JSON checks |
+| `ruff` | Python | Linting and formatting |
+| `prettier` | JS/TS/JSON/YAML/MD | Code formatting |
+| `conventional-pre-commit` | All | Commit message validation |
+| `detect-secrets` | All | Prevent committing secrets |
+| `shellcheck` | Bash | Shell script linting |
+| `markdownlint` | Markdown | Markdown formatting |
+
+### Setup
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Run on all files
+pre-commit run --all-files
+
+# Update hooks
+pre-commit autoupdate
+```
+
+### Language-Specific Hooks
+
+The template includes commented sections for:
+- **Go** — golangci-lint
+- **Rust** — cargo fmt, clippy
+
+Uncomment the relevant sections for your project.
+
+---
+
+## Mode: Notifications (`/github-setup notifications`)
+
+Set up Slack and Discord notifications for releases and CI failures:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/notify-slack.yml` | Slack notifications |
+| `.github/workflows/notify-discord.yml` | Discord notifications |
+
+### Slack Setup
+
+1. Create a Slack App at https://api.slack.com/apps
+2. Enable "Incoming Webhooks" in the app settings
+3. Add a new webhook to your workspace
+4. Copy the webhook URL to your repository secrets as `SLACK_WEBHOOK_URL`
+
+### Discord Setup
+
+1. In Discord, go to Server Settings > Integrations > Webhooks
+2. Create a new webhook or use an existing one
+3. Copy the webhook URL to your repository secrets as `DISCORD_WEBHOOK`
+
+### Notification Triggers
+
+| Event | Notification |
+|-------|-------------|
+| Release published | New release announcement with changelog |
+| CI failure | Alert with branch, commit, and link to workflow |
+
+### Required Secrets
+
+| Secret | Platform | Purpose |
+|--------|----------|---------|
+| `SLACK_WEBHOOK_URL` | Slack | Incoming webhook URL |
+| `DISCORD_WEBHOOK` | Discord | Webhook URL |
+
+---
+
+## Mode: API Documentation (`/github-setup api-docs`)
+
+Set up API documentation generation and deployment:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/docs-api.yml` | API documentation workflow |
+
+### Supported Documentation Generators
+
+| Generator | Language | Format |
+|-----------|----------|--------|
+| Redocly | OpenAPI/Swagger | YAML/JSON → HTML |
+| TypeDoc | TypeScript/JavaScript | Source → HTML |
+| Sphinx | Python | RST/autodoc → HTML |
+| Rustdoc | Rust | Source → HTML |
+| Javadoc | Java | Source → HTML |
+
+### OpenAPI/Swagger (Default)
+
+The workflow looks for API specs in:
+- `openapi.yaml` / `openapi.json`
+- `swagger.yaml` / `swagger.json`
+- `docs/openapi.yaml`
+
+Generated documentation is deployed to GitHub Pages.
+
+### Other Generators
+
+Uncomment the relevant section in the workflow for:
+- **TypeDoc** — TypeScript/JavaScript projects
+- **Sphinx** — Python projects
+- **Rustdoc** — Rust projects
+- **Javadoc** — Java projects
+
+### Setup
+
+1. Enable GitHub Pages in repository settings
+2. Set source to "GitHub Actions"
+3. Ensure your API spec is in one of the expected locations
+4. Push to main branch to trigger documentation build

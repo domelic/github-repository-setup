@@ -97,7 +97,17 @@
     "ossf",
     "sarif",
     "SARIF",
-    "aquasecurity"
+    "aquasecurity",
+    "redocly",
+    "typedoc",
+    "openapi",
+    "mrkdwn",
+    "sarisia",
+    "slackapi",
+    "autodoc",
+    "rustdoc",
+    "precommit",
+    "shellcheck"
   ],
   "flagWords": [],
   "dictionaries": [

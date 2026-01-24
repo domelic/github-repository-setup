@@ -68,6 +68,9 @@ This guide covers everything needed to set up a professional GitHub repository:
 /github-setup aws                # AWS deployments (S3, Lambda)
 /github-setup kubernetes         # Kubernetes deployment
 /github-setup monorepo           # Monorepo setup (Turborepo, pnpm)
+/github-setup precommit          # Pre-commit hooks setup
+/github-setup notifications      # Slack/Discord notifications
+/github-setup api-docs           # API documentation workflow
 ```
 
 ### Manual Setup
@@ -98,12 +101,15 @@ This guide covers everything needed to set up a professional GitHub repository:
 16. [Gitignore Templates](#16-gitignore-templates)
 17. [Discovery & Sponsorship](#17-discovery--sponsorship)
 18. [Publishing (Books/eBooks)](#18-publishing-booksebooks)
-19. [Serena Code Intelligence](#19-serena-code-intelligence)
-20. [Zotero Research Library](#20-zotero-research-library)
-21. [Obsidian Knowledge Base](#21-obsidian-knowledge-base)
-22. [Complete Setup Checklist](#complete-setup-checklist)
-23. [Workflow Reference](#workflow-reference)
-24. [Troubleshooting](#troubleshooting)
+19. [Pre-commit Hooks](#19-pre-commit-hooks)
+20. [Notification Workflows](#20-notification-workflows)
+21. [API Documentation](#21-api-documentation)
+22. [Serena Code Intelligence](#22-serena-code-intelligence)
+23. [Zotero Research Library](#23-zotero-research-library)
+24. [Obsidian Knowledge Base](#24-obsidian-knowledge-base)
+25. [Complete Setup Checklist](#complete-setup-checklist)
+26. [Workflow Reference](#workflow-reference)
+27. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -1132,7 +1138,169 @@ env:
 
 ---
 
-## 19. Serena Code Intelligence
+## 19. Pre-commit Hooks
+
+Pre-commit hooks automate code quality checks before each commit.
+
+**File:** [`templates/.pre-commit-config.yaml`](templates/.pre-commit-config.yaml)
+
+### Setup
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks in your repository
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Run on all files (first time or manually)
+pre-commit run --all-files
+
+# Update hooks to latest versions
+pre-commit autoupdate
+```
+
+### Included Hooks
+
+| Hook | Languages | Purpose |
+|------|-----------|---------|
+| `pre-commit-hooks` | All | Trailing whitespace, file endings, YAML/JSON checks |
+| `ruff` | Python | Fast linting and formatting |
+| `prettier` | JS/TS/JSON/YAML/MD | Code formatting |
+| `conventional-pre-commit` | All | Commit message validation |
+| `detect-secrets` | All | Prevent committing secrets |
+| `shellcheck` | Bash | Shell script linting |
+| `markdownlint` | Markdown | Markdown formatting |
+
+### Language-Specific Hooks
+
+The template includes commented sections for additional languages:
+- **Go** — golangci-lint
+- **Rust** — cargo fmt, clippy
+
+Uncomment the relevant sections in `.pre-commit-config.yaml` for your project.
+
+### CI Integration
+
+The configuration includes CI settings for automated hook updates:
+
+```yaml
+ci:
+  autofix_commit_msg: "style: auto-fix from pre-commit hooks"
+  autoupdate_schedule: monthly
+```
+
+---
+
+## 20. Notification Workflows
+
+Send notifications to Slack or Discord for releases and CI failures.
+
+### Slack Notifications
+
+**Workflow:** [`templates/workflows/notify-slack.yml`](templates/workflows/notify-slack.yml)
+
+| Event | Notification |
+|-------|-------------|
+| Release published | New release announcement with changelog |
+| CI failure | Alert with branch, commit, and workflow link |
+
+**Setup:**
+
+1. Create a Slack App at https://api.slack.com/apps
+2. Enable "Incoming Webhooks" in the app settings
+3. Add a new webhook to your workspace
+4. Copy the webhook URL to repository secrets as `SLACK_WEBHOOK_URL`
+
+### Discord Notifications
+
+**Workflow:** [`templates/workflows/notify-discord.yml`](templates/workflows/notify-discord.yml)
+
+| Event | Notification |
+|-------|-------------|
+| Release published | New release announcement with changelog |
+| CI failure | Alert with branch, commit, and workflow link |
+
+**Setup:**
+
+1. In Discord, go to Server Settings > Integrations > Webhooks
+2. Create a new webhook for your notifications channel
+3. Copy the webhook URL to repository secrets as `DISCORD_WEBHOOK`
+
+### Required Secrets
+
+| Secret | Platform | Purpose |
+|--------|----------|---------|
+| `SLACK_WEBHOOK_URL` | Slack | Incoming webhook URL |
+| `DISCORD_WEBHOOK` | Discord | Webhook URL |
+
+### Customization
+
+Both workflows support:
+- Modifying message format and styling
+- Adding success notifications (commented by default)
+- Adding triggers for other workflows
+
+---
+
+## 21. API Documentation
+
+Automated API documentation generation and deployment to GitHub Pages.
+
+**Workflow:** [`templates/workflows/docs-api.yml`](templates/workflows/docs-api.yml)
+
+### Supported Documentation Generators
+
+| Generator | Language | Source Format |
+|-----------|----------|---------------|
+| Redocly | OpenAPI/Swagger | YAML/JSON |
+| TypeDoc | TypeScript/JavaScript | Source code |
+| Sphinx | Python | RST/autodoc |
+| Rustdoc | Rust | Source code |
+| Javadoc | Java | Source code |
+
+### OpenAPI/Swagger (Default)
+
+The workflow automatically finds and builds documentation from:
+- `openapi.yaml` / `openapi.json`
+- `swagger.yaml` / `swagger.json`
+- `docs/openapi.yaml`
+
+Features:
+- Lint validation with Redocly
+- Beautiful HTML output with Redoc
+- Automatic deployment to GitHub Pages
+
+### Setup
+
+1. Enable GitHub Pages in repository settings
+2. Set source to "GitHub Actions"
+3. Place your OpenAPI spec in the root or `docs/` directory
+4. Push to main branch to trigger build
+
+### Other Generators
+
+Uncomment the relevant section in the workflow for:
+- **TypeDoc** — Requires `npm ci` and TypeDoc configuration
+- **Sphinx** — Requires Python and `docs/source/` structure
+- **Rustdoc** — Requires Cargo project
+- **Javadoc** — Requires Maven or Gradle project
+
+### Example OpenAPI Spec Location
+
+```text
+my-project/
+├── openapi.yaml      # ← Workflow finds this
+├── src/
+└── .github/
+    └── workflows/
+        └── docs-api.yml
+```
+
+---
+
+## 22. Serena Code Intelligence
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
@@ -1182,7 +1350,7 @@ cp -r templates/serena/ .serena/
 
 ---
 
-## 20. Zotero Research Library
+## 23. Zotero Research Library
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
@@ -1240,7 +1408,7 @@ zotero-mcp update-db --fulltext
 
 ---
 
-## 21. Obsidian Knowledge Base
+## 24. Obsidian Knowledge Base
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
@@ -1318,6 +1486,7 @@ Claude Code automatically discovers vaults via WebSocket.
 
 ### Quality Gates
 
+- [ ] Pre-commit hooks configured
 - [ ] Commitlint workflow
 - [ ] Spell check workflow + dictionary
 - [ ] Link checker workflow
@@ -1468,6 +1637,19 @@ Claude Code automatically discovers vaults via WebSocket.
 | `deploy-fly.yml` | Push to main | Deploy to Fly.io |
 | `deploy-render.yml` | Push to main | Deploy to Render |
 | `artifact-preview.yml` | PR | Upload build preview |
+
+### Notification Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `notify-slack.yml` | Release/CI failure | Slack notifications |
+| `notify-discord.yml` | Release/CI failure | Discord notifications |
+
+### Documentation Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `docs-api.yml` | Push to main | Generate and deploy API docs |
 
 ---
 

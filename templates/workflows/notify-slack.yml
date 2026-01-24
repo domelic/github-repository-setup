@@ -1,0 +1,164 @@
+# Slack Notifications Workflow
+# Sends notifications to Slack for releases and CI failures
+#
+# Required secrets:
+#   SLACK_WEBHOOK_URL - Slack Incoming Webhook URL
+#
+# Setup:
+#   1. Create a Slack App at https://api.slack.com/apps
+#   2. Enable "Incoming Webhooks" in the app settings
+#   3. Add a new webhook to your workspace
+#   4. Copy the webhook URL to your repository secrets as SLACK_WEBHOOK_URL
+#
+# Customization:
+#   - Modify the payload JSON to customize message format
+#   - Add more workflow_run triggers for other workflows
+#   - Change colors and emoji to match your team's preferences
+
+name: Notify Slack
+
+on:
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  # Notify on new releases
+  notify-release:
+    name: Release Notification
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack of Release
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": ":rocket: *${{ github.repository }}* ${{ github.event.release.tag_name }} released!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":rocket: New Release Published",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*<${{ github.event.release.html_url }}|${{ github.repository }} ${{ github.event.release.tag_name }}>*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ github.event.release.body }}"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Released by *${{ github.actor }}*"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  # Notify on CI failures
+  notify-failure:
+    name: CI Failure Notification
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack of Failure
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": ":x: CI failed on ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":x: CI Workflow Failed",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n<https://github.com/${{ github.repository }}|${{ github.repository }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n`${{ github.event.workflow_run.head_branch }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n`${{ github.event.workflow_run.head_sha }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.event.workflow_run.actor.login }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run",
+                        "emoji": true
+                      },
+                      "url": "${{ github.event.workflow_run.html_url }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  # Optional: Notify on CI success (uncomment if desired)
+  # notify-success:
+  #   name: CI Success Notification
+  #   if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Notify Slack of Success
+  #       uses: slackapi/slack-github-action@v1.27.0
+  #       with:
+  #         payload: |
+  #           {
+  #             "text": ":white_check_mark: CI passed on ${{ github.repository }}",
+  #             "blocks": [
+  #               {
+  #                 "type": "section",
+  #                 "text": {
+  #                   "type": "mrkdwn",
+  #                   "text": ":white_check_mark: *CI Passed* on <${{ github.event.workflow_run.html_url }}|${{ github.repository }}>\n\nBranch: `${{ github.event.workflow_run.head_branch }}`"
+  #                 }
+  #               }
+  #             ]
+  #           }
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
