@@ -33,7 +33,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 ### Using the Claude Code Skill
 
 ```bash
-/github-setup                    # Full setup wizard
+/github-setup                    # Full setup wizard (auto-detects project type)
 /github-setup docs               # Documentation files
 /github-setup protection         # Branch protection + CODEOWNERS
 /github-setup issues             # Templates, labels, Discussions
@@ -42,6 +42,23 @@ This guide covers everything needed to set up a professional GitHub repository:
 /github-setup automation         # All GitHub Actions
 /github-setup discovery          # Topics, social preview, funding
 /github-setup checklist          # Show what's missing
+```
+
+### Language Presets
+
+```bash
+/github-setup nodejs             # Node.js/TypeScript preset
+/github-setup python             # Python preset
+/github-setup go                 # Go preset
+/github-setup rust               # Rust preset
+```
+
+### Category Presets
+
+```bash
+/github-setup ci                 # CI workflows only
+/github-setup security           # Security workflows only
+/github-setup deploy             # Deployment workflows only
 ```
 
 ### Manual Setup
@@ -60,14 +77,19 @@ This guide covers everything needed to set up a professional GitHub repository:
 4. [Quality Gate Workflows](#4-quality-gate-workflows)
 5. [Release Automation](#5-release-automation)
 6. [CI/CD Workflows](#6-cicd-workflows)
-7. [Discovery & Sponsorship](#7-discovery--sponsorship)
-8. [Publishing (Books/eBooks)](#8-publishing-booksebooks)
-9. [Serena Code Intelligence](#9-serena-code-intelligence)
-10. [Zotero Research Library](#10-zotero-research-library)
-11. [Obsidian Knowledge Base](#11-obsidian-knowledge-base)
-12. [Complete Setup Checklist](#complete-setup-checklist)
-13. [Workflow Reference](#workflow-reference)
-14. [Troubleshooting](#troubleshooting)
+7. [Language-Specific CI](#7-language-specific-ci)
+8. [Publishing Workflows](#8-publishing-workflows)
+9. [Deployment Templates](#9-deployment-templates)
+10. [Dev Containers](#10-dev-containers)
+11. [Editor Configuration](#11-editor-configuration)
+12. [Discovery & Sponsorship](#12-discovery--sponsorship)
+13. [Publishing (Books/eBooks)](#13-publishing-booksebooks)
+14. [Serena Code Intelligence](#14-serena-code-intelligence)
+15. [Zotero Research Library](#15-zotero-research-library)
+16. [Obsidian Knowledge Base](#16-obsidian-knowledge-base)
+17. [Complete Setup Checklist](#complete-setup-checklist)
+18. [Workflow Reference](#workflow-reference)
+19. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -406,7 +428,209 @@ Upload build artifacts for review before merge.
 
 ---
 
-## 7. Discovery & Sponsorship
+## 7. Language-Specific CI
+
+Pre-configured CI workflows for major programming languages with version matrix testing.
+
+### Node.js CI
+
+**Workflow:** [`templates/workflows/ci-nodejs.yml`](templates/workflows/ci-nodejs.yml)
+
+| Feature | Details |
+|---------|---------|
+| Node versions | 18, 20, 22 |
+| Package manager | npm with caching |
+| Steps | Install, lint, type-check, test, build |
+
+### Python CI
+
+**Workflow:** [`templates/workflows/ci-python.yml`](templates/workflows/ci-python.yml)
+
+| Feature | Details |
+|---------|---------|
+| Python versions | 3.10, 3.11, 3.12 |
+| Package manager | pip with caching |
+| Linting | ruff (linter + formatter) |
+| Type checking | mypy |
+| Testing | pytest with coverage |
+
+### Go CI
+
+**Workflow:** [`templates/workflows/ci-go.yml`](templates/workflows/ci-go.yml)
+
+| Feature | Details |
+|---------|---------|
+| Go versions | 1.21, 1.22 |
+| Linting | golangci-lint |
+| Testing | go test with race detection |
+
+### Rust CI
+
+**Workflow:** [`templates/workflows/ci-rust.yml`](templates/workflows/ci-rust.yml)
+
+| Feature | Details |
+|---------|---------|
+| Toolchains | stable, nightly (+ optional MSRV) |
+| Linting | clippy |
+| Formatting | rustfmt |
+| Caching | Swatinem/rust-cache |
+
+### Shared Features
+
+All language-specific CI workflows include:
+
+- **Concurrency control** — Cancel in-progress runs for same ref
+- **Matrix testing** — Test across multiple language versions
+- **Fail-fast disabled** — All matrix jobs complete
+- **Caching** — Package manager caches for speed
+
+---
+
+## 8. Publishing Workflows
+
+Automated package publishing on GitHub release.
+
+### npm Publishing
+
+**Workflow:** [`templates/workflows/publish-npm.yml`](templates/workflows/publish-npm.yml)
+
+- Publishes with provenance (supply chain security)
+- Verifies version matches tag
+- Supports GitHub Packages (optional)
+
+**Required secret:** `NPM_TOKEN`
+
+### PyPI Publishing
+
+**Workflow:** [`templates/workflows/publish-pypi.yml`](templates/workflows/publish-pypi.yml)
+
+- Uses OIDC trusted publishing (no secrets needed)
+- Builds with `python -m build`
+- Supports TestPyPI (optional)
+
+**Setup:** Configure trusted publishing at [pypi.org/manage/account/publishing](https://pypi.org/manage/account/publishing)
+
+### Docker Publishing
+
+**Workflow:** [`templates/workflows/publish-docker.yml`](templates/workflows/publish-docker.yml)
+
+- Publishes to GitHub Container Registry (GHCR)
+- Optional Docker Hub publishing
+- Multi-platform builds (amd64, arm64)
+- Automatic tagging (semver, sha)
+- Build provenance and SBOM
+
+### crates.io Publishing
+
+**Workflow:** [`templates/workflows/publish-crates.yml`](templates/workflows/publish-crates.yml)
+
+- Verifies Cargo.toml version matches tag
+- Runs `cargo package` check first
+- Supports workspaces with cargo-workspaces
+
+**Required secret:** `CRATES_IO_TOKEN`
+
+---
+
+## 9. Deployment Templates
+
+Automated deployment workflows for static sites and applications.
+
+### GitHub Pages
+
+**Workflow:** [`templates/workflows/deploy-github-pages.yml`](templates/workflows/deploy-github-pages.yml)
+
+- Supports Node.js, Python (MkDocs), Rust (mdBook)
+- Uses GitHub Pages official actions
+- Configurable build output directory
+
+### Vercel
+
+**Workflow:** [`templates/workflows/deploy-vercel.yml`](templates/workflows/deploy-vercel.yml)
+
+- Preview deployments on PRs
+- Production deployments on merge to main
+- PR comments with preview URLs
+
+**Required secrets:** `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+### Netlify
+
+**Workflow:** [`templates/workflows/deploy-netlify.yml`](templates/workflows/deploy-netlify.yml)
+
+- Preview deployments on PRs
+- Production deployments on merge to main
+- PR comments with preview URLs
+
+**Required secrets:** `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`
+
+---
+
+## 10. Dev Containers
+
+Pre-configured development containers for consistent environments.
+
+### Available Containers
+
+| File | Language | Base Image |
+|------|----------|------------|
+| [`devcontainer.json`](templates/.devcontainer/devcontainer.json) | Generic | Ubuntu base |
+| [`devcontainer-nodejs.json`](templates/.devcontainer/devcontainer-nodejs.json) | Node.js | Node 22 |
+| [`devcontainer-python.json`](templates/.devcontainer/devcontainer-python.json) | Python | Python 3.12 |
+| [`devcontainer-go.json`](templates/.devcontainer/devcontainer-go.json) | Go | Go 1.22 |
+| [`devcontainer-rust.json`](templates/.devcontainer/devcontainer-rust.json) | Rust | Rust latest |
+
+### Usage
+
+1. Copy the appropriate config to `.devcontainer/devcontainer.json`
+2. Open in VS Code with Remote - Containers extension
+3. Or use GitHub Codespaces
+
+### Features Included
+
+- **Common utilities** — zsh, Oh My Zsh, git, GitHub CLI
+- **Language tools** — Formatters, linters, language servers
+- **VS Code extensions** — Pre-installed recommendations
+- **Port forwarding** — Common development ports configured
+
+---
+
+## 11. Editor Configuration
+
+Consistent editor settings across the team.
+
+### EditorConfig
+
+**File:** [`templates/.editorconfig`](templates/.editorconfig)
+
+Universal formatting rules:
+
+| Setting | Default | Python | Go |
+|---------|---------|--------|-----|
+| Indent style | spaces | spaces | tabs |
+| Indent size | 2 | 4 | 4 |
+| End of line | LF | LF | LF |
+
+### VS Code Settings
+
+**Files:**
+
+- [`templates/.vscode/settings.json`](templates/.vscode/settings.json) — Workspace settings
+- [`templates/.vscode/extensions.json`](templates/.vscode/extensions.json) — Recommended extensions
+
+Language-specific formatters configured:
+
+| Language | Formatter |
+|----------|-----------|
+| JavaScript/TypeScript | Prettier |
+| Python | Black + isort |
+| Go | gofmt |
+| Rust | rustfmt |
+| YAML | Red Hat YAML |
+
+---
+
+## 12. Discovery & Sponsorship
 
 ### Repository Topics
 
@@ -447,7 +671,7 @@ EOF
 
 ---
 
-## 8. Publishing (Books/eBooks)
+## 13. Publishing (Books/eBooks)
 
 ### Amazon KDP Automation
 
@@ -481,7 +705,7 @@ env:
 
 ---
 
-## 9. Serena Code Intelligence
+## 14. Serena Code Intelligence
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
@@ -531,7 +755,7 @@ cp -r templates/serena/ .serena/
 
 ---
 
-## 10. Zotero Research Library
+## 15. Zotero Research Library
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
@@ -589,7 +813,7 @@ zotero-mcp update-db --fulltext
 
 ---
 
-## 11. Obsidian Knowledge Base
+## 16. Obsidian Knowledge Base
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
@@ -640,6 +864,12 @@ Claude Code automatically discovers vaults via WebSocket.
 - [ ] CITATION.cff (if citable)
 - [ ] CLAUDE.md (for Claude Code users)
 
+### Editor Configuration
+
+- [ ] .editorconfig for universal formatting
+- [ ] .vscode/settings.json for VS Code
+- [ ] .vscode/extensions.json for recommended extensions
+
 ### Branch Protection
 
 - [ ] PRs required for main
@@ -652,6 +882,7 @@ Claude Code automatically discovers vaults via WebSocket.
 
 - [ ] Bug report template
 - [ ] Feature request template
+- [ ] Discussion templates (ideas, Q&A)
 - [ ] PR template
 - [ ] Labels configured
 - [ ] Discussions enabled
@@ -664,6 +895,7 @@ Claude Code automatically discovers vaults via WebSocket.
 - [ ] Spell check workflow + dictionary
 - [ ] Link checker workflow
 - [ ] Markdown lint workflow + config
+- [ ] Format check workflow (multi-language)
 
 ### Release Automation
 
@@ -672,9 +904,33 @@ Claude Code automatically discovers vaults via WebSocket.
 
 ### CI/CD
 
-- [ ] Build/test workflow
-- [ ] Dependabot for Actions
+- [ ] Language-specific CI workflow (nodejs, python, go, rust)
+- [ ] Coverage workflow with Codecov
+- [ ] Dependabot for Actions + packages
 - [ ] Artifact preview on PRs (if applicable)
+
+### Security
+
+- [ ] Dependency review workflow (PR vulnerability check)
+- [ ] Dependabot configured for security updates
+
+### Publishing (if applicable)
+
+- [ ] npm publishing workflow
+- [ ] PyPI publishing workflow (OIDC)
+- [ ] Docker publishing workflow
+- [ ] crates.io publishing workflow
+
+### Deployment (if applicable)
+
+- [ ] GitHub Pages deployment
+- [ ] Vercel deployment
+- [ ] Netlify deployment
+
+### Dev Experience
+
+- [ ] Dev container configured
+- [ ] All-contributors bot (optional)
 
 ### Discovery
 
@@ -694,6 +950,8 @@ Claude Code automatically discovers vaults via WebSocket.
 
 ## Workflow Reference
 
+### Quality & Automation
+
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `release-please.yml` | Push to main | Auto-create release PRs |
@@ -701,11 +959,41 @@ Claude Code automatically discovers vaults via WebSocket.
 | `spell-check.yml` | Push/PR with docs | Check spelling |
 | `link-checker.yml` | Push/PR + weekly | Validate links |
 | `markdown-lint.yml` | Push/PR with .md | Lint markdown |
+| `format-check.yml` | Push/PR | Multi-language format check |
 | `stale.yml` | Daily schedule | Mark inactive issues |
 | `welcome.yml` | First issue/PR | Welcome contributors |
-| `ci.yml` | Push/PR | Build and test |
+| `all-contributors.yml` | Issue comment | Add contributors |
+
+### CI Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR | Generic build and test |
+| `ci-nodejs.yml` | Push/PR | Node.js CI (18, 20, 22) |
+| `ci-python.yml` | Push/PR | Python CI (3.10, 3.11, 3.12) |
+| `ci-go.yml` | Push/PR | Go CI (1.21, 1.22) |
+| `ci-rust.yml` | Push/PR | Rust CI (stable, nightly) |
+| `coverage.yml` | Push/PR | Upload coverage to Codecov |
+| `dependency-review.yml` | PR | Check for vulnerabilities |
+
+### Publishing Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `publish-npm.yml` | Release | Publish to npm |
+| `publish-pypi.yml` | Release | Publish to PyPI (OIDC) |
+| `publish-docker.yml` | Release/Push | Publish Docker image |
+| `publish-crates.yml` | Release | Publish to crates.io |
+| `amazon-kdp-publish.yml` | Release | Build EPUB for KDP |
+
+### Deployment Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `deploy-github-pages.yml` | Push to main | Deploy to GitHub Pages |
+| `deploy-vercel.yml` | Push/PR | Deploy to Vercel |
+| `deploy-netlify.yml` | Push/PR | Deploy to Netlify |
 | `artifact-preview.yml` | PR | Upload build preview |
-| `amazon-kdp-publish.yml` | Release published | Build EPUB for KDP |
 
 ---
 

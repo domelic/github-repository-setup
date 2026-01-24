@@ -1,0 +1,68 @@
+name: All Contributors
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  add-contributor:
+    name: Add Contributor
+    runs-on: ubuntu-latest
+    # Only run when someone comments "@all-contributors please add"
+    if: |
+      github.event.issue.pull_request == null &&
+      contains(github.event.comment.body, '@all-contributors')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Add contributor
+        uses: all-contributors/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run all-contributors
+        uses: all-contributors/add-contributor-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Usage:
+# Comment on an issue with:
+# @all-contributors please add @username for code, documentation
+#
+# Contribution types:
+# - code: Code contribution
+# - documentation: Documentation
+# - bug: Bug reports
+# - ideas: Ideas & Planning
+# - review: Reviewed Pull Requests
+# - test: Tests
+# - maintenance: Maintenance
+# - design: Design
+# - translation: Translation
+# - question: Answering Questions
+# - tutorial: Tutorials
+# - example: Examples
+# - content: Content
+# - infra: Infrastructure
+# - tool: Tools
+# - plugin: Plugin/utility libraries
+# - platform: Packaging/porting to new platform
+# - financial: Financial Support
+# - fundingFinding: Funding Finding/Coordination
+# - eventOrganizing: Event Organizing
+# - security: Security
+# - userTesting: User Testing
+# - data: Data
+# - audio: Audio
+# - video: Video
+# - talk: Talks
+# - blog: Blogposts
+# - research: Research
+# - projectManagement: Project Management
+# - mentoring: Mentoring
+# - business: Business Development

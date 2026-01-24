@@ -48,7 +48,11 @@
     "Serena",
     "serena",
     "Obsidian",
-    "obsidian"
+    "obsidian",
+    "skillname",
+    "lycheeverse",
+    "pypi",
+    "pyproject"
   ],
   "ignorePaths": [
     "node_modules/**",

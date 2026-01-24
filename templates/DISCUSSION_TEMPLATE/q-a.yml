@@ -1,0 +1,74 @@
+title: "[Question]: "
+labels:
+  - "question"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Ask a Question
+
+        Before asking, please:
+        - Search existing discussions to see if your question has been answered
+        - Check the documentation and README
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: |
+        Ask your question here. Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context that might help answer your question.
+      placeholder: |
+        - What are you trying to accomplish?
+        - What have you already tried?
+        - Any relevant configuration or environment details?
+    validations:
+      required: false
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code or Configuration
+      description: If applicable, share relevant code snippets or configuration.
+      placeholder: |
+        ```
+        // Your code here
+        ```
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic Area
+      description: What area does your question relate to?
+      options:
+        - General Usage
+        - Installation / Setup
+        - Configuration
+        - API / Integration
+        - Performance
+        - Best Practices
+        - Other
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing discussions and issues
+          required: true
+        - label: I have read the documentation
+          required: true

@@ -1,0 +1,100 @@
+name: Format Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-language:
+    name: Detect Project Language
+    runs-on: ubuntu-latest
+    outputs:
+      nodejs: ${{ steps.detect.outputs.nodejs }}
+      python: ${{ steps.detect.outputs.python }}
+      go: ${{ steps.detect.outputs.go }}
+      rust: ${{ steps.detect.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect languages
+        id: detect
+        run: |
+          echo "nodejs=$([[ -f package.json ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "python=$([[ -f pyproject.toml || -f requirements.txt || -f setup.py ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "go=$([[ -f go.mod ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "rust=$([[ -f Cargo.toml ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+  format-nodejs:
+    name: Format (Node.js)
+    runs-on: ubuntu-latest
+    needs: detect-language
+    if: needs.detect-language.outputs.nodejs == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Check Prettier formatting
+        run: npx prettier --check "**/*.{js,jsx,ts,tsx,json,md,yml,yaml}"
+        continue-on-error: true
+      - name: Check ESLint
+        run: npm run lint --if-present
+
+  format-python:
+    name: Format (Python)
+    runs-on: ubuntu-latest
+    needs: detect-language
+    if: needs.detect-language.outputs.python == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install formatters
+        run: pip install ruff black isort
+      - name: Check ruff formatting
+        run: ruff format --check .
+      - name: Check ruff linting
+        run: ruff check .
+      - name: Check import sorting
+        run: isort --check-only --diff .
+
+  format-go:
+    name: Format (Go)
+    runs-on: ubuntu-latest
+    needs: detect-language
+    if: needs.detect-language.outputs.go == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Check gofmt
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go files need formatting:"
+            gofmt -l .
+            exit 1
+          fi
+      - name: Check go vet
+        run: go vet ./...
+
+  format-rust:
+    name: Format (Rust)
+    runs-on: ubuntu-latest
+    needs: detect-language
+    if: needs.detect-language.outputs.rust == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check rustfmt
+        run: cargo fmt --all -- --check

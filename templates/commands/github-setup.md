@@ -5,7 +5,7 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 ## Usage
 
 ```bash
-/github-setup                    # Full setup wizard
+/github-setup                    # Full setup wizard (auto-detects project type)
 /github-setup docs               # Documentation files
 /github-setup protection         # Branch protection + CODEOWNERS
 /github-setup issues             # Templates, labels, Discussions
@@ -17,26 +17,238 @@ Set up GitHub repositories with production-grade automation, quality gates, and 
 /github-setup checklist          # Audit what's missing
 ```
 
+### Language Presets
+
+```bash
+/github-setup nodejs             # Node.js/TypeScript preset
+/github-setup python             # Python preset
+/github-setup go                 # Go preset
+/github-setup rust               # Rust preset
+```
+
+### Category Presets
+
+```bash
+/github-setup ci                 # CI workflows only
+/github-setup security           # Security workflows only
+/github-setup deploy             # Deployment workflows only
+```
+
+---
+
+## Project Auto-Detection
+
+When running `/github-setup` without arguments, automatically detect the project type:
+
+### Detection Logic
+
+| File Present | Project Type | Preset Applied |
+|--------------|--------------|----------------|
+| `package.json` | Node.js/TypeScript | `nodejs` |
+| `pyproject.toml` or `requirements.txt` or `setup.py` | Python | `python` |
+| `go.mod` | Go | `go` |
+| `Cargo.toml` | Rust | `rust` |
+
+### Auto-Detection Implementation
+
+```bash
+# Check for project type
+if [ -f "package.json" ]; then
+    PROJECT_TYPE="nodejs"
+elif [ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ]; then
+    PROJECT_TYPE="python"
+elif [ -f "go.mod" ]; then
+    PROJECT_TYPE="go"
+elif [ -f "Cargo.toml" ]; then
+    PROJECT_TYPE="rust"
+else
+    PROJECT_TYPE="generic"
+fi
+```
+
 ---
 
 ## Mode: Full Setup (`/github-setup`)
 
 Assess the repository and implement all missing components:
 
-1. **Audit current state** — Check what exists
-2. **Prioritize by impact** — Essential → Recommended → Optional
-3. **Implement incrementally** — One category at a time
-4. **Verify each step** — Confirm before proceeding
+1. **Detect project type** — Auto-detect or ask user
+2. **Audit current state** — Check what exists
+3. **Prioritize by impact** — Essential → Recommended → Optional
+4. **Implement incrementally** — One category at a time
+5. **Verify each step** — Confirm before proceeding
 
 ### Implementation Order
 
 1. Documentation (README, LICENSE, CONTRIBUTING)
-2. Branch protection + CODEOWNERS
-3. Issue templates + labels
-4. Quality gates (commitlint, linting)
-5. Release automation
-6. CI/CD workflows
-7. Discovery (topics, social preview)
+2. Editor configs (.editorconfig, .vscode/)
+3. Branch protection + CODEOWNERS
+4. Issue templates + labels
+5. Quality gates (commitlint, linting)
+6. Language-specific CI workflow
+7. Release automation
+8. Publishing workflow (if applicable)
+9. Dev container setup
+10. Discovery (topics, social preview)
+
+---
+
+## Language Preset: Node.js (`/github-setup nodejs`)
+
+Installs the complete Node.js development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-nodejs.yml` | CI with Node.js 18, 20, 22 matrix |
+| `.github/workflows/publish-npm.yml` | npm publishing on release |
+| `.github/dependabot.yml` | npm + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Node.js dev container |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with Codecov
+- Format check workflow (Prettier, ESLint)
+- Deployment to Vercel/Netlify
+
+---
+
+## Language Preset: Python (`/github-setup python`)
+
+Installs the complete Python development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-python.yml` | CI with Python 3.10, 3.11, 3.12 matrix |
+| `.github/workflows/publish-pypi.yml` | PyPI publishing (OIDC) on release |
+| `.github/dependabot.yml` | pip + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Python dev container |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (black, ruff, isort) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with Codecov
+- Format check workflow (ruff, black, isort)
+- Type checking with mypy
+
+---
+
+## Language Preset: Go (`/github-setup go`)
+
+Installs the complete Go development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-go.yml` | CI with Go 1.21, 1.22 matrix |
+| `.github/dependabot.yml` | gomod + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Go dev container |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (gofmt, golangci-lint) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with Codecov
+- Format check workflow (gofmt, go vet)
+- golangci-lint configuration
+
+---
+
+## Language Preset: Rust (`/github-setup rust`)
+
+Installs the complete Rust development setup:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/ci-rust.yml` | CI with stable, nightly, MSRV matrix |
+| `.github/workflows/publish-crates.yml` | crates.io publishing on release |
+| `.github/dependabot.yml` | cargo + GitHub Actions updates |
+| `.devcontainer/devcontainer.json` | Rust dev container |
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode settings (rust-analyzer, clippy) |
+| `.vscode/extensions.json` | Recommended extensions |
+
+### Optional Add-ons
+
+- Coverage workflow with cargo-tarpaulin
+- Format check workflow (rustfmt, clippy)
+- Documentation workflow
+
+---
+
+## Category Preset: CI (`/github-setup ci`)
+
+Install CI workflows without publishing:
+
+### Available Workflows
+
+| Workflow | Languages |
+|----------|-----------|
+| `ci-nodejs.yml` | Node.js 18, 20, 22 |
+| `ci-python.yml` | Python 3.10, 3.11, 3.12 |
+| `ci-go.yml` | Go 1.21, 1.22 |
+| `ci-rust.yml` | Rust stable, nightly |
+
+### Shared Features
+
+All CI workflows include:
+- Matrix builds across versions
+- Concurrency control (cancel in-progress)
+- Linting and formatting checks
+- Test execution
+- Build verification
+
+---
+
+## Category Preset: Security (`/github-setup security`)
+
+Install security-focused workflows:
+
+### Files Installed
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/dependency-review.yml` | PR dependency vulnerability check |
+| `.github/dependabot.yml` | Automated dependency updates |
+| `codecov.yml` | Coverage configuration |
+
+### Dependency Review Features
+
+- Fails on high/critical vulnerabilities
+- Comments on PR with findings
+- Optional license compliance checking
+
+---
+
+## Category Preset: Deploy (`/github-setup deploy`)
+
+Install deployment workflows:
+
+### Available Deployments
+
+| Workflow | Platform |
+|----------|----------|
+| `deploy-github-pages.yml` | GitHub Pages |
+| `deploy-vercel.yml` | Vercel |
+| `deploy-netlify.yml` | Netlify |
+
+### Features
+
+- Preview deployments on PRs
+- Production deployments on merge to main
+- Automatic PR comments with preview URLs
 
 ---
 
@@ -91,6 +303,14 @@ Enable automatic deletion of branches after PR merge:
 gh api repos/OWNER/REPO -X PATCH -f delete_branch_on_merge=true
 ```
 
+### Automated Setup Script
+
+Use `templates/scripts/setup-branch-protection.sh`:
+
+```bash
+./setup-branch-protection.sh owner/repo main
+```
+
 ### Branch Naming Convention
 
 When creating branches, use prefixes matching conventional commit types:
@@ -118,9 +338,9 @@ Create `.github/CODEOWNERS`:
 
 | Setting | Solo | Team |
 |---------|------|------|
-| PRs required | ✅ | ✅ |
+| PRs required | Yes | Yes |
 | Approvals | 0 | 1+ |
-| CODEOWNERS | Optional | ✅ |
+| CODEOWNERS | Optional | Yes |
 
 ---
 
@@ -134,6 +354,12 @@ Create in `.github/ISSUE_TEMPLATE/`:
 - `bug_report.md`
 - `feature_request.md`
 - `config.yml`
+
+### Discussion Templates
+
+Create in `.github/DISCUSSION_TEMPLATE/`:
+- `ideas.yml`
+- `q-a.yml`
 
 ### Labels
 
@@ -193,6 +419,13 @@ Features: Weekly scan, auto-creates issue on failure.
 - `.github/workflows/markdown-lint.yml`
 - `.markdownlint.json`
 
+### 5. Format Check (Multi-language)
+
+**Files:**
+- `.github/workflows/format-check.yml`
+
+Features: Auto-detects project type, runs appropriate formatters.
+
 ---
 
 ## Mode: Release Automation (`/github-setup releases`)
@@ -237,18 +470,32 @@ Set up all GitHub Actions:
 6. **stale.yml** — Inactive issue management
 7. **welcome.yml** — First-time contributor greeting
 8. **ci.yml** — Build and test (customize per project)
+9. **dependency-review.yml** — PR vulnerability check
+10. **format-check.yml** — Multi-language formatting
+11. **coverage.yml** — Test coverage upload
 
 ### Dependabot
 
 Create `.github/dependabot.yml` for auto-updating Actions.
 
+For full ecosystem coverage, use `dependabot-full.yml`.
+
 ---
 
 ## Mode: Publishing (`/github-setup publishing`)
 
-Set up Amazon KDP automation for book/ebook projects:
+Set up publishing workflows:
 
-### Amazon KDP Workflow
+### Package Registries
+
+| Workflow | Registry |
+|----------|----------|
+| `publish-npm.yml` | npm (with provenance) |
+| `publish-pypi.yml` | PyPI (OIDC) |
+| `publish-crates.yml` | crates.io |
+| `publish-docker.yml` | GHCR + Docker Hub |
+
+### Amazon KDP (Books)
 
 **Workflow:** `.github/workflows/amazon-kdp-publish.yml`
 
@@ -256,33 +503,6 @@ Set up Amazon KDP automation for book/ebook projects:
 1. Builds EPUB from source (LaTeX/Markdown) using Pandoc
 2. Attaches EPUB to GitHub release
 3. Creates issue with KDP upload checklist
-
-### Customization
-
-```yaml
-env:
-  BOOK_TITLE: "Your Book Title"
-  BOOK_SUBTITLE: "Your Subtitle"
-  BOOK_AUTHOR: "Your Name"
-  SOURCE_FILE: "book.tex"  # or book.md
-  COVER_IMAGE: "cover.jpg"
-  BIBLIOGRAPHY: "references.bib"
-```
-
-### Why Semi-Automated?
-
-Amazon KDP has no public API. The workflow automates:
-- EPUB generation from source
-- Release asset attachment
-- Upload instructions via GitHub issue
-
-Manual step required: Upload EPUB to KDP dashboard.
-
-### Create amazon-kdp Label
-
-```bash
-gh label create "amazon-kdp" -c "f9d0c4" -d "Amazon KDP publishing"
-```
 
 ---
 
@@ -302,7 +522,7 @@ EOF
 
 ### Social Preview
 
-- Create 1280×640 image
+- Create 1280x640 image
 - Upload via Settings > General > Social preview
 
 ### FUNDING.yml
@@ -338,6 +558,11 @@ Audit the repository and report what's missing:
 - [ ] CHANGELOG.md exists
 - [ ] CLAUDE.md exists (for Claude Code users)
 
+**Editor Config:**
+- [ ] .editorconfig exists
+- [ ] .vscode/settings.json exists
+- [ ] .vscode/extensions.json exists
+
 **Protection:**
 - [ ] Branch protection enabled
 - [ ] Auto-delete merged branches enabled
@@ -348,20 +573,30 @@ Audit the repository and report what's missing:
 - [ ] Labels configured
 - [ ] PR template exists
 - [ ] Discussions enabled
+- [ ] Discussion templates exist
 
 **Quality:**
 - [ ] Commitlint workflow
 - [ ] Spell check workflow
 - [ ] Link checker workflow
 - [ ] Markdown lint workflow
+- [ ] Format check workflow
+
+**CI/CD:**
+- [ ] Language-specific CI workflow
+- [ ] Coverage workflow
+- [ ] Dependabot configured
+- [ ] Stale bot configured
 
 **Releases:**
 - [ ] Release automation configured
+- [ ] Publishing workflow (if applicable)
 
-**CI/CD:**
-- [ ] Build workflow exists
-- [ ] Dependabot configured
-- [ ] Stale bot configured
+**Security:**
+- [ ] Dependency review workflow
+
+**Dev Experience:**
+- [ ] Dev container configured
 
 **Discovery:**
 - [ ] Topics set (3+ recommended)
@@ -381,10 +616,89 @@ Report missing items grouped by priority:
 
 All templates available at: https://github.com/domelic/github-repository-setup/tree/main/templates
 
-| Category | Files |
-|----------|-------|
-| Workflows | `workflows/*.yml` |
-| Configs | `.cspell.json`, `.markdownlint.json`, `commitlint.config.js` |
-| Issue Templates | `ISSUE_TEMPLATE/*.md` |
-| Docs | `CONTRIBUTING.md`, `RELEASING.md`, `CITATION.cff`, `CLAUDE.md` |
-| Release Please | `release-please-config.json`, `.release-please-manifest.json` |
+### Workflows
+
+| File | Purpose |
+|------|---------|
+| `ci.yml` | Generic CI template |
+| `ci-nodejs.yml` | Node.js CI (18, 20, 22) |
+| `ci-python.yml` | Python CI (3.10, 3.11, 3.12) |
+| `ci-go.yml` | Go CI (1.21, 1.22) |
+| `ci-rust.yml` | Rust CI (stable, nightly) |
+| `publish-npm.yml` | npm publishing |
+| `publish-pypi.yml` | PyPI publishing (OIDC) |
+| `publish-docker.yml` | Docker image publishing |
+| `publish-crates.yml` | crates.io publishing |
+| `deploy-github-pages.yml` | GitHub Pages deployment |
+| `deploy-vercel.yml` | Vercel deployment |
+| `deploy-netlify.yml` | Netlify deployment |
+| `dependency-review.yml` | PR vulnerability check |
+| `format-check.yml` | Multi-language formatting |
+| `coverage.yml` | Test coverage upload |
+| `all-contributors.yml` | Contributor recognition |
+| `commitlint.yml` | Commit validation |
+| `spell-check.yml` | Spelling check |
+| `link-checker.yml` | Link validation |
+| `markdown-lint.yml` | Markdown style |
+| `stale.yml` | Inactive issue management |
+| `welcome.yml` | First-time contributor |
+| `release-please.yml` | Auto-releases |
+| `release-manual.yml` | Tag-triggered releases |
+
+### Configs
+
+| File | Purpose |
+|------|---------|
+| `.editorconfig` | Editor formatting rules |
+| `.vscode/settings.json` | VSCode workspace settings |
+| `.vscode/extensions.json` | Recommended extensions |
+| `.cspell.json` | Spell check dictionary |
+| `.markdownlint.json` | Markdown lint rules |
+| `commitlint.config.js` | Commit lint rules |
+| `codecov.yml` | Coverage configuration |
+| `dependabot.yml` | Basic dependabot |
+| `dependabot-full.yml` | Full ecosystem dependabot |
+| `.all-contributorsrc` | Contributor config |
+
+### Dev Containers
+
+| File | Purpose |
+|------|---------|
+| `devcontainer.json` | Base dev container |
+| `devcontainer-nodejs.json` | Node.js container |
+| `devcontainer-python.json` | Python container |
+| `devcontainer-go.json` | Go container |
+| `devcontainer-rust.json` | Rust container |
+
+### Templates
+
+| File | Purpose |
+|------|---------|
+| `ISSUE_TEMPLATE/bug_report.md` | Bug report template |
+| `ISSUE_TEMPLATE/feature_request.md` | Feature request template |
+| `ISSUE_TEMPLATE/config.yml` | Issue chooser config |
+| `DISCUSSION_TEMPLATE/ideas.yml` | Ideas discussion |
+| `DISCUSSION_TEMPLATE/q-a.yml` | Q&A discussion |
+| `PULL_REQUEST_TEMPLATE.md` | PR template |
+
+### Docs
+
+| File | Purpose |
+|------|---------|
+| `CONTRIBUTING.md` | Contribution guidelines |
+| `RELEASING.md` | Release process |
+| `CITATION.cff` | Citation file |
+| `CLAUDE.md` | Claude Code guide |
+
+### Scripts
+
+| File | Purpose |
+|------|---------|
+| `scripts/setup-branch-protection.sh` | Branch protection setup |
+
+### Release Please
+
+| File | Purpose |
+|------|---------|
+| `release-please-config.json` | Release config |
+| `.release-please-manifest.json` | Version manifest |
