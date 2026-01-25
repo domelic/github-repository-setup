@@ -1,0 +1,29 @@
+# CODEOWNERS - Define code ownership for automated review requests
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Each line is a file pattern followed by one or more owners.
+# Order matters - later patterns override earlier ones.
+# Owners can be @usernames, @org/team-names, or email addresses.
+
+# Default owners for everything in the repo
+# Uncomment and customize:
+# * @your-username
+
+# Examples by file type:
+# *.js @frontend-team
+# *.py @backend-team
+# *.go @backend-team
+
+# Examples by directory:
+# /src/ @dev-team
+# /docs/ @docs-team
+# /.github/ @devops-team
+
+# Protect sensitive files:
+# /security/ @security-team
+# *.env.example @security-team
+
+# Require specific reviewers for CI/CD:
+# /.github/workflows/ @devops-team @security-team
+# Dockerfile @devops-team
+# docker-compose*.yml @devops-team

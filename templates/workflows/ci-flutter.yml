@@ -1,0 +1,231 @@
+# Flutter CI Workflow
+#
+# Analyzes, tests, and builds Flutter applications.
+# Supports Android, iOS, and web builds.
+#
+# Features:
+#   - Flutter SDK caching
+#   - Static analysis with flutter analyze
+#   - Unit and widget tests with coverage
+#   - Multi-platform builds
+
+name: CI (Flutter)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  analyze-and-test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-14
+    needs: analyze-and-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --debug --no-codesign
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 7
+
+  # Optional: Integration tests
+  # integration-tests:
+  #   name: Integration Tests
+  #   runs-on: macos-14
+  #   needs: analyze-and-test
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: ${{ env.FLUTTER_VERSION }}
+  #         channel: 'stable'
+  #         cache: true
+  #
+  #     - name: Get dependencies
+  #       run: flutter pub get
+  #
+  #     - name: Start iOS Simulator
+  #       run: |
+  #         UDID=$(xcrun simctl list devices available --json | jq -r '.devices["com.apple.CoreSimulator.SimRuntime.iOS-17-2"][-1].udid')
+  #         xcrun simctl boot $UDID
+  #
+  #     - name: Run integration tests
+  #       run: flutter test integration_test/app_test.dart
+
+  # Optional: Release builds
+  # release-android:
+  #   name: Release Android
+  #   runs-on: ubuntu-latest
+  #   needs: [build-android, build-ios]
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Java
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: 'temurin'
+  #         java-version: '17'
+  #         cache: 'gradle'
+  #
+  #     - name: Setup Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: ${{ env.FLUTTER_VERSION }}
+  #         channel: 'stable'
+  #         cache: true
+  #
+  #     - name: Decode keystore
+  #       env:
+  #         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+  #       run: |
+  #         echo $KEYSTORE_BASE64 | base64 -d > android/app/release.keystore
+  #
+  #     - name: Create key.properties
+  #       env:
+  #         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+  #         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+  #         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+  #       run: |
+  #         cat > android/key.properties << EOF
+  #         storePassword=$KEYSTORE_PASSWORD
+  #         keyPassword=$KEY_PASSWORD
+  #         keyAlias=$KEY_ALIAS
+  #         storeFile=release.keystore
+  #         EOF
+  #
+  #     - name: Get dependencies
+  #       run: flutter pub get
+  #
+  #     - name: Build release APK
+  #       run: flutter build apk --release
+  #
+  #     - name: Build App Bundle
+  #       run: flutter build appbundle --release
+  #
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android-release
+  #         path: |
+  #           build/app/outputs/flutter-apk/app-release.apk
+  #           build/app/outputs/bundle/release/app-release.aab
+  #         retention-days: 30

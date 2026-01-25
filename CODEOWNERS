@@ -1,0 +1,15 @@
+# CODEOWNERS - Define code ownership for automated review requests
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @domelic
+
+# GitHub Actions workflows
+.github/ @domelic
+
+# Templates
+templates/ @domelic
+
+# Documentation
+docs/ @domelic
+*.md @domelic

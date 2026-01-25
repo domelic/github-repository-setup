@@ -14,9 +14,9 @@ Set up GitHub repositories with production-grade automation by fetching template
 
 ## Template Source
 
-**Pinned Version:** `v0.1.13`
+**Pinned Version:** `v0.1.18`
 
-**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.13/templates/`
+**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.18/templates/`
 
 All templates are fetched from this pinned release. This ensures stability - templates won't change unexpectedly.
 
@@ -34,7 +34,7 @@ Templates include SHA-256 checksums for integrity verification.
 
 Fetch the checksums file:
 ```bash
-VERSION="v0.1.13"  # Update to match pinned version
+VERSION="v0.1.18"  # Update to match pinned version
 curl -s "https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates/checksums.json"
 ```
 
@@ -44,7 +44,7 @@ After fetching a template, verify its integrity:
 
 ```bash
 # Fetch template
-curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.13/templates/.editorconfig"
+curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.18/templates/.editorconfig"
 
 # Verify checksum (expected: fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71)
 shasum -a 256 .editorconfig
@@ -381,6 +381,59 @@ $RECYCLE.BIN/
 
 ---
 
+## Mobile & Infrastructure Presets
+
+### `/github-setup android`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-android.yml` | `.github/workflows/ci-android.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Gradle caching, unit tests, instrumented tests with Android Emulator, APK artifact upload.
+
+### `/github-setup ios`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-ios.yml` | `.github/workflows/ci-ios.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: xcodebuild, SwiftLint, SPM/CocoaPods caching, multi-iOS version matrix.
+
+### `/github-setup flutter`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-flutter.yml` | `.github/workflows/ci-flutter.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Flutter analyze, tests with coverage, multi-platform builds (Android/iOS/Web).
+
+### `/github-setup react-native`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-react-native.yml` | `.github/workflows/ci-react-native.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Jest tests, Android/iOS builds, optional Expo and Detox E2E support.
+
+### `/github-setup terraform`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-terraform.yml` | `.github/workflows/ci-terraform.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Terraform fmt, validate, tfsec security scanning, optional plan/apply with OIDC authentication.
+
+---
+
 ## Category Presets
 
 ### `/github-setup docs`
@@ -391,6 +444,8 @@ $RECYCLE.BIN/
 | `RELEASING.md` | `RELEASING.md` |
 | `CITATION.cff` | `CITATION.cff` |
 | `CLAUDE.md` | `CLAUDE.md` |
+| `CODEOWNERS` | `.github/CODEOWNERS` |
+| `SECURITY.md` | `SECURITY.md` |
 
 Also create: `README.md`, `LICENSE`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md` (ask user for details).
 
@@ -581,6 +636,7 @@ Check for existence of these files/settings:
 - [ ] `CONTRIBUTING.md`
 - [ ] `CHANGELOG.md`
 - [ ] `CLAUDE.md`
+- [ ] `SECURITY.md`
 
 ### Editor
 - [ ] `.editorconfig`
@@ -671,7 +727,7 @@ gh api repos/{owner}/{repo} -X PATCH -f has_discussions=true
 ### Using curl
 
 ```bash
-VERSION="v0.1.13"
+VERSION="v0.1.18"
 BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates"
 
 # Example: Fetch Node.js CI workflow
@@ -707,4 +763,4 @@ Full documentation: https://github.com/domelic/github-repository-setup
 
 Template directory: https://github.com/domelic/github-repository-setup/tree/main/templates
 
-Checksums manifest: `templates/checksums.json` (available in v0.1.13+)
+Checksums manifest: `templates/checksums.json` (available in v0.1.18+)

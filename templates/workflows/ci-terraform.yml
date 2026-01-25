@@ -1,0 +1,225 @@
+# Terraform CI Workflow
+#
+# Validates and plans Terraform infrastructure changes.
+# Follows HashiCorp best practices for CI/CD.
+#
+# Required secrets:
+#   - AWS_ROLE_ARN (for AWS OIDC authentication)
+#   - Or provider-specific credentials
+#
+# Required permissions:
+#   - id-token: write (for OIDC)
+#   - contents: read
+#   - pull-requests: write (for plan comments)
+
+name: CI (Terraform)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '.github/workflows/ci-terraform.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '.github/workflows/ci-terraform.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_VERSION: '1.9'
+  # Customize working directory if Terraform files are in a subdirectory
+  TF_WORKING_DIR: '.'
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive -diff
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Comment on PR (validation results)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  # Security scanning with tfsec
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ${{ env.TF_WORKING_DIR }}
+          soft_fail: true
+
+  # Cost estimation (optional - requires Infracost API key)
+  # cost:
+  #   name: Cost Estimate
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Infracost
+  #       uses: infracost/actions/setup@v3
+  #       with:
+  #         api-key: ${{ secrets.INFRACOST_API_KEY }}
+  #
+  #     - name: Generate Infracost diff
+  #       run: |
+  #         infracost diff \
+  #           --path=${{ env.TF_WORKING_DIR }} \
+  #           --format=json \
+  #           --out-file=/tmp/infracost.json
+  #
+  #     - name: Post Infracost comment
+  #       uses: infracost/actions/comment@v1
+  #       with:
+  #         path: /tmp/infracost.json
+  #         behavior: update
+
+  # Terraform Plan (requires cloud credentials)
+  # Uncomment and configure for your cloud provider
+  #
+  # plan:
+  #   name: Plan
+  #   runs-on: ubuntu-latest
+  #   needs: [validate, security]
+  #   if: github.event_name == 'pull_request'
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     pull-requests: write
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Configure AWS credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+  #         aws-region: us-east-1
+  #
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: ${{ env.TF_VERSION }}
+  #
+  #     - name: Terraform Init
+  #       run: terraform init
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
+  #
+  #     - name: Terraform Plan
+  #       id: plan
+  #       run: terraform plan -no-color -out=tfplan
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
+  #       continue-on-error: true
+  #
+  #     - name: Comment Plan on PR
+  #       uses: actions/github-script@v7
+  #       env:
+  #         PLAN: "${{ steps.plan.outputs.stdout }}"
+  #       with:
+  #         script: |
+  #           const output = `#### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+  #
+  #           <details><summary>Show Plan</summary>
+  #
+  #           \`\`\`terraform
+  #           ${process.env.PLAN}
+  #           \`\`\`
+  #
+  #           </details>
+  #
+  #           *Pushed by: @${{ github.actor }}*`;
+  #
+  #           github.rest.issues.createComment({
+  #             issue_number: context.issue.number,
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             body: output
+  #           })
+  #
+  #     - name: Terraform Plan Status
+  #       if: steps.plan.outcome == 'failure'
+  #       run: exit 1
+
+  # Terraform Apply (only on main branch merge)
+  # apply:
+  #   name: Apply
+  #   runs-on: ubuntu-latest
+  #   needs: [validate, security]
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   environment: production
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Configure AWS credentials (OIDC)
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+  #         aws-region: us-east-1
+  #
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: ${{ env.TF_VERSION }}
+  #
+  #     - name: Terraform Init
+  #       run: terraform init
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
+  #
+  #     - name: Terraform Apply
+  #       run: terraform apply -auto-approve
+  #       working-directory: ${{ env.TF_WORKING_DIR }}
