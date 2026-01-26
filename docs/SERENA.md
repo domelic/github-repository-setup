@@ -32,7 +32,7 @@ Add to your Claude Code MCP configuration (`~/.claude/settings.json` or project 
     }
   }
 }
-```
+```text
 
 ### Prerequisites
 
@@ -47,19 +47,19 @@ Add to your Claude Code MCP configuration (`~/.claude/settings.json` or project 
 
 When you first use Serena in a project, activate it:
 
-```
+```text
 Serena: activate_project /path/to/your/project
-```
+```text
 
 This creates a `.serena/` directory in your project:
 
-```
+```text
 .serena/
 ├── .gitignore      # Ignores /cache
 ├── project.yml     # Project configuration
 ├── cache/          # LSP cache (gitignored)
 └── memories/       # Persistent notes (tracked in git)
-```
+```text
 
 ### Project Configuration
 
@@ -72,21 +72,21 @@ programming_languages:
   - typescript
   - python
 file_encoding: utf-8
-```
+```text
 
 ### Onboarding Check
 
 After activation, run the onboarding check:
 
-```
+```text
 Serena: check_onboarding_performed
-```
+```text
 
 If onboarding hasn't been done, run:
 
-```
+```text
 Serena: onboarding
-```
+```text
 
 This guides you through creating project-specific memories.
 
@@ -102,7 +102,7 @@ Serena's memory system provides persistent context across sessions.
 Serena: write_memory
   memory_file_name: "ARCHITECTURE.md"
   content: "# Project Architecture\n\n## Overview\n..."
-```
+```text
 
 Memories are stored in `.serena/memories/` as markdown files.
 
@@ -110,14 +110,14 @@ Memories are stored in `.serena/memories/` as markdown files.
 
 ```text
 Serena: list_memories
-```
+```text
 
 Returns available memory files. Then read specific ones:
 
 ```text
 Serena: read_memory
   memory_file_name: "ARCHITECTURE.md"
-```
+```text
 
 ### Memory Types by Project Type
 
@@ -166,7 +166,7 @@ For a large documentation project (e.g., LaTeX treatise), create this memory sui
 ├── CROSS_REFERENCES.md    # WHAT depends on what
 ├── BIBLIOGRAPHY_SOURCES.md # WHY cite each source
 └── REVISION_DECISIONS.md  # WHAT was decided and why
-```
+```text
 
 **Workflow:**
 1. Before editing → Read `EDITING_GUIDE.md` for structure
@@ -177,13 +177,13 @@ For a large documentation project (e.g., LaTeX treatise), create this memory sui
 
 ### Editing Memories
 
-```
+```text
 Serena: edit_memory
   memory_file_name: "ARCHITECTURE.md"
   needle: "## Old Section"
   repl: "## Updated Section"
   mode: "literal"  # or "regex"
-```
+```text
 
 ---
 
@@ -191,12 +191,12 @@ Serena: edit_memory
 
 ### Finding Symbols
 
-```
+```text
 Serena: find_symbol
   name_path_pattern: "MyClass/myMethod"
   include_body: true
   depth: 1  # Include immediate children
-```
+```text
 
 **Name path patterns:**
 - `myMethod` — Find any symbol named `myMethod`
@@ -206,59 +206,59 @@ Serena: find_symbol
 
 ### Getting Symbol Overview
 
-```
+```text
 Serena: get_symbols_overview
   relative_path: "src/components/Button.tsx"
   depth: 1
-```
+```text
 
 Returns all symbols in a file grouped by kind (classes, functions, variables).
 
 ### Finding References
 
-```
+```text
 Serena: find_referencing_symbols
   name_path: "MyClass/myMethod"
   relative_path: "src/MyClass.ts"
-```
+```text
 
 Finds all places where a symbol is used.
 
 ### Replacing Symbol Bodies
 
-```
+```text
 Serena: replace_symbol_body
   name_path: "MyClass/myMethod"
   relative_path: "src/MyClass.ts"
   body: "function myMethod() {\n  return 42;\n}"
-```
+```text
 
 **Important:** The body includes the full definition (signature + implementation), NOT docstrings or imports.
 
 ### Inserting Code
 
-```
+```text
 Serena: insert_after_symbol
   name_path: "MyClass"
   relative_path: "src/MyClass.ts"
   body: "\n\nexport class NewClass {\n  // ...\n}"
-```
+```text
 
-```
+```text
 Serena: insert_before_symbol
   name_path: "MyClass"
   relative_path: "src/MyClass.ts"
   body: "import { Dependency } from './dep';\n\n"
-```
+```text
 
 ### Renaming Symbols
 
-```
+```text
 Serena: rename_symbol
   name_path: "oldName"
   relative_path: "src/file.ts"
   new_name: "newName"
-```
+```text
 
 Renames across the entire codebase.
 
@@ -268,49 +268,49 @@ Renames across the entire codebase.
 
 ### Pattern Search
 
-```
+```text
 Serena: search_for_pattern
   substring_pattern: "TODO|FIXME"
   paths_include_glob: "**/*.ts"
   context_lines_before: 2
   context_lines_after: 2
-```
+```text
 
 ### Content Replacement
 
-```
+```text
 Serena: replace_content
   relative_path: "src/config.ts"
   needle: "version: \".*?\""
   repl: "version: \"2.0.0\""
   mode: "regex"
-```
+```text
 
 **Pro tip:** Use regex with wildcards to avoid quoting large sections:
 
-```
+```text
 Serena: replace_content
   needle: "function oldFunc.*?^}"  # DOTALL + MULTILINE enabled
   repl: "function newFunc() {\n  // new implementation\n}"
   mode: "regex"
-```
+```text
 
 ### Reading Files
 
-```
+```text
 Serena: read_file
   relative_path: "src/index.ts"
   start_line: 0
   end_line: 50
-```
+```text
 
 ### Creating Files
 
-```
+```text
 Serena: create_text_file
   relative_path: "src/newFile.ts"
   content: "export const value = 42;"
-```
+```text
 
 ---
 
@@ -330,12 +330,12 @@ These help maintain focus during complex multi-step tasks.
 
 ## Shell Commands
 
-```
+```text
 Serena: execute_shell_command
   command: "npm test"
   cwd: "packages/core"  # Optional working directory
   capture_stderr: true
-```
+```text
 
 **Limitations:**
 - Do not use for long-running processes (servers)
@@ -350,7 +350,7 @@ The `.serena/` directory structure:
 ```gitignore
 # .serena/.gitignore
 /cache
-```
+```text
 
 **Track in git:**
 - `.serena/project.yml` — Project configuration
@@ -395,10 +395,10 @@ The `.serena/` directory structure:
 
 Serena supports different operational modes:
 
-```
+```text
 Serena: switch_modes
   modes: ["editing", "interactive"]
-```
+```text
 
 | Mode | Description |
 |------|-------------|
@@ -417,9 +417,9 @@ Serena: switch_modes
 
 **Fix:** Activate the project first:
 
-```
+```text
 Serena: activate_project /path/to/project
-```
+```text
 
 ### Symbol Not Found
 
@@ -446,7 +446,7 @@ Serena: activate_project /path/to/project
 ```bash
 git add .serena/project.yml .serena/memories/
 git commit -m "chore: add Serena project configuration"
-```
+```text
 
 ### Slow Symbol Resolution
 
@@ -456,11 +456,11 @@ git commit -m "chore: add Serena project configuration"
 
 **Fix:** Always provide `relative_path` to narrow the search:
 
-```
+```text
 Serena: find_symbol
   name_path_pattern: "myFunction"
   relative_path: "src/utils/"  # Restrict to directory
-```
+```text
 
 ---
 
@@ -485,7 +485,7 @@ claude
 # 5. Commit Serena config
 git add .serena/
 git commit -m "chore: add Serena project configuration"
-```
+```text
 
 ---
 
