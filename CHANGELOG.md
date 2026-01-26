@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.26](https://github.com/domelic/github-repository-setup/compare/v0.1.25...v0.1.26) (2026-01-26)
+
+
+### Documentation
+
+* update workflow changelog for v0.1.25 ([#92](https://github.com/domelic/github-repository-setup/issues/92)) ([1256f6a](https://github.com/domelic/github-repository-setup/commit/1256f6af0649942b909e2fa27cbbab8967c385b7))
+
 ## [0.1.25](https://github.com/domelic/github-repository-setup/compare/v0.1.24...v0.1.25) (2026-01-26)
 
 
