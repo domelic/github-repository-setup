@@ -1,0 +1,277 @@
+# Bundle Size Monitoring Workflow
+#
+# Tracks JavaScript and CSS bundle sizes to prevent bloat.
+# Compares against baseline and fails PRs that exceed thresholds.
+#
+# Features:
+#   - Track JS/CSS bundle sizes with size-limit or bundlewatch
+#   - Compare against main branch baseline
+#   - Fail PR if size increases beyond threshold
+#   - Comment PR with detailed size comparison table
+#   - Support for multiple entry points
+#   - Tree-shaking analysis
+#
+# Configuration:
+#   Create a .size-limit.json or package.json "size-limit" section
+#   See examples at the bottom of this file
+
+name: Bundle Size
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  size-limit:
+    name: Size Limit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check bundle size
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Skip step if no size-limit config found
+          skip_step: 'install'
+          # Customize comparison
+          # comparison_branch: 'main'
+          # comparison_workflow: 'Bundle Size'
+
+  # Alternative: Bundlewatch configuration
+  bundlewatch:
+    name: Bundlewatch
+    runs-on: ubuntu-latest
+    if: false # Enable by setting to true (choose either size-limit or bundlewatch)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Bundlewatch
+        run: npx bundlewatch
+        env:
+          BUNDLEWATCH_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          CI_BRANCH: ${{ github.head_ref || github.ref_name }}
+          CI_BRANCH_BASE: ${{ github.base_ref || 'main' }}
+
+  # Custom size tracking for any build system
+  custom-size-check:
+    name: Custom Size Check
+    runs-on: ubuntu-latest
+    if: false # Enable for custom implementations
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout base branch for comparison
+        uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build current branch
+        run: npm run build
+
+      - name: Calculate current sizes
+        id: current
+        run: |
+          # Calculate sizes (adjust paths as needed)
+          JS_SIZE=$(find dist -name "*.js" -exec cat {} + | wc -c)
+          JS_GZIP=$(find dist -name "*.js" -exec cat {} + | gzip -c | wc -c)
+          CSS_SIZE=$(find dist -name "*.css" -exec cat {} + 2>/dev/null | wc -c || echo 0)
+          CSS_GZIP=$(find dist -name "*.css" -exec cat {} + 2>/dev/null | gzip -c | wc -c || echo 0)
+
+          echo "js_size=$JS_SIZE" >> $GITHUB_OUTPUT
+          echo "js_gzip=$JS_GZIP" >> $GITHUB_OUTPUT
+          echo "css_size=$CSS_SIZE" >> $GITHUB_OUTPUT
+          echo "css_gzip=$CSS_GZIP" >> $GITHUB_OUTPUT
+
+          echo "📦 Current bundle sizes:"
+          echo "  JS:  $(numfmt --to=iec $JS_SIZE) ($(numfmt --to=iec $JS_GZIP) gzip)"
+          echo "  CSS: $(numfmt --to=iec $CSS_SIZE) ($(numfmt --to=iec $CSS_GZIP) gzip)"
+
+      - name: Build base branch
+        if: github.event_name == 'pull_request'
+        run: |
+          cd base
+          npm ci
+          npm run build
+
+      - name: Calculate base sizes
+        if: github.event_name == 'pull_request'
+        id: base
+        run: |
+          cd base
+          JS_SIZE=$(find dist -name "*.js" -exec cat {} + | wc -c)
+          JS_GZIP=$(find dist -name "*.js" -exec cat {} + | gzip -c | wc -c)
+          CSS_SIZE=$(find dist -name "*.css" -exec cat {} + 2>/dev/null | wc -c || echo 0)
+          CSS_GZIP=$(find dist -name "*.css" -exec cat {} + 2>/dev/null | gzip -c | wc -c || echo 0)
+
+          echo "js_size=$JS_SIZE" >> $GITHUB_OUTPUT
+          echo "js_gzip=$JS_GZIP" >> $GITHUB_OUTPUT
+          echo "css_size=$CSS_SIZE" >> $GITHUB_OUTPUT
+          echo "css_gzip=$CSS_GZIP" >> $GITHUB_OUTPUT
+
+      - name: Compare and report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const current = {
+              js: parseInt('${{ steps.current.outputs.js_gzip }}'),
+              css: parseInt('${{ steps.current.outputs.css_gzip }}')
+            };
+            const base = {
+              js: parseInt('${{ steps.base.outputs.js_gzip }}'),
+              css: parseInt('${{ steps.base.outputs.css_gzip }}')
+            };
+
+            const formatSize = (bytes) => {
+              if (bytes < 1024) return `${bytes} B`;
+              if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+              return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+            };
+
+            const formatDiff = (current, base) => {
+              const diff = current - base;
+              const percent = base > 0 ? ((diff / base) * 100).toFixed(1) : 0;
+              const arrow = diff > 0 ? '📈' : diff < 0 ? '📉' : '➡️';
+              const sign = diff > 0 ? '+' : '';
+              return `${arrow} ${sign}${formatSize(diff)} (${sign}${percent}%)`;
+            };
+
+            // Define thresholds (in bytes)
+            const JS_THRESHOLD = 50 * 1024; // 50KB increase
+            const CSS_THRESHOLD = 10 * 1024; // 10KB increase
+
+            const jsDiff = current.js - base.js;
+            const cssDiff = current.css - base.css;
+
+            let status = '✅ **Bundle size OK**';
+            if (jsDiff > JS_THRESHOLD || cssDiff > CSS_THRESHOLD) {
+              status = '⚠️ **Bundle size increased significantly**';
+            }
+
+            const body = `## 📦 Bundle Size Report
+
+            ${status}
+
+            | Asset | Base | Current | Change |
+            |-------|------|---------|--------|
+            | JavaScript (gzip) | ${formatSize(base.js)} | ${formatSize(current.js)} | ${formatDiff(current.js, base.js)} |
+            | CSS (gzip) | ${formatSize(base.css)} | ${formatSize(current.css)} | ${formatDiff(current.css, base.css)} |
+
+            <details>
+            <summary>Thresholds</summary>
+
+            - JS increase limit: ${formatSize(JS_THRESHOLD)}
+            - CSS increase limit: ${formatSize(CSS_THRESHOLD)}
+            </details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+            // Fail if thresholds exceeded
+            if (jsDiff > JS_THRESHOLD || cssDiff > CSS_THRESHOLD) {
+              core.setFailed(`Bundle size increased beyond threshold. JS: +${formatSize(jsDiff)}, CSS: +${formatSize(cssDiff)}`);
+            }
+
+      - name: Create summary
+        run: |
+          echo "## 📦 Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Asset | Size | Gzip |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| JavaScript | $(numfmt --to=iec ${{ steps.current.outputs.js_size }}) | $(numfmt --to=iec ${{ steps.current.outputs.js_gzip }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| CSS | $(numfmt --to=iec ${{ steps.current.outputs.css_size }}) | $(numfmt --to=iec ${{ steps.current.outputs.css_gzip }}) |" >> $GITHUB_STEP_SUMMARY
+
+# Example .size-limit.json configuration:
+# [
+#   {
+#     "path": "dist/index.js",
+#     "limit": "50 KB"
+#   },
+#   {
+#     "path": "dist/index.css",
+#     "limit": "10 KB"
+#   },
+#   {
+#     "name": "Tree-shaking check",
+#     "import": "{ Button }",
+#     "path": "dist/index.js",
+#     "limit": "5 KB"
+#   }
+# ]
+
+# Example package.json size-limit section:
+# "size-limit": [
+#   {
+#     "path": "dist/**/*.js",
+#     "limit": "100 KB",
+#     "gzip": true
+#   }
+# ]
+
+# Example bundlewatch.config.js:
+# module.exports = {
+#   files: [
+#     {
+#       path: './dist/*.js',
+#       maxSize: '100kB',
+#     },
+#     {
+#       path: './dist/*.css',
+#       maxSize: '20kB',
+#     }
+#   ],
+#   defaultCompression: 'gzip',
+# };

@@ -72,8 +72,24 @@ What's your project type?
 ├─ Embedded/IoT
 │  └─ PlatformIO → embedded
 │
-└─ Documentation Only
-   └─ docs
+├─ Documentation Only
+│  └─ docs
+│
+├─ Mobile App (Publishing)
+│  ├─ Play Store → mobile-publish
+│  └─ TestFlight/App Store → mobile-publish
+│
+├─ Web App (Performance)
+│  └─ Bundle Size Tracking → bundle-size
+│
+├─ API / Microservices
+│  └─ Contract Testing → contract-testing
+│
+├─ Component Library
+│  └─ Storybook Documentation → storybook
+│
+└─ Security (Dynamic Testing)
+   └─ OWASP ZAP DAST → dast
 ```
 
 ### Common Preset Bundles
@@ -93,6 +109,11 @@ What's your project type?
 | **Browser Extension** | `nodejs` + `browser-extension` + `quality` |
 | **Desktop App** | `nodejs` + `electron` + `releases` |
 | **IoT Project** | `embedded` + `releases` |
+| **Production Mobile App** | `android` or `ios` + `mobile-publish` + `security` |
+| **Web App with Perf Focus** | `nodejs` + `bundle-size` + `lighthouse` |
+| **Microservices API** | `{language}` + `contract-testing` + `api-docs` |
+| **Component Library** | `nodejs` + `storybook` + `visual-regression` |
+| **Security-Critical App** | `{language}` + `security` + `dast` + `snyk` |
 
 ### Preset Selection FAQ
 
@@ -1173,6 +1194,120 @@ Features: Multi-board firmware builds (ESP32, ESP8266, Teensy, STM32, Arduino), 
 
 ---
 
+## Mobile Publishing Presets
+
+### `/github-setup mobile-publish`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/publish-play-store.yml` | `.github/workflows/publish-play-store.yml` |
+| `workflows/publish-testflight.yml` | `.github/workflows/publish-testflight.yml` |
+
+Features: Fastlane integration, Google Play Store (internal/alpha/beta/production tracks), TestFlight beta distribution, App Store submission, AAB signing, code signing with App Store Connect API.
+
+**Required Secrets (Play Store):**
+- `PLAY_STORE_SERVICE_ACCOUNT_JSON` - Google Cloud service account (base64)
+- `ANDROID_KEYSTORE_BASE64` - Signing keystore (base64)
+- `ANDROID_KEYSTORE_PASSWORD` - Keystore password
+- `ANDROID_KEY_ALIAS` - Key alias
+- `ANDROID_KEY_PASSWORD` - Key password
+
+**Required Secrets (TestFlight/App Store):**
+- `APP_STORE_CONNECT_API_KEY_ID` - API key ID
+- `APP_STORE_CONNECT_API_ISSUER_ID` - Issuer ID
+- `APP_STORE_CONNECT_API_KEY_BASE64` - API key content (base64)
+- `CERTIFICATE_BASE64` - Distribution certificate (base64)
+- `CERTIFICATE_PASSWORD` - Certificate password
+- `PROVISIONING_PROFILE_BASE64` - Provisioning profile (base64)
+
+---
+
+## Performance Monitoring Presets
+
+### `/github-setup bundle-size`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/bundle-size.yml` | `.github/workflows/bundle-size.yml` |
+
+Features: Track JS/CSS bundle sizes with size-limit or bundlewatch, compare against main branch baseline, fail PR if size increases beyond threshold, PR comment with size comparison table, tree-shaking analysis.
+
+**Configuration:**
+Create `.size-limit.json` or add `"size-limit"` section to `package.json`:
+```json
+[
+  { "path": "dist/index.js", "limit": "50 KB" },
+  { "path": "dist/index.css", "limit": "10 KB" }
+]
+```
+
+---
+
+## Dynamic Security Testing Presets
+
+### `/github-setup dast`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/dast-zap.yml` | `.github/workflows/dast-zap.yml` |
+
+Features: OWASP ZAP dynamic application security testing, baseline scan (quick, ~5 min), full scan (comprehensive, ~30+ min), API scan (OpenAPI-based), SARIF output for GitHub Security tab, HTML report artifacts.
+
+**Scan Modes:**
+- `baseline` - Quick passive scan, safe for production
+- `full` - Active scanning with spider, NOT safe for production
+- `api` - OpenAPI specification-based scanning
+
+**Configuration:**
+Create `.zap/rules.tsv` to ignore false positives:
+```text
+10015  IGNORE  (Incomplete or No Cache-control Header Set)
+10037  IGNORE  (Server Leaks Information via X-Powered-By)
+```
+
+---
+
+## Contract Testing Presets
+
+### `/github-setup contract-testing`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/contract-pact.yml` | `.github/workflows/contract-pact.yml` |
+
+Features: Pact consumer-driven contract testing, consumer contract generation, provider verification, Pact Broker/Pactflow integration, can-i-deploy safety checks, webhook triggers for provider changes.
+
+**Required Secrets:**
+- `PACT_BROKER_URL` - Pact Broker base URL
+- `PACT_BROKER_TOKEN` - API token (or use `PACT_BROKER_USERNAME`/`PACT_BROKER_PASSWORD`)
+
+**Use Cases:**
+- Verify API compatibility between microservices
+- Prevent breaking changes without integration tests
+- Enable independent service deployment
+
+---
+
+## Documentation Publishing Presets
+
+### `/github-setup storybook`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/storybook-publish.yml` | `.github/workflows/storybook-publish.yml` |
+
+Features: Build Storybook on PR and push, deploy to GitHub Pages (default), PR comment with preview link, only rebuild on component changes, optional Chromatic integration, S3/CloudFront deployment support.
+
+**Deployment Options:**
+- GitHub Pages (free, default)
+- S3 + CloudFront
+- Netlify/Vercel
+
+**Optional Secrets (for Chromatic):**
+- `CHROMATIC_PROJECT_TOKEN` - Chromatic project token
+
+---
+
 ## Full Setup (`/github-setup`)
 
 ### 1. Detect Project Type
@@ -1271,6 +1406,20 @@ Check for existence of these files/settings:
 - [ ] `.github/workflows/a11y.yml` (accessibility testing)
 - [ ] `.github/workflows/api-docs.yml` (API documentation)
 - [ ] `.github/workflows/codecov.yml` + `codecov.yml` (coverage tracking)
+
+### Testing & Security
+- [ ] `.github/workflows/contract-pact.yml` (Pact contract testing)
+- [ ] `.github/workflows/dast-zap.yml` (OWASP ZAP dynamic security)
+
+### Performance
+- [ ] `.github/workflows/bundle-size.yml` (JS/CSS bundle monitoring)
+
+### Mobile Publishing
+- [ ] `.github/workflows/publish-play-store.yml` (Android Play Store)
+- [ ] `.github/workflows/publish-testflight.yml` (iOS TestFlight/App Store)
+
+### Documentation Publishing
+- [ ] `.github/workflows/storybook-publish.yml` (Storybook component docs)
 
 ### Specialized Domains
 - [ ] `.github/workflows/ci-godot.yml` (Godot game development)

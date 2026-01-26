@@ -1,0 +1,403 @@
+# TestFlight & App Store Publishing Workflow
+#
+# Publishes iOS apps to TestFlight for beta testing and optionally
+# submits to App Store for review.
+#
+# Features:
+#   - Fastlane integration for TestFlight/App Store
+#   - Code signing with App Store Connect API
+#   - Build number auto-increment
+#   - TestFlight beta distribution
+#   - Optional App Store submission
+#   - Automatic changelog from release notes
+#
+# Required secrets:
+#   - APP_STORE_CONNECT_API_KEY_ID: App Store Connect API key ID
+#   - APP_STORE_CONNECT_API_ISSUER_ID: API issuer ID
+#   - APP_STORE_CONNECT_API_KEY_BASE64: API key content (base64)
+#   - CERTIFICATE_BASE64: Distribution certificate (p12, base64)
+#   - CERTIFICATE_PASSWORD: Certificate password
+#   - PROVISIONING_PROFILE_BASE64: Provisioning profile (base64)
+#
+# Optional secrets (for Fastlane match):
+#   - MATCH_PASSWORD: Fastlane match passphrase
+#   - MATCH_GIT_BASIC_AUTH: Match repo authentication
+
+name: Publish to TestFlight
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      submit_for_review:
+        description: 'Submit to App Store for review'
+        required: false
+        type: boolean
+        default: false
+      build_number:
+        description: 'Build number (leave empty for auto-increment)'
+        required: false
+        type: string
+      whats_new:
+        description: 'What''s new in this version'
+        required: false
+        type: string
+      skip_testflight:
+        description: 'Skip TestFlight upload (App Store only)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  # Update these to match your project
+  SCHEME: 'YourApp'
+  PROJECT: 'YourApp.xcodeproj'
+  # Or use workspace for CocoaPods/SPM
+  # WORKSPACE: 'YourApp.xcworkspace'
+  BUNDLE_ID: 'com.example.yourapp'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      submit_for_review: ${{ steps.config.outputs.submit_for_review }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          # Get version from release tag or package
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # Try to extract from Info.plist or package.json
+            VERSION=$(grep -A1 'CFBundleShortVersionString' */Info.plist | grep string | sed 's/.*<string>\(.*\)<\/string>/\1/' | head -1 || echo "1.0.0")
+          fi
+
+          # Build number
+          if [ -n "${{ inputs.build_number }}" ]; then
+            BUILD_NUMBER="${{ inputs.build_number }}"
+          else
+            # Use timestamp for unique build number
+            BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "📱 Version: $VERSION ($BUILD_NUMBER)"
+
+      - name: Determine configuration
+        id: config
+        run: |
+          SUBMIT="false"
+          if [ "${{ inputs.submit_for_review }}" == "true" ]; then
+            SUBMIT="true"
+          elif [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.release.prerelease }}" != "true" ]; then
+            # Auto-submit for non-prerelease releases
+            SUBMIT="false"  # Change to "true" to auto-submit releases
+          fi
+          echo "submit_for_review=$SUBMIT" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build & Archive
+    runs-on: macos-14
+    needs: prepare
+    environment: app-store
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      # Uncomment if using CocoaPods
+      # - name: Cache CocoaPods
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: Pods
+      #     key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+      #
+      # - name: Install CocoaPods dependencies
+      #   run: pod install
+
+      - name: Create App Store Connect API key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Install certificates and profiles
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/build.mobileprovision
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          # Extract profile UUID for export options
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i "$PROFILE_PATH"))
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
+      - name: Update version and build number
+        run: |
+          # Update Info.plist (adjust path as needed)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ needs.prepare.outputs.version }}" "${{ env.SCHEME }}/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ needs.prepare.outputs.build_number }}" "${{ env.SCHEME }}/Info.plist" || true
+
+          # Or use agvtool
+          # xcrun agvtool new-marketing-version ${{ needs.prepare.outputs.version }}
+          # xcrun agvtool new-version -all ${{ needs.prepare.outputs.build_number }}
+
+      - name: Archive app
+        run: |
+          xcodebuild archive \
+            -project ${{ env.PROJECT }} \
+            -scheme ${{ env.SCHEME }} \
+            -archivePath $RUNNER_TEMP/${{ env.SCHEME }}.xcarchive \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Create export options plist
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${{ env.BUNDLE_ID }}</key>
+              <string>${{ env.PROFILE_UUID }}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/${{ env.SCHEME }}.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/export \
+            -allowProvisioningUpdates
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-ipa
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 30
+
+      - name: Upload dSYM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dsym
+          path: ${{ runner.temp }}/${{ env.SCHEME }}.xcarchive/dSYMs
+          retention-days: 30
+
+  upload-testflight:
+    name: Upload to TestFlight
+    runs-on: macos-14
+    needs: [prepare, build]
+    if: inputs.skip_testflight != true
+    environment: app-store
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download IPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-ipa
+          path: ./ipa
+
+      - name: Create App Store Connect API key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Prepare what's new
+        id: whats_new
+        run: |
+          mkdir -p fastlane/metadata/en-US
+          if [ -n "${{ inputs.whats_new }}" ]; then
+            echo "${{ inputs.whats_new }}" > fastlane/metadata/en-US/release_notes.txt
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            echo "${{ github.event.release.body }}" > fastlane/metadata/en-US/release_notes.txt
+          else
+            echo "Bug fixes and improvements" > fastlane/metadata/en-US/release_notes.txt
+          fi
+
+      - name: Upload to TestFlight
+        run: |
+          IPA_PATH=$(find ./ipa -name "*.ipa" | head -n 1)
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+
+      # Alternative: Use Fastlane pilot
+      # - name: Setup Ruby
+      #   uses: ruby/setup-ruby@v1
+      #   with:
+      #     ruby-version: '3.2'
+      #
+      # - name: Install Fastlane
+      #   run: gem install fastlane
+      #
+      # - name: Upload to TestFlight (Fastlane)
+      #   run: |
+      #     IPA_PATH=$(find ./ipa -name "*.ipa" | head -n 1)
+      #
+      #     fastlane pilot upload \
+      #       --ipa "$IPA_PATH" \
+      #       --api_key_path ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8 \
+      #       --api_key_id ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} \
+      #       --issuer_id ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }} \
+      #       --changelog "$(cat fastlane/metadata/en-US/release_notes.txt)" \
+      #       --distribute_external false \
+      #       --notify_external_testers false
+
+      - name: Create summary
+        run: |
+          echo "## 🚀 TestFlight Upload Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.prepare.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.prepare.outputs.build_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏳ The build is now processing in App Store Connect." >> $GITHUB_STEP_SUMMARY
+          echo "Once processing is complete, it will be available for testing." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View in App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+
+  submit-for-review:
+    name: Submit for App Store Review
+    runs-on: macos-14
+    needs: [prepare, upload-testflight]
+    if: needs.prepare.outputs.submit_for_review == 'true'
+    environment: app-store-production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Create App Store Connect API key
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Wait for build processing
+        run: |
+          echo "Waiting for build to finish processing..."
+          sleep 300  # Wait 5 minutes for initial processing
+
+          # Use Fastlane to check build status
+          # fastlane run latest_testflight_build_number
+
+      - name: Submit for review
+        run: |
+          fastlane deliver \
+            --submit_for_review \
+            --automatic_release false \
+            --force \
+            --api_key_path ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8 \
+            --build_number ${{ needs.prepare.outputs.build_number }} \
+            --app_version ${{ needs.prepare.outputs.version }} \
+            --skip_screenshots \
+            --skip_metadata
+
+      - name: Create summary
+        run: |
+          echo "## 🎉 App Store Submission Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Version ${{ needs.prepare.outputs.version }} (${{ needs.prepare.outputs.build_number }}) has been submitted for App Store review." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏳ Review typically takes 24-48 hours." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View in App Store Connect](https://appstoreconnect.apple.com)" >> $GITHUB_STEP_SUMMARY
+
+# Alternative: Using Fastlane match for code signing
+# If you prefer Fastlane match over manual certificate management,
+# replace the certificate installation step with:
+#
+# - name: Setup Ruby
+#   uses: ruby/setup-ruby@v1
+#   with:
+#     ruby-version: '3.2'
+#     bundler-cache: true
+#
+# - name: Install Fastlane
+#   run: gem install fastlane
+#
+# - name: Sync certificates with match
+#   env:
+#     MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+#     MATCH_GIT_BASIC_AUTH: ${{ secrets.MATCH_GIT_BASIC_AUTH }}
+#   run: |
+#     fastlane match appstore --readonly

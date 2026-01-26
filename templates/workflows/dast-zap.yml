@@ -1,0 +1,304 @@
+# OWASP ZAP Dynamic Application Security Testing (DAST)
+#
+# Performs dynamic security testing against running web applications.
+# Scans for OWASP Top 10 vulnerabilities and common security issues.
+#
+# Features:
+#   - Baseline scan (quick passive scan, ~5 min)
+#   - Full scan (comprehensive active scanning, ~30+ min)
+#   - API scan (OpenAPI/Swagger-based scanning)
+#   - SARIF output for GitHub Security tab
+#   - HTML report artifact
+#   - Configurable alert thresholds
+#
+# Modes:
+#   - baseline: Quick passive scan, safe for production
+#   - full: Active scanning with spider, NOT safe for production
+#   - api: OpenAPI specification-based scanning
+
+name: DAST (OWASP ZAP)
+
+on:
+  # Run on schedule for deployed environments
+  schedule:
+    - cron: '0 4 * * 1' # Weekly on Monday at 4 AM UTC
+
+  # Run on-demand
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to scan'
+        required: true
+        type: string
+        default: 'https://staging.example.com'
+      scan_type:
+        description: 'Scan type'
+        required: true
+        type: choice
+        options:
+          - baseline
+          - full
+          - api
+        default: 'baseline'
+      api_spec_url:
+        description: 'OpenAPI spec URL (required for API scan)'
+        required: false
+        type: string
+
+  # Optional: Run on deployment to staging
+  # deployment_status:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.target_url || 'scheduled' }}
+  cancel-in-progress: false
+
+env:
+  # Default target for scheduled scans
+  DEFAULT_TARGET: 'https://staging.example.com'
+  # Fail on risk levels: 0=Pass, 1=Warn(Informational), 2=Warn(Low), 3=Warn(Medium), 4=Fail(High)
+  FAIL_THRESHOLD: '3'
+
+jobs:
+  baseline-scan:
+    name: ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    if: inputs.scan_type == 'baseline' || (github.event_name == 'schedule')
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine target URL
+        id: target
+        run: |
+          if [ -n "${{ inputs.target_url }}" ]; then
+            TARGET="${{ inputs.target_url }}"
+          else
+            TARGET="${{ env.DEFAULT_TARGET }}"
+          fi
+          echo "url=$TARGET" >> $GITHUB_OUTPUT
+          echo "🎯 Target: $TARGET"
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ steps.target.outputs.url }}
+          # Generate reports
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          # Rules file to exclude false positives
+          rules_file_name: '.zap/rules.tsv'
+          # Fail based on threshold
+          fail_action: true
+          # Generate SARIF for GitHub Security tab
+          allow_issue_writing: true
+          # Output formats
+          cmd_options: '-a -j -l INFO'
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          retention-days: 30
+
+      # Upload SARIF to GitHub Security tab (if available)
+      - name: Upload SARIF
+        if: always() && hashFiles('report.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+
+  full-scan:
+    name: ZAP Full Scan
+    runs-on: ubuntu-latest
+    if: inputs.scan_type == 'full'
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: ${{ inputs.target_url }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          rules_file_name: '.zap/rules.tsv'
+          fail_action: true
+          allow_issue_writing: true
+          cmd_options: '-a -j'
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-full-report
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          retention-days: 30
+
+      - name: Upload SARIF
+        if: always() && hashFiles('report.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+
+  api-scan:
+    name: ZAP API Scan
+    runs-on: ubuntu-latest
+    if: inputs.scan_type == 'api'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate API spec URL
+        run: |
+          if [ -z "${{ inputs.api_spec_url }}" ]; then
+            echo "❌ API spec URL is required for API scan"
+            exit 1
+          fi
+          echo "📄 API Spec: ${{ inputs.api_spec_url }}"
+
+      - name: ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: ${{ inputs.api_spec_url }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          # OpenAPI format (openapi, soap, or graphql)
+          format: openapi
+          rules_file_name: '.zap/rules.tsv'
+          fail_action: true
+          allow_issue_writing: true
+          cmd_options: '-a -j'
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-api-report
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          retention-days: 30
+
+      - name: Upload SARIF
+        if: always() && hashFiles('report.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+
+  # Scan against local dev server (for PR checks)
+  scan-local:
+    name: ZAP Local Scan
+    runs-on: ubuntu-latest
+    if: false # Enable for PR-based scanning
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Start server
+        run: |
+          npm run preview &
+          sleep 10
+
+      - name: ZAP Baseline Scan (Local)
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          allow_issue_writing: false
+          cmd_options: '-a -j'
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-local-report
+          path: report_*.html
+          retention-days: 7
+
+  # Summary job
+  report-summary:
+    name: Security Report Summary
+    runs-on: ubuntu-latest
+    needs: [baseline-scan, full-scan, api-scan]
+    if: always() && (needs.baseline-scan.result == 'success' || needs.full-scan.result == 'success' || needs.api-scan.result == 'success')
+
+    steps:
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: zap-*-report
+          path: reports
+          merge-multiple: true
+
+      - name: Create summary
+        run: |
+          echo "## 🔒 OWASP ZAP Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          SCAN_TYPE="${{ inputs.scan_type || 'baseline' }}"
+          TARGET="${{ inputs.target_url || env.DEFAULT_TARGET }}"
+
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan Type | $SCAN_TYPE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | $TARGET |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "reports/report_md.md" ]; then
+            echo "### Findings" >> $GITHUB_STEP_SUMMARY
+            cat reports/report_md.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Full HTML report available in artifacts" >> $GITHUB_STEP_SUMMARY
+
+# Example .zap/rules.tsv for ignoring false positives:
+# 10015	IGNORE	(Incomplete or No Cache-control Header Set)
+# 10037	IGNORE	(Server Leaks Information via X-Powered-By)
+# 10096	IGNORE	(Timestamp Disclosure - Unix)
+# 10109	IGNORE	(Modern Web Application)
+#
+# Format: Rule_ID<tab>Action<tab>(Comment)
+# Actions: IGNORE, WARN, FAIL
+
+# ZAP Configuration Options:
+# -config api.disablekey=true         - Disable API key
+# -config spider.maxDuration=5        - Spider duration in minutes
+# -config scanner.threadPerHost=5     - Concurrent threads per host
+# -config scanner.maxRuleDurationInMins=10 - Max rule scan time

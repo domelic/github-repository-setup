@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anthropics/github-repository-setup/workflow-metadata.schema.json",
+  "title": "Workflow Metadata Schema",
+  "description": "Schema for GitHub Actions workflow template metadata index",
+  "type": "object",
+  "required": ["$schema", "version", "metadata"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the metadata format"
+    },
+    "generated": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when metadata was last updated"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Workflow metadata indexed by workflow identifier",
+      "additionalProperties": {
+        "$ref": "#/$defs/workflowEntry"
+      }
+    }
+  },
+  "$defs": {
+    "workflowEntry": {
+      "type": "object",
+      "required": ["file", "name", "category", "description", "tags"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+\\.yml$",
+          "description": "Filename of the workflow template"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "Human-readable workflow name"
+        },
+        "category": {
+          "$ref": "#/$defs/category",
+          "description": "Primary category for organization"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "Brief description of what the workflow does"
+        },
+        "tags": {
+          "$ref": "#/$defs/tags",
+          "description": "Classification tags for filtering"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/dependencies",
+          "description": "Workflow relationships and dependencies"
+        },
+        "secrets": {
+          "$ref": "#/$defs/secrets",
+          "description": "Required and optional secrets"
+        },
+        "presets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preset configurations that include this workflow"
+        }
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ci-testing",
+        "deployment",
+        "publishing",
+        "security",
+        "release-management",
+        "documentation",
+        "community",
+        "notifications",
+        "observability",
+        "specialized"
+      ]
+    },
+    "tags": {
+      "type": "object",
+      "required": ["language", "trigger", "complexity"],
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "any",
+              "nodejs",
+              "python",
+              "go",
+              "rust",
+              "java",
+              "kotlin",
+              "scala",
+              "ruby",
+              "php",
+              "dotnet",
+              "cpp",
+              "swift",
+              "elixir",
+              "android",
+              "ios",
+              "flutter",
+              "react-native",
+              "terraform",
+              "solidity",
+              "unity",
+              "godot",
+              "platformio"
+            ]
+          },
+          "description": "Programming languages this workflow supports"
+        },
+        "trigger": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "push",
+              "pull_request",
+              "release",
+              "schedule",
+              "workflow_dispatch",
+              "workflow_call",
+              "issues",
+              "issue_comment",
+              "pull_request_target"
+            ]
+          },
+          "description": "GitHub events that trigger this workflow"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["starter", "intermediate", "advanced"],
+          "description": "Setup complexity level"
+        },
+        "platform": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "github",
+              "npm",
+              "pypi",
+              "crates",
+              "rubygems",
+              "nuget",
+              "maven",
+              "docker",
+              "ghcr",
+              "ecr",
+              "gcr",
+              "acr",
+              "aws",
+              "azure",
+              "gcp",
+              "vercel",
+              "netlify",
+              "fly",
+              "railway",
+              "render",
+              "digitalocean",
+              "kubernetes",
+              "chrome-web-store",
+              "firefox-addons",
+              "play-store",
+              "app-store",
+              "slack",
+              "discord",
+              "teams",
+              "sonarcloud",
+              "snyk",
+              "datadog",
+              "sentry",
+              "codecov"
+            ]
+          },
+          "description": "External platforms/services integrated"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Workflows that this workflow can trigger (via release events, etc.)"
+        },
+        "triggered_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Workflows that typically trigger this one"
+        },
+        "commonly_paired_with": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Workflows frequently used together with this one"
+        },
+        "conflicts_with": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Workflows that should not be used together"
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/secretEntry"
+          },
+          "description": "Secrets required for workflow to function"
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/secretEntry"
+          },
+          "description": "Optional secrets for enhanced functionality"
+        }
+      }
+    },
+    "secretEntry": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Secret name (uppercase with underscores)"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this secret is used for"
+        },
+        "setup_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL with instructions to obtain this secret"
+        }
+      }
+    }
+  }
+}
