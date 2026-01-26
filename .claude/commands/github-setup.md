@@ -14,9 +14,9 @@ Set up GitHub repositories with production-grade automation by fetching template
 
 ## Template Source
 
-**Pinned Version:** `v0.1.19`
+**Pinned Version:** `v0.1.21`
 
-**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.19/templates/`
+**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.21/templates/`
 
 All templates are fetched from this pinned release. This ensures stability - templates won't change unexpectedly.
 
@@ -34,7 +34,7 @@ Templates include SHA-256 checksums for integrity verification.
 
 Fetch the checksums file:
 ```bash
-VERSION="v0.1.19"  # Update to match pinned version
+VERSION="v0.1.21"  # Update to match pinned version
 curl -s "https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates/checksums.json"
 ```
 
@@ -44,7 +44,7 @@ After fetching a template, verify its integrity:
 
 ```bash
 # Fetch template
-curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.19/templates/.editorconfig"
+curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.21/templates/.editorconfig"
 
 # Verify checksum (expected: fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71)
 shasum -a 256 .editorconfig
@@ -727,7 +727,7 @@ gh api repos/{owner}/{repo} -X PATCH -f has_discussions=true
 ### Using curl
 
 ```bash
-VERSION="v0.1.19"
+VERSION="v0.1.21"
 BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates"
 
 # Example: Fetch Node.js CI workflow
@@ -763,4 +763,4 @@ Full documentation: https://github.com/domelic/github-repository-setup
 
 Template directory: https://github.com/domelic/github-repository-setup/tree/main/templates
 
-Checksums manifest: `templates/checksums.json` (available in v0.1.19+)
+Checksums manifest: `templates/checksums.json` (available in v0.1.21+)
