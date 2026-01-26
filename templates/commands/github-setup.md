@@ -118,7 +118,7 @@ What's your project type?
 ### Preset Selection FAQ
 
 **Q: Can I use multiple presets?**
-A: Yes! Presets are composable. Apply them sequentially for your needs.
+A: Yes! Presets are composable. Apply them sequentially for your needs. See the [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/COMPATIBILITY_MATRIX.md) for which presets work best together and potential conflicts.
 
 **Q: What's the difference between `python` and `ml`?**
 A: The `python` preset is for general Python projects. The `ml` preset adds GPU support, Jupyter validation, and ML-specific tooling (DVC, experiment tracking).
@@ -129,13 +129,16 @@ A: Use `security` for GitHub-native scanning (CodeQL, Trivy). Add `snyk` for add
 **Q: What about monorepos?**
 A: Use your primary language preset + `monorepo` for Turborepo/pnpm workspace configuration.
 
+**Q: How do I understand workflow dependencies?**
+A: See the [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/WORKFLOW_DIAGRAMS.md) for visual chains showing how workflows trigger each other (e.g., release-please → publish-npm).
+
 ---
 
 ## Template Source
 
-**Pinned Version:** `v0.1.20`
+**Pinned Version:** `v0.1.21`
 
-**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.20/templates/`
+**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.21/templates/`
 
 All templates are fetched from this pinned release. This ensures stability - templates won't change unexpectedly.
 
@@ -153,7 +156,7 @@ Templates include SHA-256 checksums for integrity verification.
 
 Fetch the checksums file:
 ```bash
-VERSION="v0.1.20"  # Update to match pinned version
+VERSION="v0.1.21"  # Update to match pinned version
 curl -s "https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates/checksums.json"
 ```
 
@@ -163,7 +166,7 @@ After fetching a template, verify its integrity:
 
 ```bash
 # Fetch template
-curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.20/templates/.editorconfig"
+curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.21/templates/.editorconfig"
 
 # Verify checksum (expected: fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71)
 shasum -a 256 .editorconfig
@@ -1492,7 +1495,7 @@ gh api repos/{owner}/{repo} -X PATCH -f has_discussions=true
 ### Using curl
 
 ```bash
-VERSION="v0.1.20"
+VERSION="v0.1.21"
 BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates"
 
 # Example: Fetch Node.js CI workflow
@@ -1528,4 +1531,13 @@ Full documentation: https://github.com/domelic/github-repository-setup
 
 Template directory: https://github.com/domelic/github-repository-setup/tree/main/templates
 
-Checksums manifest: `templates/checksums.json` (available in v0.1.20+)
+Checksums manifest: `templates/checksums.json` (available in v0.1.21+)
+
+### Discoverability Resources
+
+| Resource | Purpose |
+|----------|---------|
+| [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/WORKFLOW_DIAGRAMS.md) | Visual Mermaid diagrams showing workflow chains and dependencies |
+| [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/COMPATIBILITY_MATRIX.md) | Which presets work together, conflicts, and recommended stacks |
+| [Workflow Metadata](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/workflow-metadata.yaml) | Structured data index for all 113 workflows |
+| [Workflow README](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/README.md) | Quick reference tables with triggers, secrets, and complexity |
