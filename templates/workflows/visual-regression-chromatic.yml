@@ -1,0 +1,110 @@
+name: Visual Regression (Chromatic)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromatic:
+    name: Chromatic Visual Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Chromatic to detect changes
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Run Chromatic
+      - name: Publish to Chromatic
+        id: chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          # Build Storybook during the action
+          buildScriptName: build-storybook
+          # Auto-accept changes on main branch
+          autoAcceptChanges: ${{ github.ref == 'refs/heads/main' }}
+          # Exit with 0 even if there are visual changes (for PR workflow)
+          exitZeroOnChanges: true
+          # Only run on changed stories for faster builds
+          onlyChanged: true
+          # External build output directory (if pre-built)
+          # storybookBuildDir: storybook-static
+
+      # Comment PR with Chromatic results
+      - name: Comment PR with Chromatic results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const storybookUrl = '${{ steps.chromatic.outputs.storybookUrl }}';
+            const buildUrl = '${{ steps.chromatic.outputs.buildUrl }}';
+            const changeCount = '${{ steps.chromatic.outputs.changeCount }}';
+
+            let body = '## 🎨 Chromatic Visual Review\n\n';
+
+            if (changeCount > 0) {
+              body += `⚠️ **${changeCount} visual change(s) detected**\n\n`;
+              body += `Please review the changes before merging.\n\n`;
+            } else {
+              body += `✅ **No visual changes detected**\n\n`;
+            }
+
+            body += `| Resource | Link |\n`;
+            body += `|----------|------|\n`;
+            body += `| 📖 Storybook | [View Storybook](${storybookUrl}) |\n`;
+            body += `| 🔍 Build | [Review Changes](${buildUrl}) |\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Multi-viewport testing (optional)
+  chromatic-viewports:
+    name: Chromatic Multi-Viewport
+    runs-on: ubuntu-latest
+    if: false # Enable by setting to true
+
+    strategy:
+      matrix:
+        viewport: [320, 768, 1024, 1440]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to Chromatic (viewport ${{ matrix.viewport }})
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: build-storybook

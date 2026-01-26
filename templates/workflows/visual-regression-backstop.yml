@@ -1,0 +1,166 @@
+name: Visual Regression (BackstopJS)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backstop:
+    name: BackstopJS Visual Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install BackstopJS
+        run: npm install -g backstopjs
+
+      - name: Build application
+        run: npm run build
+
+      # Start application server in background
+      - name: Start application
+        run: |
+          npm run preview &
+          sleep 5
+        env:
+          PORT: 3000
+
+      # Wait for server to be ready
+      - name: Wait for server
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 1; done'
+
+      # Run visual regression tests
+      - name: Run BackstopJS tests
+        id: backstop
+        run: |
+          backstop test --config=backstop.config.js || echo "VISUAL_CHANGES=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      # Upload HTML report as artifact
+      - name: Upload BackstopJS report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backstop-report
+          path: backstop_data/html_report/
+          retention-days: 14
+
+      # Upload bitmaps for debugging
+      - name: Upload test bitmaps
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backstop-bitmaps
+          path: backstop_data/bitmaps_test/
+          retention-days: 7
+
+      # Comment on PR with results
+      - name: Comment PR with BackstopJS results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasChanges = '${{ steps.backstop.outputs.VISUAL_CHANGES }}' === 'true';
+            const runId = '${{ github.run_id }}';
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
+            const artifactUrl = `${repoUrl}/actions/runs/${runId}`;
+
+            let body = '## 🖼️ BackstopJS Visual Regression Results\n\n';
+
+            if (hasChanges) {
+              body += '⚠️ **Visual changes detected!**\n\n';
+              body += 'Please review the changes in the HTML report artifact.\n\n';
+              body += 'If the changes are intentional, update reference images:\n';
+              body += '```bash\nbackstop approve\n```\n\n';
+            } else {
+              body += '✅ **No visual changes detected**\n\n';
+            }
+
+            body += `📊 [View Artifacts](${artifactUrl})\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      # Fail if visual changes detected on PR
+      - name: Check for visual changes
+        if: steps.backstop.outputs.VISUAL_CHANGES == 'true' && github.event_name == 'pull_request'
+        run: |
+          echo "::error::Visual regression changes detected. Review the BackstopJS report."
+          exit 1
+
+  # Update reference images on main branch
+  update-references:
+    name: Update Reference Images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: backstop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install BackstopJS
+        run: npm install -g backstopjs
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start application
+        run: |
+          npm run preview &
+          sleep 5
+        env:
+          PORT: 3000
+
+      - name: Wait for server
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 1; done'
+
+      # Generate new reference images
+      - name: Generate reference images
+        run: backstop reference --config=backstop.config.js
+
+      # Commit updated references if changed
+      - name: Commit reference images
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add backstop_data/bitmaps_reference/
+          git diff --staged --quiet || git commit -m "chore: update BackstopJS reference images [skip ci]"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

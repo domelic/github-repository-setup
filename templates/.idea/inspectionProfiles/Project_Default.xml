@@ -1,0 +1,80 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+
+    <!-- ============================================ -->
+    <!-- General Inspections                         -->
+    <!-- ============================================ -->
+
+    <!-- Spelling: Enable but at warning level -->
+    <inspection_tool class="SpellCheckingInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+
+    <!-- ============================================ -->
+    <!-- JavaScript/TypeScript Inspections           -->
+    <!-- ============================================ -->
+
+    <!-- Enable strict type checking suggestions -->
+    <inspection_tool class="JSUnusedLocalSymbols" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JSUnusedGlobalSymbols" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JSUnresolvedReference" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="TypeScriptUnresolvedReference" enabled="true" level="ERROR" enabled_by_default="true" />
+
+    <!-- Async/await best practices -->
+    <inspection_tool class="JSIgnoredPromiseFromCall" enabled="true" level="WARNING" enabled_by_default="true" />
+
+    <!-- Prefer const over let -->
+    <inspection_tool class="ES6ConvertLetToConst" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- ============================================ -->
+    <!-- Python Inspections                          -->
+    <!-- ============================================ -->
+
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyUnusedLocalInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyTypeCheckerInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- ============================================ -->
+    <!-- Java/Kotlin Inspections                     -->
+    <!-- ============================================ -->
+
+    <inspection_tool class="unused" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="Convert2Lambda" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- Kotlin-specific -->
+    <inspection_tool class="RedundantVisibilityModifier" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="ConvertToStringTemplate" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- ============================================ -->
+    <!-- Security Inspections                        -->
+    <!-- ============================================ -->
+
+    <!-- SQL injection detection -->
+    <inspection_tool class="SqlInjectionInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+
+    <!-- Hardcoded credentials -->
+    <inspection_tool class="HardcodedPassword" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="HardcodedFileSeparator" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- ============================================ -->
+    <!-- General Code Quality                        -->
+    <!-- ============================================ -->
+
+    <!-- TODO/FIXME tracking -->
+    <inspection_tool class="TodoComment" enabled="true" level="WARNING" enabled_by_default="true" />
+
+    <!-- Duplicate code detection -->
+    <inspection_tool class="DuplicatedCode" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+
+    <!-- Overly complex code -->
+    <inspection_tool class="OverlyComplexMethod" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_limit" value="20" />
+    </inspection_tool>
+
+    <!-- Long methods -->
+    <inspection_tool class="OverlyLongMethod" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_limit" value="100" />
+    </inspection_tool>
+  </profile>
+</component>

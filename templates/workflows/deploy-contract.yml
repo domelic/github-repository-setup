@@ -1,0 +1,231 @@
+name: Deploy Contract
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Target network'
+        required: true
+        type: choice
+        options:
+          - sepolia
+          - goerli
+          - mainnet
+          - polygon
+          - polygon-mumbai
+          - arbitrum
+          - arbitrum-goerli
+          - optimism
+          - optimism-goerli
+          - base
+          - base-goerli
+      contract:
+        description: 'Contract to deploy (e.g., MyContract)'
+        required: true
+        type: string
+      verify:
+        description: 'Verify on block explorer'
+        required: false
+        type: boolean
+        default: true
+      dry_run:
+        description: 'Dry run (simulate only)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  validate:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      rpc_url_secret: ${{ steps.network.outputs.rpc_url_secret }}
+      explorer_api_secret: ${{ steps.network.outputs.explorer_api_secret }}
+      chain_id: ${{ steps.network.outputs.chain_id }}
+
+    steps:
+      - name: Map network to secrets
+        id: network
+        run: |
+          case "${{ inputs.network }}" in
+            "mainnet")
+              echo "rpc_url_secret=MAINNET_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=ETHERSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=1" >> $GITHUB_OUTPUT
+              ;;
+            "sepolia")
+              echo "rpc_url_secret=SEPOLIA_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=ETHERSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=11155111" >> $GITHUB_OUTPUT
+              ;;
+            "goerli")
+              echo "rpc_url_secret=GOERLI_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=ETHERSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=5" >> $GITHUB_OUTPUT
+              ;;
+            "polygon")
+              echo "rpc_url_secret=POLYGON_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=POLYGONSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=137" >> $GITHUB_OUTPUT
+              ;;
+            "polygon-mumbai")
+              echo "rpc_url_secret=POLYGON_MUMBAI_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=POLYGONSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=80001" >> $GITHUB_OUTPUT
+              ;;
+            "arbitrum")
+              echo "rpc_url_secret=ARBITRUM_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=ARBISCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=42161" >> $GITHUB_OUTPUT
+              ;;
+            "arbitrum-goerli")
+              echo "rpc_url_secret=ARBITRUM_GOERLI_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=ARBISCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=421613" >> $GITHUB_OUTPUT
+              ;;
+            "optimism")
+              echo "rpc_url_secret=OPTIMISM_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=OPTIMISTIC_ETHERSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=10" >> $GITHUB_OUTPUT
+              ;;
+            "optimism-goerli")
+              echo "rpc_url_secret=OPTIMISM_GOERLI_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=OPTIMISTIC_ETHERSCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=420" >> $GITHUB_OUTPUT
+              ;;
+            "base")
+              echo "rpc_url_secret=BASE_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=BASESCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=8453" >> $GITHUB_OUTPUT
+              ;;
+            "base-goerli")
+              echo "rpc_url_secret=BASE_GOERLI_RPC_URL" >> $GITHUB_OUTPUT
+              echo "explorer_api_secret=BASESCAN_API_KEY" >> $GITHUB_OUTPUT
+              echo "chain_id=84531" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Validate mainnet deployment
+        if: inputs.network == 'mainnet' && !inputs.dry_run
+        run: |
+          echo "::warning::You are about to deploy to MAINNET. This is irreversible."
+          echo "Ensure you have reviewed all contracts and tested on testnet first."
+
+  deploy-foundry:
+    name: Deploy (Foundry)
+    runs-on: ubuntu-latest
+    needs: validate
+    # Only run if foundry.toml exists
+    # if: hashFiles('foundry.toml') != ''
+    environment: ${{ inputs.network }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build contracts
+        run: forge build
+
+      - name: Run deployment script (dry run)
+        if: inputs.dry_run
+        run: |
+          forge script script/Deploy.s.sol:Deploy${{ inputs.contract }} \
+            --rpc-url ${{ secrets[needs.validate.outputs.rpc_url_secret] }} \
+            --chain-id ${{ needs.validate.outputs.chain_id }} \
+            -vvvv
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+
+      - name: Run deployment script
+        if: ${{ !inputs.dry_run }}
+        id: deploy
+        run: |
+          DEPLOY_OUTPUT=$(forge script script/Deploy.s.sol:Deploy${{ inputs.contract }} \
+            --rpc-url ${{ secrets[needs.validate.outputs.rpc_url_secret] }} \
+            --chain-id ${{ needs.validate.outputs.chain_id }} \
+            --broadcast \
+            --verify \
+            -vvvv 2>&1) || true
+
+          echo "$DEPLOY_OUTPUT"
+
+          # Extract deployed address from output
+          DEPLOYED_ADDRESS=$(echo "$DEPLOY_OUTPUT" | grep -oP 'Contract Address: \K0x[a-fA-F0-9]{40}' | head -1)
+          echo "deployed_address=$DEPLOYED_ADDRESS" >> $GITHUB_OUTPUT
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets[needs.validate.outputs.explorer_api_secret] }}
+
+      - name: Verify contract
+        if: inputs.verify && !inputs.dry_run && steps.deploy.outputs.deployed_address
+        run: |
+          forge verify-contract \
+            --chain-id ${{ needs.validate.outputs.chain_id }} \
+            --watch \
+            ${{ steps.deploy.outputs.deployed_address }} \
+            ${{ inputs.contract }}
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets[needs.validate.outputs.explorer_api_secret] }}
+        continue-on-error: true
+
+      - name: Create deployment summary
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Network | ${{ inputs.network }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contract | ${{ inputs.contract }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Address | \`${{ steps.deploy.outputs.deployed_address }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Verified | ${{ inputs.verify }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployer | Workflow Run #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+
+  deploy-hardhat:
+    name: Deploy (Hardhat)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: false # Enable by setting to true and disabling deploy-foundry
+    environment: ${{ inputs.network }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts
+        run: npx hardhat compile
+
+      - name: Deploy contract
+        if: ${{ !inputs.dry_run }}
+        run: |
+          npx hardhat run scripts/deploy.ts --network ${{ inputs.network }}
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets[needs.validate.outputs.explorer_api_secret] }}
+
+      - name: Verify contract
+        if: inputs.verify && !inputs.dry_run
+        run: |
+          npx hardhat verify --network ${{ inputs.network }} $DEPLOYED_ADDRESS
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets[needs.validate.outputs.explorer_api_secret] }}
+        continue-on-error: true

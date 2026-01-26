@@ -1,0 +1,244 @@
+name: Release Firmware
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g., 1.2.3)'
+        required: true
+        type: string
+      environments:
+        description: 'Environments to build (comma-separated)'
+        required: false
+        type: string
+        default: 'esp32dev,esp8266'
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      environments: ${{ steps.environments.outputs.list }}
+
+    steps:
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Parse environments
+        id: environments
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            # Default environments for release
+            ENVS='["esp32dev","esp8266","teensy41"]'
+          else
+            # Convert comma-separated to JSON array
+            ENVS=$(echo "${{ inputs.environments }}" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$";""))')
+          fi
+          echo "list=$ENVS" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.prepare.outputs.environments) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-release-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-release-${{ matrix.environment }}-
+            ${{ runner.os }}-pio-
+
+      # Update version in code (optional)
+      - name: Update version
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+
+          # Update version in header file (if exists)
+          if [ -f "include/version.h" ]; then
+            sed -i "s/#define VERSION.*/#define VERSION \"$VERSION\"/" include/version.h
+          fi
+
+          # Update version in platformio.ini (if present)
+          if grep -q "version" platformio.ini; then
+            sed -i "s/version = .*/version = $VERSION/" platformio.ini
+          fi
+
+      - name: Build firmware (release)
+        run: |
+          # Build with release optimizations
+          pio run -e ${{ matrix.environment }}
+        env:
+          PLATFORMIO_BUILD_FLAGS: -DRELEASE_BUILD
+
+      - name: Generate firmware info
+        id: info
+        run: |
+          ENV="${{ matrix.environment }}"
+          VERSION="${{ needs.prepare.outputs.version }}"
+
+          # Find firmware files
+          BIN_FILE=$(find .pio/build/$ENV -name "firmware.bin" 2>/dev/null | head -1)
+          HEX_FILE=$(find .pio/build/$ENV -name "firmware.hex" 2>/dev/null | head -1)
+          ELF_FILE=$(find .pio/build/$ENV -name "firmware.elf" 2>/dev/null | head -1)
+
+          # Create release directory
+          mkdir -p release
+
+          # Copy and rename files
+          if [ -n "$BIN_FILE" ]; then
+            cp "$BIN_FILE" "release/firmware-${ENV}-${VERSION}.bin"
+            echo "bin=release/firmware-${ENV}-${VERSION}.bin" >> $GITHUB_OUTPUT
+          fi
+          if [ -n "$HEX_FILE" ]; then
+            cp "$HEX_FILE" "release/firmware-${ENV}-${VERSION}.hex"
+            echo "hex=release/firmware-${ENV}-${VERSION}.hex" >> $GITHUB_OUTPUT
+          fi
+          if [ -n "$ELF_FILE" ]; then
+            cp "$ELF_FILE" "release/firmware-${ENV}-${VERSION}.elf"
+            echo "elf=release/firmware-${ENV}-${VERSION}.elf" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate checksums
+        run: |
+          cd release
+          for file in firmware-*; do
+            shasum -a 256 "$file" >> SHA256SUMS.txt
+          done
+          cat SHA256SUMS.txt
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.environment }}
+          path: release/
+          retention-days: 90
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: release-*
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      - name: Merge checksums
+        run: |
+          cat artifacts/SHA256SUMS.txt > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Generate release notes
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+
+          cat > RELEASE_NOTES.md <<EOF
+          # Firmware Release v${VERSION}
+
+          ## Downloads
+
+          | Board | Binary | Checksum |
+          |-------|--------|----------|
+          EOF
+
+          for file in artifacts/firmware-*.bin; do
+            if [ -f "$file" ]; then
+              FILENAME=$(basename "$file")
+              BOARD=$(echo "$FILENAME" | sed 's/firmware-\(.*\)-'$VERSION'.bin/\1/')
+              CHECKSUM=$(grep "$FILENAME" SHA256SUMS.txt | cut -d' ' -f1)
+              echo "| $BOARD | $FILENAME | \`${CHECKSUM:0:16}...\` |" >> RELEASE_NOTES.md
+            fi
+          done
+
+          cat >> RELEASE_NOTES.md <<EOF
+
+          ## Installation
+
+          ### ESP32/ESP8266
+          \`\`\`bash
+          # Using esptool.py
+          esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x10000 firmware-esp32dev-${VERSION}.bin
+
+          # Using PlatformIO
+          pio run -t upload --upload-port /dev/ttyUSB0
+          \`\`\`
+
+          ### Teensy
+          Use Teensy Loader or \`teensy_loader_cli\`:
+          \`\`\`bash
+          teensy_loader_cli --mcu=TEENSY41 -w firmware-teensy41-${VERSION}.hex
+          \`\`\`
+
+          ## Verify Checksums
+          \`\`\`bash
+          shasum -a 256 -c SHA256SUMS.txt
+          \`\`\`
+          EOF
+
+          cat RELEASE_NOTES.md
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            artifacts/firmware-*.bin
+            artifacts/firmware-*.hex
+            artifacts/firmware-*.elf
+            SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create summary
+        run: |
+          echo "## 🔌 Firmware Release" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -la artifacts/firmware-*.bin 2>/dev/null | awk '{print "- " $NF " (" $5 " bytes)"}' >> $GITHUB_STEP_SUMMARY || echo "No .bin files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checksums (SHA256)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat SHA256SUMS.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

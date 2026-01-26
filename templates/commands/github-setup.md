@@ -59,6 +59,19 @@ What's your project type?
 │  ├─ Kubernetes → kubernetes
 │  └─ Serverless → serverless
 │
+├─ Blockchain/Web3
+│  ├─ Hardhat → web3 (Hardhat)
+│  └─ Foundry → web3 (Foundry)
+│
+├─ Browser Extension
+│  └─ Chrome/Firefox → browser-extension
+│
+├─ Desktop Application
+│  └─ Electron → electron
+│
+├─ Embedded/IoT
+│  └─ PlatformIO → embedded
+│
 └─ Documentation Only
    └─ docs
 ```
@@ -76,6 +89,10 @@ What's your project type?
 | **ML/AI Project** | `ml` + `releases` + `observability` + `codecov` |
 | **CLI Distribution** | `{language}` + `cli-tool` + `releases` |
 | **API Backend** | `{language}` + `api-docs` + `codecov` + `security` + `deploy` |
+| **Web3 dApp** | `nodejs` + `web3` + `security` |
+| **Browser Extension** | `nodejs` + `browser-extension` + `quality` |
+| **Desktop App** | `nodejs` + `electron` + `releases` |
+| **IoT Project** | `embedded` + `releases` |
 
 ### Preset Selection FAQ
 
@@ -998,6 +1015,164 @@ Features: Codecov coverage upload, multi-language support (Node.js, Python, Go, 
 
 ---
 
+## Editor Presets
+
+### `/github-setup jetbrains`
+
+| Template | Destination |
+|----------|-------------|
+| `.idea/codeStyles/codeStyleConfig.xml` | `.idea/codeStyles/codeStyleConfig.xml` |
+| `.idea/codeStyles/Project.xml` | `.idea/codeStyles/Project.xml` |
+| `.idea/inspectionProfiles/Project_Default.xml` | `.idea/inspectionProfiles/Project_Default.xml` |
+| `.idea/.gitignore` | `.idea/.gitignore` |
+
+Features: Shared code style (120 char lines, language-specific indentation), team-wide inspection profiles, proper `.gitignore` for local-only files. Works with IntelliJ IDEA, PyCharm, WebStorm, and all JetBrains IDEs.
+
+---
+
+## AI Presets
+
+### `/github-setup ai`
+
+| Template | Destination |
+|----------|-------------|
+| `.github/copilot-instructions.md` | `.github/copilot-instructions.md` |
+
+Features: Repository-specific GitHub Copilot customization including project context, coding standards, architecture patterns, naming conventions, testing requirements, security guidelines, and anti-patterns to avoid.
+
+---
+
+## Visual Regression Testing Presets
+
+### `/github-setup visual-regression`
+
+Choose based on your needs:
+
+**Percy (Cloud-based, any test framework):**
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/visual-regression-percy.yml` | `.github/workflows/visual-regression-percy.yml` |
+
+**Required Secret:** `PERCY_TOKEN`
+
+**Chromatic (Storybook-native):**
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/visual-regression-chromatic.yml` | `.github/workflows/visual-regression-chromatic.yml` |
+
+**Required Secret:** `CHROMATIC_PROJECT_TOKEN`
+
+**BackstopJS (Self-hosted, no external service):**
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/visual-regression-backstop.yml` | `.github/workflows/visual-regression-backstop.yml` |
+
+Features: PR status checks for visual changes, multi-viewport testing, HTML report artifacts, auto-accept baselines on main branch.
+
+---
+
+## Blockchain/Web3 Presets
+
+### `/github-setup web3`
+
+**Hardhat (JavaScript/TypeScript):**
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-hardhat.yml` | `.github/workflows/ci-hardhat.yml` |
+| `workflows/deploy-contract.yml` | `.github/workflows/deploy-contract.yml` |
+| `.gitignore-solidity` | `.gitignore` (merge if exists) |
+
+Features: Solidity compilation, Hardhat tests with gas reporting, Slither security analysis, coverage with Codecov, contract size checks.
+
+**Foundry (Rust-based, faster):**
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-foundry.yml` | `.github/workflows/ci-foundry.yml` |
+| `workflows/deploy-contract.yml` | `.github/workflows/deploy-contract.yml` |
+| `.gitignore-solidity` | `.gitignore` (merge if exists) |
+
+Features: Forge build/test, fuzz testing, invariant testing, gas snapshots, Slither security analysis.
+
+**Required Secrets for deployment:**
+- `DEPLOYER_PRIVATE_KEY` - Deployment wallet private key
+- `ETHERSCAN_API_KEY` - For contract verification (or `POLYGONSCAN_API_KEY`, `ARBISCAN_API_KEY`, etc.)
+- `*_RPC_URL` - RPC endpoint for each network (e.g., `MAINNET_RPC_URL`, `SEPOLIA_RPC_URL`)
+
+---
+
+## Browser Extension Presets
+
+### `/github-setup browser-extension`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-browser-extension.yml` | `.github/workflows/ci-browser-extension.yml` |
+| `workflows/publish-chrome-extension.yml` | `.github/workflows/publish-chrome-extension.yml` |
+| `workflows/publish-firefox-addon.yml` | `.github/workflows/publish-firefox-addon.yml` |
+
+Features: Multi-browser builds (Chrome, Firefox), E2E testing with Playwright, automated store publishing.
+
+**Required Secrets (Chrome Web Store):**
+- `CHROME_EXTENSION_ID` - Your extension's ID
+- `CHROME_CLIENT_ID` - OAuth2 client ID
+- `CHROME_CLIENT_SECRET` - OAuth2 client secret
+- `CHROME_REFRESH_TOKEN` - OAuth2 refresh token
+
+**Required Secrets (Firefox Add-ons):**
+- `FIREFOX_EXTENSION_ID` - Your add-on's ID (UUID or slug)
+- `FIREFOX_JWT_ISSUER` - AMO API key
+- `FIREFOX_JWT_SECRET` - AMO API secret
+
+---
+
+## Desktop Application Presets
+
+### `/github-setup electron`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-electron.yml` | `.github/workflows/ci-electron.yml` |
+| `workflows/publish-electron.yml` | `.github/workflows/publish-electron.yml` |
+
+Features: Cross-platform builds (Windows, macOS, Linux), code signing, Apple notarization, auto-update support, security scanning.
+
+**Required Secrets (macOS code signing):**
+- `APPLE_ID` - Apple Developer account email
+- `APPLE_APP_SPECIFIC_PASSWORD` - App-specific password for notarization
+- `APPLE_TEAM_ID` - Apple Developer Team ID
+- `CSC_LINK` - Base64-encoded .p12 certificate
+- `CSC_KEY_PASSWORD` - Certificate password
+
+**Required Secrets (Windows code signing):**
+- `WINDOWS_CSC_LINK` - Base64-encoded .pfx certificate
+- `WINDOWS_CSC_KEY_PASSWORD` - Certificate password
+
+---
+
+## Embedded/IoT Presets
+
+### `/github-setup embedded`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-platformio.yml` | `.github/workflows/ci-platformio.yml` |
+| `workflows/release-firmware.yml` | `.github/workflows/release-firmware.yml` |
+
+Features: Multi-board firmware builds (ESP32, ESP8266, Teensy, STM32, Arduino), code quality checks (cppcheck), unit testing with native environment, memory usage analysis, OTA update support.
+
+**Supported Boards:**
+- ESP32, ESP8266 (Espressif)
+- Teensy 4.x (PJRC)
+- STM32 (various)
+- Arduino (Uno, Mega, etc.)
+
+---
+
 ## Full Setup (`/github-setup`)
 
 ### 1. Detect Project Type
@@ -1102,6 +1277,15 @@ Check for existence of these files/settings:
 - [ ] `.github/workflows/ci-unity.yml` (Unity game development)
 - [ ] `.github/workflows/ci-ml-python.yml` (ML/AI projects)
 - [ ] `.github/workflows/publish-cli-binaries.yml` (CLI distribution)
+- [ ] `.github/workflows/ci-hardhat.yml` or `ci-foundry.yml` (Web3/Blockchain)
+- [ ] `.github/workflows/ci-browser-extension.yml` (Browser extensions)
+- [ ] `.github/workflows/ci-electron.yml` (Desktop applications)
+- [ ] `.github/workflows/ci-platformio.yml` (Embedded/IoT)
+
+### Editor & AI Integrations
+- [ ] `.github/copilot-instructions.md` (AI consistency)
+- [ ] `.idea/` shareable configurations (JetBrains IDE)
+- [ ] Visual regression testing workflows (Percy/Chromatic/BackstopJS)
 
 Report missing items grouped by priority: Essential -> Recommended -> Optional.
 
