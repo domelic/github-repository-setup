@@ -67,14 +67,15 @@ What's your project type?
 
 | Use Case | Recommended Presets |
 |----------|---------------------|
-| **Production Web App** | `{language}` + `quality` + `security` + `deploy` + `releases` |
-| **Open Source Library** | `{language}` + `docs` + `issues` + `releases` + `bots` |
-| **Enterprise Project** | `{language}` + `security` + `sonarcloud` + `snyk` + `multienv` |
+| **Production Web App** | `{language}` + `quality` + `security` + `deploy` + `releases` + `a11y` |
+| **Open Source Library** | `{language}` + `docs` + `issues` + `releases` + `bots` + `api-docs` |
+| **Enterprise Project** | `{language}` + `security` + `sonarcloud` + `snyk` + `multienv` + `codecov` |
 | **Internal Tool** | `{language}` + `quality` + `notifications` |
 | **Startup MVP** | `{language}` + `deploy` + `notifications` |
 | **Game Project** | `godot` or `unity` + `releases` + `notifications` |
-| **ML/AI Project** | `ml` + `releases` + `observability` |
+| **ML/AI Project** | `ml` + `releases` + `observability` + `codecov` |
 | **CLI Distribution** | `{language}` + `cli-tool` + `releases` |
+| **API Backend** | `{language}` + `api-docs` + `codecov` + `security` + `deploy` |
 
 ### Preset Selection FAQ
 
@@ -968,6 +969,33 @@ Features: Dependency vulnerability scanning, container image scanning, IaC scann
 
 Features: k6 script execution, threshold validation, results as PR comments, optional cloud execution.
 
+### `/github-setup a11y`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/a11y.yml` | `.github/workflows/a11y.yml` |
+
+Features: Playwright + axe-core accessibility testing, pa11y-ci URL scanning, WCAG 2.1 AA compliance, PR violation reports, HTML report artifacts.
+
+### `/github-setup api-docs`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/api-docs.yml` | `.github/workflows/api-docs.yml` |
+
+Features: Auto-detect documentation type (TypeDoc, OpenAPI/Redocly, Sphinx), GitHub Pages deployment, PR preview comments.
+
+### `/github-setup codecov`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/codecov.yml` | `.github/workflows/codecov.yml` |
+| `codecov.yml` | `codecov.yml` |
+
+Features: Codecov coverage upload, multi-language support (Node.js, Python, Go, Rust), coverage thresholds (70% project, 80% patch), PR comments with coverage diff.
+
+**Required Secret:** `CODECOV_TOKEN` from https://app.codecov.io/
+
 ---
 
 ## Full Setup (`/github-setup`)
@@ -1065,6 +1093,9 @@ Check for existence of these files/settings:
 - [ ] `.github/workflows/snyk.yml` (security scanning)
 - [ ] `.github/workflows/notify-teams.yml` (Teams notifications)
 - [ ] `.github/workflows/load-test-k6.yml` (load testing)
+- [ ] `.github/workflows/a11y.yml` (accessibility testing)
+- [ ] `.github/workflows/api-docs.yml` (API documentation)
+- [ ] `.github/workflows/codecov.yml` + `codecov.yml` (coverage tracking)
 
 ### Specialized Domains
 - [ ] `.github/workflows/ci-godot.yml` (Godot game development)

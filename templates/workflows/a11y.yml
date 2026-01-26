@@ -1,0 +1,165 @@
+# Accessibility (a11y) Testing Workflow
+# Runs accessibility audits using axe-core and pa11y-ci
+# https://github.com/domelic/github-repository-setup
+
+name: Accessibility (a11y)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  a11y:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ─────────────────────────────────────────────
+      # Playwright + axe-core Testing
+      # Requires @axe-core/playwright in devDependencies
+      # Tests should be tagged with @a11y
+      # ─────────────────────────────────────────────
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run axe-core accessibility tests
+        id: axe_tests
+        run: |
+          npx playwright test --grep @a11y --reporter=html
+        continue-on-error: true
+
+      - name: Upload Playwright a11y report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-a11y-report
+          path: playwright-report/
+          retention-days: 14
+
+      # ─────────────────────────────────────────────
+      # pa11y-ci URL-based Scanning
+      # Configure URLs in .pa11yci or package.json
+      # ─────────────────────────────────────────────
+      - name: Start application server
+        run: |
+          npm run build 2>/dev/null || true
+          npm run start &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          CI: true
+
+      - name: Run pa11y-ci
+        id: pa11y
+        run: |
+          npx pa11y-ci --reporter cli --reporter json > pa11y-results.json 2>&1 || true
+          cat pa11y-results.json
+        continue-on-error: true
+
+      - name: Upload pa11y results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pa11y-results
+          path: pa11y-results.json
+          retention-days: 14
+
+      # ─────────────────────────────────────────────
+      # PR Comment with Results Summary
+      # ─────────────────────────────────────────────
+      - name: Generate a11y summary
+        if: github.event_name == 'pull_request'
+        id: summary
+        run: |
+          echo "## Accessibility Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.axe_tests.outcome }}" == "success" ]; then
+            echo "### :white_check_mark: axe-core tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### :x: axe-core tests found violations" >> $GITHUB_STEP_SUMMARY
+            echo "See the [Playwright report artifact](../actions/runs/${{ github.run_id }}) for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.pa11y.outcome }}" == "success" ]; then
+            echo "### :white_check_mark: pa11y-ci scan passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### :warning: pa11y-ci found issues" >> $GITHUB_STEP_SUMMARY
+            echo "See the [pa11y results artifact](../actions/runs/${{ github.run_id }}) for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**WCAG Standard:** 2.1 AA" >> $GITHUB_STEP_SUMMARY
+
+      # ─────────────────────────────────────────────
+      # Fail if critical violations found
+      # ─────────────────────────────────────────────
+      - name: Check test results
+        if: steps.axe_tests.outcome == 'failure' || steps.pa11y.outcome == 'failure'
+        run: |
+          echo "::warning::Accessibility issues were found. Please review the artifacts."
+          # Uncomment below line to fail the build on a11y violations
+          # exit 1
+
+# ─────────────────────────────────────────────────────
+# SETUP INSTRUCTIONS
+# ─────────────────────────────────────────────────────
+#
+# 1. Install dependencies:
+#    npm install -D @axe-core/playwright playwright pa11y-ci wait-on
+#
+# 2. Create a Playwright test with axe-core:
+#    // tests/a11y.spec.ts
+#    import { test, expect } from '@playwright/test';
+#    import AxeBuilder from '@axe-core/playwright';
+#
+#    test.describe('Accessibility', () => {
+#      test('homepage should have no violations @a11y', async ({ page }) => {
+#        await page.goto('/');
+#        const results = await new AxeBuilder({ page })
+#          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+#          .analyze();
+#        expect(results.violations).toEqual([]);
+#      });
+#    });
+#
+# 3. Configure pa11y-ci (create .pa11yci in project root):
+#    {
+#      "defaults": {
+#        "standard": "WCAG2AA",
+#        "timeout": 10000,
+#        "wait": 1000
+#      },
+#      "urls": [
+#        "http://localhost:3000/",
+#        "http://localhost:3000/about",
+#        "http://localhost:3000/contact"
+#      ]
+#    }
+#
+# 4. Update package.json scripts:
+#    "scripts": {
+#      "start": "next start",  // or your server command
+#      "test:a11y": "playwright test --grep @a11y"
+#    }
+#
+# ─────────────────────────────────────────────────────

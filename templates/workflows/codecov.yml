@@ -1,0 +1,166 @@
+# Codecov Coverage Workflow
+# Uploads coverage reports to Codecov for tracking and PR comments
+# https://github.com/domelic/github-repository-setup
+
+name: Codecov
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: codecov-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Upload Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # ─────────────────────────────────────────────
+      # Node.js Projects
+      # ─────────────────────────────────────────────
+      - name: Setup Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (Node.js)
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Run tests with coverage (Node.js)
+        if: hashFiles('package.json') != ''
+        run: |
+          npm test -- --coverage --coverageReporters=lcov --coverageReporters=text 2>/dev/null || \
+          npm run test:coverage 2>/dev/null || \
+          npx vitest run --coverage 2>/dev/null || \
+          echo "No coverage command found"
+        continue-on-error: true
+
+      # ─────────────────────────────────────────────
+      # Python Projects
+      # ─────────────────────────────────────────────
+      - name: Setup Python
+        if: hashFiles('pyproject.toml', 'requirements.txt', 'setup.py') != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies (Python)
+        if: hashFiles('pyproject.toml', 'requirements.txt', 'setup.py') != ''
+        run: |
+          pip install -e ".[dev]" 2>/dev/null || \
+          pip install -r requirements-dev.txt 2>/dev/null || \
+          pip install -r requirements.txt pytest pytest-cov 2>/dev/null || \
+          pip install pytest pytest-cov
+        continue-on-error: true
+
+      - name: Run tests with coverage (Python)
+        if: hashFiles('pyproject.toml', 'requirements.txt', 'setup.py') != ''
+        run: |
+          pytest --cov --cov-report=xml --cov-report=term 2>/dev/null || \
+          python -m pytest --cov --cov-report=xml 2>/dev/null || \
+          echo "No pytest coverage found"
+        continue-on-error: true
+
+      # ─────────────────────────────────────────────
+      # Go Projects
+      # ─────────────────────────────────────────────
+      - name: Setup Go
+        if: hashFiles('go.mod') != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run tests with coverage (Go)
+        if: hashFiles('go.mod') != ''
+        run: |
+          go test -race -coverprofile=coverage.out -covermode=atomic ./...
+        continue-on-error: true
+
+      # ─────────────────────────────────────────────
+      # Rust Projects
+      # ─────────────────────────────────────────────
+      - name: Setup Rust
+        if: hashFiles('Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-llvm-cov
+        if: hashFiles('Cargo.toml') != ''
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Run tests with coverage (Rust)
+        if: hashFiles('Cargo.toml') != ''
+        run: |
+          cargo llvm-cov --lcov --output-path lcov.info
+        continue-on-error: true
+
+      # ─────────────────────────────────────────────
+      # Upload to Codecov
+      # ─────────────────────────────────────────────
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: |
+            ./coverage/lcov.info
+            ./coverage.xml
+            ./coverage.out
+            ./lcov.info
+          flags: unittests
+          name: codecov-${{ github.repository }}
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Coverage summary
+        run: |
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage has been uploaded to Codecov." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed report at:" >> $GITHUB_STEP_SUMMARY
+          echo "https://app.codecov.io/gh/${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+
+# ─────────────────────────────────────────────────────
+# SETUP INSTRUCTIONS
+# ─────────────────────────────────────────────────────
+#
+# 1. Get your Codecov token:
+#    - Go to https://app.codecov.io/
+#    - Sign in with GitHub
+#    - Add your repository
+#    - Copy the repository token
+#
+# 2. Add secret to GitHub:
+#    - Go to Settings > Secrets and variables > Actions
+#    - Create new repository secret: CODECOV_TOKEN
+#
+# 3. Add codecov.yml to your project root (optional):
+#    - Copy templates/codecov.yml to your project
+#    - Customize coverage thresholds as needed
+#
+# 4. Add badge to README.md:
+#    [![codecov](https://codecov.io/gh/OWNER/REPO/graph/badge.svg)](https://codecov.io/gh/OWNER/REPO)
+#
+# ─────────────────────────────────────────────────────
+# REQUIRED SECRET
+# ─────────────────────────────────────────────────────
+#
+# CODECOV_TOKEN - Repository upload token from https://app.codecov.io/
+#
+# ─────────────────────────────────────────────────────
