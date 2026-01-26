@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "template-index.schema.json",
+  "title": "Template Index Schema",
+  "description": "Schema for the unified template index used by /github-setup search functionality",
+  "type": "object",
+  "required": ["version", "templates"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version (semver format)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated": {
+      "type": "string",
+      "description": "Date when this file was generated (YYYY-MM-DD)",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "templates": {
+      "type": "object",
+      "description": "Map of template file paths to their metadata",
+      "additionalProperties": {
+        "$ref": "#/$defs/templateEntry"
+      }
+    }
+  },
+  "$defs": {
+    "templateEntry": {
+      "type": "object",
+      "description": "Metadata for a single template file",
+      "required": ["type", "name", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of template",
+          "enum": [
+            "devcontainer",
+            "gitignore",
+            "config",
+            "template",
+            "hook",
+            "workflow"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name of the template",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of what this template provides",
+          "minLength": 1
+        },
+        "tags": {
+          "$ref": "#/$defs/tags"
+        }
+      }
+    },
+    "tags": {
+      "type": "object",
+      "description": "Tags for categorizing and filtering templates",
+      "properties": {
+        "language": {
+          "type": "array",
+          "description": "Programming languages this template is for (use 'any' for language-agnostic)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "category": {
+          "type": "array",
+          "description": "Categories for workflow templates (e.g., security, ci-testing, deployment)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "platform": {
+          "type": "array",
+          "description": "Target platforms (e.g., npm, pypi, docker, kubernetes)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

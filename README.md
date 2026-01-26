@@ -2337,15 +2337,38 @@ show_summary() {
 
 ### Project Documentation
 
+**Getting Started:**
+
+- [Quick Start Guide](docs/QUICK_START.md)
 - [Templates Directory Guide](templates/README.md)
 - [Template Customization Guide](docs/TEMPLATE_CUSTOMIZATION.md)
-- [Workflow Changelog](docs/WORKFLOW_CHANGELOG.md)
+
+**Workflow Resources:**
+
 - [Workflow Diagrams](docs/WORKFLOW_DIAGRAMS.md)
+- [Workflow Changelog](docs/WORKFLOW_CHANGELOG.md)
 - [Compatibility Matrix](docs/COMPATIBILITY_MATRIX.md)
-- [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
+
+**Configuration Guides:**
+
+- [Branching Strategies](docs/BRANCHING_STRATEGIES.md)
+- [CODEOWNERS Patterns](docs/CODEOWNERS_PATTERNS.md)
 - [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
-- [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
+- [Feature Flags](docs/FEATURE_FLAGS.md)
+- [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
 - [Release Drafter Guide](docs/RELEASE_DRAFTER.md)
+- [Renovate vs Dependabot](docs/RENOVATE_VS_DEPENDABOT.md)
+
+**Specialized Guides:**
+
+- [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
+- [ML/AI Projects](docs/ML_PROJECTS.md)
+- [Database Testing](docs/DATABASE_TESTING.md)
+
+**Project Development:**
+
+- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
+- [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
 
 ### MCP Integrations
 

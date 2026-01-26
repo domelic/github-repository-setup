@@ -19,10 +19,14 @@ This document outlines potential enhancements to elevate the repository from its
 ### What's Missing
 
 - No automated testing of template functionality
-- Search is skill-based only (no standalone tool)
+- Search is skill-based only (no standalone web UI)
 - No migration path between template versions
 - No usage analytics or community feedback loop
 - Templates are static (no composition/merging)
+- No migration guides from other CI platforms (CircleCI, Jenkins, GitLab CI)
+- Customization metadata only populated for 2/113 workflows
+- No stability/production-readiness indicators
+- No per-template versioning (all templates share single release version)
 
 ---
 
@@ -391,6 +395,269 @@ jobs:
 
 ---
 
+### 6. CI Platform Migration Guides
+
+**Priority:** Medium
+**Effort:** Medium
+**Impact:** Helps users migrate from other CI/CD platforms
+
+#### Current State
+
+- No guidance for users migrating from other CI systems
+- Users must manually translate workflows
+- Common migration patterns undocumented
+
+#### Proposed Solution
+
+Create migration guides for popular CI/CD platforms:
+
+| Guide | Source Platform | Key Differences |
+|-------|-----------------|-----------------|
+| `FROM_CIRCLECI.md` | CircleCI | Orbs → Actions, config.yml structure |
+| `FROM_GITLAB_CI.md` | GitLab CI | Stages → Jobs, includes → reusable workflows |
+| `FROM_JENKINS.md` | Jenkins | Jenkinsfile → YAML, plugins → Actions |
+| `FROM_TRAVIS_CI.md` | Travis CI | .travis.yml → workflow syntax |
+| `FROM_AZURE_PIPELINES.md` | Azure DevOps | YAML structure, variable groups |
+
+#### Guide Structure
+
+```markdown
+# Migrating from [Platform] to GitHub Actions
+
+## Key Concepts Mapping
+
+| [Platform] Concept | GitHub Actions Equivalent |
+|--------------------|---------------------------|
+| [concept] | [equivalent] |
+
+## Common Patterns
+
+### Pattern 1: [Name]
+
+**[Platform]:**
+```yaml
+# Original syntax
+```
+
+**GitHub Actions:**
+```yaml
+# Equivalent workflow
+```
+
+## Migration Checklist
+
+- [ ] Inventory existing pipelines
+- [ ] Map secrets and variables
+- [ ] Convert workflow syntax
+- [ ] Test in feature branch
+- [ ] Update branch protection
+```
+
+#### Files to Create
+
+- `docs/FROM_CIRCLECI.md`
+- `docs/FROM_GITLAB_CI.md`
+- `docs/FROM_JENKINS.md`
+- `docs/FROM_TRAVIS_CI.md`
+- `docs/FROM_AZURE_PIPELINES.md`
+
+---
+
+### 7. Customization Metadata Enhancement
+
+**Priority:** Low
+**Effort:** Large
+**Impact:** Enables IDE-assisted and automated customization
+
+#### Current State
+
+- `workflow-metadata.schema.json` supports customization field
+- Only 2 of 113 workflows have customization data populated
+- Users rely on `docs/TEMPLATE_CUSTOMIZATION.md` manual guide
+
+#### Proposed Solution
+
+##### 7.1 Populate Customization Data
+
+Add customization entries to all workflows in `workflow-metadata.yaml`:
+
+```yaml
+ci-nodejs:
+  # ... existing fields
+  customization:
+    - name: node-version
+      type: matrix
+      path: jobs.build.strategy.matrix.node-version
+      default: [18, 20, 22]
+      description: Node.js versions to test against
+      options: [16, 18, 20, 22, 23]
+    - name: package-manager
+      type: enum
+      path: jobs.build.steps[1].run
+      default: npm
+      description: Package manager to use
+      options: [npm, yarn, pnpm, bun]
+    - name: os
+      type: matrix
+      path: jobs.build.strategy.matrix.os
+      default: [ubuntu-latest]
+      description: Operating systems for CI matrix
+```
+
+##### 7.2 Customization Assistant
+
+Add to skill:
+
+```bash
+/github-setup customize ci-nodejs
+```
+
+Interactive customization:
+1. Load workflow template
+2. Read customization metadata
+3. Ask user about each customizable field
+4. Generate customized workflow
+
+##### 7.3 Batch Customization
+
+For teams applying consistent settings:
+
+```yaml
+# .github-setup/customizations.yaml
+defaults:
+  node-version: [20, 22]
+  os: [ubuntu-latest, windows-latest]
+
+overrides:
+  ci-nodejs:
+    package-manager: pnpm
+```
+
+#### Files to Modify/Create
+
+- `templates/workflows/workflow-metadata.yaml` - Add customization to all entries
+- `templates/commands/github-setup.md` - Add customize command
+- `docs/TEMPLATE_CUSTOMIZATION.md` - Update with metadata-driven approach
+
+---
+
+### 8. Production Readiness Indicators
+
+**Priority:** Medium
+**Effort:** Small
+**Impact:** Builds trust and guides template selection
+
+#### Current State
+
+- README warning states templates are untested
+- No indication of which templates are battle-tested
+- Users can't distinguish experimental from stable
+
+#### Proposed Solution
+
+##### 8.1 Stability Tiers
+
+Add stability field to workflow metadata:
+
+```yaml
+ci-nodejs:
+  # ... existing fields
+  stability: stable  # stable | beta | experimental
+  tested_in_production: true
+  last_verified: "2025-01-15"
+  known_issues: []
+```
+
+##### 8.2 Stability Badges
+
+Display in search results and documentation:
+
+| Badge | Meaning |
+|-------|---------|
+| 🟢 **Stable** | Tested in production, recommended |
+| 🟡 **Beta** | Functional but limited testing |
+| 🟠 **Experimental** | New, may have issues |
+
+##### 8.3 Community Verification
+
+Allow community to report successful production use:
+
+```yaml
+# In workflow-metadata.yaml
+ci-nodejs:
+  community_verified:
+    - repo: "example/production-app"
+      date: "2025-01-20"
+      notes: "Running in CI for 6 months"
+```
+
+#### Files to Modify
+
+- `templates/workflows/workflow-metadata.schema.json` - Add stability fields
+- `templates/workflows/workflow-metadata.yaml` - Populate stability data
+- `README.md` - Update warning with tier explanation
+
+---
+
+### 9. Per-Template Versioning
+
+**Priority:** Low
+**Effort:** Medium
+**Impact:** Enables selective template updates
+
+#### Current State
+
+- All templates share single version (git tag)
+- Updating one template requires new release
+- Users can't pin individual template versions
+
+#### Proposed Solution
+
+##### 9.1 Template Version Manifest
+
+Track individual template versions:
+
+```yaml
+# templates/versions.yaml
+templates:
+  ci-nodejs.yml:
+    version: "2.1.0"
+    last_updated: "2025-01-26"
+    breaking_since: "2.0.0"
+  ci-python.yml:
+    version: "1.5.0"
+    last_updated: "2025-01-20"
+    breaking_since: "1.0.0"
+```
+
+##### 9.2 Version-Aware Fetching
+
+Update skill to support version pinning:
+
+```bash
+/github-setup fetch ci-nodejs@2.0.0
+/github-setup fetch ci-nodejs@latest
+/github-setup fetch ci-nodejs@^2.0.0  # Semver range
+```
+
+##### 9.3 Update Notifications
+
+When fetching templates, notify if newer versions available:
+
+```
+📦 Fetched ci-nodejs.yml v2.0.0
+⚠️  Newer version available: v2.1.0
+   Run `/github-setup changelog ci-nodejs` to see changes
+```
+
+#### Files to Create
+
+- `templates/versions.yaml` - Version manifest
+- `scripts/bump-template-version.sh` - Version management
+- Update `templates/commands/github-setup.md` - Version syntax
+
+---
+
 ## Implementation Roadmap
 
 ### Phase 1: Foundation (1-2 weeks)
@@ -400,30 +667,48 @@ jobs:
 | Template version changelog in metadata | High | Small |
 | Migration guide generator script | Medium | Small |
 | Template feedback issue template | Low | Small |
+| Add stability tiers to metadata schema | Medium | Small |
 
-### Phase 2: Testing (2-4 weeks)
+### Phase 2: Testing & Trust (2-4 weeks)
 
 | Task | Priority | Effort |
 |------|----------|--------|
 | Create minimal test repositories | High | Medium |
 | Template testing workflow | High | Medium |
 | Test result dashboard | Medium | Medium |
+| Populate stability data for tested templates | Medium | Small |
+| Community verification system | Low | Small |
 
-### Phase 3: Discovery (2-3 weeks)
+### Phase 3: Discovery & Migration (2-3 weeks)
 
 | Task | Priority | Effort |
 |------|----------|--------|
 | Static documentation site | Medium | Medium |
 | Search UI implementation | Medium | Medium |
 | Dependency graph visualization | Low | Small |
+| Migration guide: CircleCI | Medium | Medium |
+| Migration guide: GitLab CI | Medium | Medium |
+| Migration guide: Jenkins | Medium | Medium |
+| Migration guide: Travis CI | Low | Small |
 
-### Phase 4: Advanced (4+ weeks)
+### Phase 4: Advanced Features (4+ weeks)
 
 | Task | Priority | Effort |
 |------|----------|--------|
 | Template composition system | Low | Large |
 | Fragment library | Low | Medium |
 | Smart merging | Low | Large |
+| Per-template versioning system | Low | Medium |
+| Version-aware fetching in skill | Low | Medium |
+
+### Phase 5: Customization (Ongoing)
+
+| Task | Priority | Effort |
+|------|----------|--------|
+| Populate customization metadata (batch 1: top 20 workflows) | Low | Medium |
+| Populate customization metadata (batch 2: remaining) | Low | Large |
+| Customization assistant in skill | Low | Medium |
+| Batch customization support | Low | Small |
 
 ---
 
@@ -434,8 +719,25 @@ jobs:
 | Template test coverage | 0% | 80%+ |
 | Documentation completeness | 85% | 95% |
 | Search response time | N/A | <100ms |
-| Migration guide coverage | 0% | 100% |
+| Migration guide coverage | 0% | 100% (5 platforms) |
+| Customization metadata coverage | 2% | 100% |
+| Templates with stability rating | 0% | 100% |
+| Production-verified templates | 0 | 50+ |
 | Community contributions | Low | Active |
+
+---
+
+## Quick Wins (Can Be Done Now)
+
+These improvements can be implemented quickly with minimal effort:
+
+| Task | Effort | Impact |
+|------|--------|--------|
+| Add stability field to schema | 1 hour | Medium |
+| Create template feedback issue template | 30 min | Low |
+| Start first migration guide (CircleCI) | 2-3 hours | Medium |
+| Add `last_verified` dates to top 10 workflows | 1 hour | Medium |
+| Create SHOWCASE.md with example projects | 1 hour | Low |
 
 ---
 
