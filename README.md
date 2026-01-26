@@ -125,7 +125,7 @@ Then use it:
 
 **Category presets:** `docs`, `quality`, `releases`, `issues`, `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`, `aws`, `kubernetes`, `monorepo`, `editor`, `gitignore`, `bots`
 
-> **Note:** The skill fetches templates from a pinned release version (`v0.1.21`) ensuring stability. Features include:
+> **Note:** The skill fetches templates from a pinned release version (`v0.1.29`) ensuring stability. Features include:
 >
 > - **Version pinning** - Templates won't change unexpectedly
 > - **SHA-256 checksums** - Verify template integrity after download
