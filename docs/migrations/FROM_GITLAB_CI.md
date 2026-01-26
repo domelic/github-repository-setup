@@ -473,4 +473,4 @@ jobs:
 ## Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Migrating from GitLab CI/CD](https://docs.github.com/en/actions/migrating-to-github-actions/migrating-from-gitlab-ci-cd-to-github-actions)
+- [Migrating from GitLab CI/CD](https://docs.github.com/en/actions/migrating-to-github-actions/manually-migrating-to-github-actions/migrating-from-gitlab-cicd-to-github-actions)

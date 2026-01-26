@@ -254,7 +254,21 @@
     "Clippy",
     "clippy",
     "FUNCTIONAPP",
-    "LHCI"
+    "LHCI",
+    "isready",
+    "mysqladmin",
+    "ppassword",
+    "mongosh",
+    "rabbitmq",
+    "Rollouts",
+    "pytest",
+    "dorny",
+    "pubspec",
+    "parentbased",
+    "traceidratio",
+    "tracecontext",
+    "Zipkin",
+    "Dynatrace"
   ],
   "ignorePaths": [
     "node_modules/**",

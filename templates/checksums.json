@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.21",
-  "version": "0.1.21",
+  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.20",
+  "version": "0.1.20",
   "algorithm": "sha256",
   "checksums": {
     ".all-contributorsrc": "79661319e74f6adb6475a72b8ffdeeb387f545a775c40a367ae9901577317e17",
@@ -73,6 +73,8 @@
     "otel/otel-collector-config.yaml": "e43c7091110d37b527dbbab31e739e4e49585c854fe498c0e4ed5315d1f5eadc",
     "otel/README.md": "495e62baddb06028b5381712c663d0092a84262006381987b83166c0148fa346",
     "pnpm-workspace.yaml": "079fe7de763feeb0e9a2b2cb70b49a37f4bc615f8b82d7baedd7c20ea2fa41b6",
+    "presets.schema.json": "35627f1d4127a08776e0e43771737758f4f46b84e8e55ad578f5032f2c120566",
+    "presets.yaml": "6317107821ee943cf0be22dd45f488543c0859b221cea778120414a5696f74a3",
     "PULL_REQUEST_TEMPLATE.md": "5cdfdb8203589c9ad4db68778bbf4dcd7f0aaf878a3a31922ff933748681a868",
     "pyproject.toml": "3c570b18b5faa9f5aea448f42103161d7746335e03f982e57a6099ddc6ccf1b2",
     "README.md": "eeea07d0c328a81746f936af2aa266e4d6386458a1c4aa4e4cbfd6a802667dd7",
@@ -90,6 +92,8 @@
     "serena/memories/REVISION_DECISIONS.template.md": "7884ea38cda9bf61a567694d7dbac06627ed9b04978e07996942c9539f0d8f13",
     "serena/memories/STYLE_GUIDE.template.md": "4618e04285e4c15efd86a3c2787fb749ec1ae28dc7809ea7ad10d2b5faa979f5",
     "serena/project.yml": "ba3229e91272330c441bb86838ab9688a798e962d32d2112768eb92970da7995",
+    "template-index.schema.json": "cacc7d97db2fd9f51e560260e5c5932f130c9ff7d26fb777e5bf066b6219175a",
+    "template-index.yaml": "d4cd58ec51656226b3b4faf3806329b9294b02f5342683a6e60da88d23fe9e89",
     "tsconfig.json": "90a30a6c284a076ea953b4262f2a0e71ccf36dc8c1fbbc3d683f991981ec9528",
     "turbo.json": "4e45d00c7fb0b2af7bdc0aecc3d5614b1d2ece1561674c77eb957fe8fc17283f",
     "vitest.config.js": "0b595b9bef8f35230a310dfd79840a741e4bd53b1d3d7efe73f13312283b7a8c",
@@ -188,8 +192,6 @@
     "workflows/publish-rubygems.yml": "00c9c6016042fda78b9f2871275a1ecba5e62b1297e7a3f8b16f23b298aec035",
     "workflows/publish-testflight.yml": "85d3d403246d1c8d98b877676b03869e04abb929fd5cbd73e2174b319450638f",
     "workflows/README.md": "3a3dca6fa5ef301e8fa7455a19f6999e799f8dcb9636e836f3d362a761dabd1e",
-    "workflows/workflow-metadata.schema.json": "1cc4b74e2cfec0e887e9340fc03fa65adfefab3c89d1af888516700c0f8f6260",
-    "workflows/workflow-metadata.yaml": "420f2ce3300ca8f7aaa6bd2e7cf2523dc6e27ccefe9f2a7f98b94c9c22195c9e",
     "workflows/release-drafter.yml": "2cc002a694befdd86e0750d45bbe3347c1449471e8ce6d16d1eb53a6b118e765",
     "workflows/release-firmware.yml": "da1ad59b0ac52aaea1fd0c44994389d6d2f3cefa0d49485c2aa29de7fbb8caf7",
     "workflows/release-manual.yml": "6782c936948ab81d8a7a631049963deefd8e6081f3242f8e594245e76b63e359",
@@ -208,6 +210,8 @@
     "workflows/visual-regression-backstop.yml": "ec1d47ef44f15d1e7f6880c02bd896c2cf8c8025c57ba871f3186106feac0678",
     "workflows/visual-regression-chromatic.yml": "6fdccbaec8ec333949610a6d4bf6f401d58ce4a766d17facff085e475c9273f4",
     "workflows/visual-regression-percy.yml": "3063dbc929e2e8d79c43470501988de5a082576ec8f314e6d8a5543c25ecc2de",
-    "workflows/welcome.yml": "71617352de13b40636e120cfbe5c93ec1bb5b2036df01fd845c0043f70d4c025"
+    "workflows/welcome.yml": "71617352de13b40636e120cfbe5c93ec1bb5b2036df01fd845c0043f70d4c025",
+    "workflows/workflow-metadata.schema.json": "6421acb4bb97249f7a8566dbe93f18850c82089b3e0fb7ef2ac4007b2f2e38c0",
+    "workflows/workflow-metadata.yaml": "420f2ce3300ca8f7aaa6bd2e7cf2523dc6e27ccefe9f2a7f98b94c9c22195c9e"
   }
 }

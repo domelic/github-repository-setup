@@ -41,6 +41,7 @@ jobs:
             --exclude "^https://github.com/serena-ai/serena"
             --exclude "^https://www.zotero.org/settings"
             --exclude "^https://www.contributor-covenant.org"
+            --exclude "^http://localhost"
             "**/*.md"
           fail: true
 

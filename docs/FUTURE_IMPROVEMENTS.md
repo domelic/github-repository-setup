@@ -125,7 +125,7 @@ jobs:
 
 Create a static site (GitHub Pages) with interactive search:
 
-```
+```text
 docs/
 ├── index.html           # Landing page
 ├── search/
@@ -421,7 +421,7 @@ Create migration guides for popular CI/CD platforms:
 
 #### Guide Structure
 
-```markdown
+````markdown
 # Migrating from [Platform] to GitHub Actions
 
 ## Key Concepts Mapping
@@ -451,7 +451,7 @@ Create migration guides for popular CI/CD platforms:
 - [ ] Convert workflow syntax
 - [ ] Test in feature branch
 - [ ] Update branch protection
-```
+````
 
 #### Files to Create
 
@@ -477,7 +477,7 @@ Create migration guides for popular CI/CD platforms:
 
 #### Proposed Solution
 
-##### 7.1 Populate Customization Data
+#### 7.1 Populate Customization Data
 
 Add customization entries to all workflows in `workflow-metadata.yaml`:
 
@@ -504,7 +504,7 @@ ci-nodejs:
       description: Operating systems for CI matrix
 ```
 
-##### 7.2 Customization Assistant
+#### 7.2 Customization Assistant
 
 Add to skill:
 
@@ -518,7 +518,7 @@ Interactive customization:
 3. Ask user about each customizable field
 4. Generate customized workflow
 
-##### 7.3 Batch Customization
+#### 7.3 Batch Customization
 
 For teams applying consistent settings:
 
@@ -644,7 +644,7 @@ Update skill to support version pinning:
 
 When fetching templates, notify if newer versions available:
 
-```
+```text
 📦 Fetched ci-nodejs.yml v2.0.0
 ⚠️  Newer version available: v2.1.0
    Run `/github-setup changelog ci-nodejs` to see changes
