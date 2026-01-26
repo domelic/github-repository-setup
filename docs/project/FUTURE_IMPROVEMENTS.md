@@ -743,7 +743,7 @@ These improvements can be implemented quickly with minimal effort:
 
 ## Related Documents
 
-- [README.md](../README.md) - Project overview
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
+- [README.md](../../README.md) - Project overview
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
 - [TEMPLATE_CUSTOMIZATION.md](../guides/TEMPLATE_CUSTOMIZATION.md) - Current customization guide
 - [WORKFLOW_CHANGELOG.md](../workflows/WORKFLOW_CHANGELOG.md) - Workflow version history

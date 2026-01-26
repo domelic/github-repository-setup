@@ -169,5 +169,5 @@ Additional guides in `docs/`:
 
 - [Secrets Management](../docs/guides/SECRETS_MANAGEMENT.md)
 - [Monorepo Patterns](../docs/architecture/MONOREPO_PATTERNS.md)
-- [Release Drafter](../docs/guides/RELEASE_DRAFTER.md)
+- [Release Drafter](../docs/workflows/RELEASE_DRAFTER.md)
 - [Markdown Lint](../docs/guides/MARKDOWN_LINT.md)
