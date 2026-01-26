@@ -162,3 +162,41 @@ jobs:
 
           # Strict validation for our own workflows
           ./actionlint -color .github/workflows/*.yml
+
+  validate-metadata-schema:
+    name: Validate Metadata Schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate metadata against schema
+        run: npm run test:schema
+
+  validate-metadata-completeness:
+    name: Validate Metadata Completeness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check all workflows have metadata
+        run: npm run test:completeness

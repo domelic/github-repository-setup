@@ -1,0 +1,741 @@
+# Preset Definitions
+# Structured preset configurations for the interactive wizard
+#
+# Each preset defines:
+#   - detection: How to auto-detect if this preset applies
+#   - templates: Files to install with source -> destination mapping
+#   - commonly_paired_with: Presets often used together
+#   - conflicts_with: Presets that shouldn't be used together
+#   - secrets: Required/optional secrets for the preset
+
+$schema: "./presets.schema.json"
+version: "1.0.0"
+generated: "2026-01-26"
+
+# ============================================================================
+# LANGUAGE PRESETS
+# ============================================================================
+
+presets:
+  nodejs:
+    name: Node.js
+    description: Node.js/TypeScript projects with npm/yarn/pnpm
+    category: language
+    detection:
+      files: [package.json]
+      exclude: [pubspec.yaml, Cargo.toml, go.mod]
+    templates:
+      - source: workflows/ci-nodejs.yml
+        dest: .github/workflows/ci-nodejs.yml
+      - source: workflows/publish-npm.yml
+        dest: .github/workflows/publish-npm.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-nodejs.json
+        dest: .devcontainer/devcontainer.json
+      - source: .gitignore-nodejs
+        dest: .gitignore
+        merge: true
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+      - source: .prettierrc
+        dest: .prettierrc
+      - source: .eslintrc.json
+        dest: .eslintrc.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets:
+      optional:
+        - name: NPM_TOKEN
+          description: npm automation token for publishing
+          setup_url: https://www.npmjs.com/settings/~/tokens
+
+  python:
+    name: Python
+    description: Python projects with pip/poetry/uv
+    category: language
+    detection:
+      files: [pyproject.toml, requirements.txt, setup.py]
+      exclude: [package.json, Cargo.toml]
+    templates:
+      - source: workflows/ci-python.yml
+        dest: .github/workflows/ci-python.yml
+      - source: workflows/publish-pypi.yml
+        dest: .github/workflows/publish-pypi.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-python.json
+        dest: .devcontainer/devcontainer.json
+      - source: .gitignore-python
+        dest: .gitignore
+        merge: true
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets:
+      optional:
+        - name: PYPI_API_TOKEN
+          description: PyPI API token for publishing
+          setup_url: https://pypi.org/manage/account/
+
+  go:
+    name: Go
+    description: Go projects with modules
+    category: language
+    detection:
+      files: [go.mod]
+      exclude: []
+    templates:
+      - source: workflows/ci-go.yml
+        dest: .github/workflows/ci-go.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-go.json
+        dest: .devcontainer/devcontainer.json
+      - source: .gitignore-go
+        dest: .gitignore
+        merge: true
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets: {}
+
+  rust:
+    name: Rust
+    description: Rust projects with Cargo
+    category: language
+    detection:
+      files: [Cargo.toml]
+      exclude: []
+    templates:
+      - source: workflows/ci-rust.yml
+        dest: .github/workflows/ci-rust.yml
+      - source: workflows/publish-crates.yml
+        dest: .github/workflows/publish-crates.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-rust.json
+        dest: .devcontainer/devcontainer.json
+      - source: .gitignore-rust
+        dest: .gitignore
+        merge: true
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets:
+      optional:
+        - name: CRATES_TOKEN
+          description: crates.io API token for publishing
+          setup_url: https://crates.io/settings/tokens
+
+  java:
+    name: Java
+    description: Java projects with Maven/Gradle
+    category: language
+    detection:
+      files: [pom.xml, build.gradle, build.gradle.kts]
+      exclude: []
+    templates:
+      - source: workflows/ci-java.yml
+        dest: .github/workflows/ci-java.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-java.json
+        dest: .devcontainer/devcontainer.json
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets: {}
+
+  ruby:
+    name: Ruby
+    description: Ruby projects with Bundler
+    category: language
+    detection:
+      files: [Gemfile]
+      exclude: []
+    templates:
+      - source: workflows/ci-ruby.yml
+        dest: .github/workflows/ci-ruby.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-ruby.json
+        dest: .devcontainer/devcontainer.json
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets: {}
+
+  dotnet:
+    name: .NET
+    description: .NET/C# projects
+    category: language
+    detection:
+      files: ["*.csproj", "*.sln", "*.fsproj"]
+      exclude: []
+    templates:
+      - source: workflows/ci-dotnet.yml
+        dest: .github/workflows/ci-dotnet.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .devcontainer/devcontainer-dotnet.json
+        dest: .devcontainer/devcontainer.json
+      - source: .editorconfig
+        dest: .editorconfig
+      - source: .vscode/settings.json
+        dest: .vscode/settings.json
+      - source: .vscode/extensions.json
+        dest: .vscode/extensions.json
+    commonly_paired_with: [quality, security, releases]
+    conflicts_with: []
+    secrets: {}
+
+  flutter:
+    name: Flutter
+    description: Flutter cross-platform apps
+    category: language
+    detection:
+      files: [pubspec.yaml]
+      content_match:
+        pubspec.yaml: "flutter:"
+    templates:
+      - source: workflows/ci-flutter.yml
+        dest: .github/workflows/ci-flutter.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [mobile-publish, releases]
+    conflicts_with: []
+    secrets: {}
+
+  # ============================================================================
+  # MOBILE PRESETS
+  # ============================================================================
+
+  android:
+    name: Android
+    description: Native Android projects
+    category: mobile
+    detection:
+      files: [build.gradle, settings.gradle]
+      content_match:
+        build.gradle: "com.android"
+    templates:
+      - source: workflows/ci-android.yml
+        dest: .github/workflows/ci-android.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [mobile-publish, security]
+    conflicts_with: []
+    secrets: {}
+
+  ios:
+    name: iOS
+    description: Native iOS/Swift projects
+    category: mobile
+    detection:
+      files: ["*.xcodeproj", "*.xcworkspace", Package.swift]
+      exclude: []
+    templates:
+      - source: workflows/ci-ios.yml
+        dest: .github/workflows/ci-ios.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [mobile-publish, security]
+    conflicts_with: []
+    secrets: {}
+
+  react-native:
+    name: React Native
+    description: React Native mobile apps
+    category: mobile
+    detection:
+      files: [package.json]
+      content_match:
+        package.json: "react-native"
+    templates:
+      - source: workflows/ci-react-native.yml
+        dest: .github/workflows/ci-react-native.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [mobile-publish, quality]
+    conflicts_with: []
+    secrets: {}
+
+  # ============================================================================
+  # FEATURE PRESETS
+  # ============================================================================
+
+  quality:
+    name: Quality Checks
+    description: Code quality and linting workflows
+    category: feature
+    detection: null
+    templates:
+      - source: workflows/commitlint.yml
+        dest: .github/workflows/commitlint.yml
+      - source: workflows/spell-check.yml
+        dest: .github/workflows/spell-check.yml
+      - source: workflows/link-checker.yml
+        dest: .github/workflows/link-checker.yml
+      - source: workflows/markdown-lint.yml
+        dest: .github/workflows/markdown-lint.yml
+      - source: workflows/format-check.yml
+        dest: .github/workflows/format-check.yml
+      - source: commitlint.config.js
+        dest: commitlint.config.js
+      - source: .cspell.json
+        dest: .cspell.json
+      - source: .markdownlint.json
+        dest: .markdownlint.json
+    commonly_paired_with: [releases, security]
+    conflicts_with: []
+    secrets: {}
+
+  security:
+    name: Security Scanning
+    description: GitHub-native security scanning (CodeQL, Trivy, Dependency Review)
+    category: feature
+    detection: null
+    templates:
+      - source: workflows/dependency-review.yml
+        dest: .github/workflows/dependency-review.yml
+      - source: workflows/codeql.yml
+        dest: .github/workflows/codeql.yml
+      - source: workflows/trivy.yml
+        dest: .github/workflows/trivy.yml
+      - source: workflows/scorecard.yml
+        dest: .github/workflows/scorecard.yml
+      - source: workflows/sbom.yml
+        dest: .github/workflows/sbom.yml
+    commonly_paired_with: [releases, quality]
+    conflicts_with: []
+    secrets: {}
+
+  releases:
+    name: Automated Releases
+    description: Release Please automated versioning and changelog
+    category: feature
+    detection: null
+    templates:
+      - source: workflows/release-please.yml
+        dest: .github/workflows/release-please.yml
+      - source: release-please-config.json
+        dest: release-please-config.json
+      - source: .release-please-manifest.json
+        dest: .release-please-manifest.json
+    commonly_paired_with: [quality, security]
+    conflicts_with: [release-drafter]
+    secrets: {}
+
+  # ============================================================================
+  # DEPLOYMENT PRESETS
+  # ============================================================================
+
+  deploy-vercel:
+    name: Vercel Deployment
+    description: Deploy to Vercel with preview deployments
+    category: deployment
+    detection: null
+    templates:
+      - source: workflows/deploy-vercel.yml
+        dest: .github/workflows/deploy-vercel.yml
+    commonly_paired_with: [nodejs, quality]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: VERCEL_TOKEN
+          description: Vercel API token
+          setup_url: https://vercel.com/account/tokens
+        - name: VERCEL_ORG_ID
+          description: Vercel organization ID
+        - name: VERCEL_PROJECT_ID
+          description: Vercel project ID
+
+  deploy-netlify:
+    name: Netlify Deployment
+    description: Deploy to Netlify with preview deployments
+    category: deployment
+    detection: null
+    templates:
+      - source: workflows/deploy-netlify.yml
+        dest: .github/workflows/deploy-netlify.yml
+    commonly_paired_with: [nodejs, quality]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: NETLIFY_AUTH_TOKEN
+          description: Netlify personal access token
+          setup_url: https://app.netlify.com/user/applications
+        - name: NETLIFY_SITE_ID
+          description: Netlify site ID
+
+  deploy-aws:
+    name: AWS Deployment
+    description: Deploy to AWS (S3, Lambda)
+    category: deployment
+    detection: null
+    templates:
+      - source: workflows/deploy-aws-s3.yml
+        dest: .github/workflows/deploy-aws-s3.yml
+      - source: workflows/deploy-aws-lambda.yml
+        dest: .github/workflows/deploy-aws-lambda.yml
+    commonly_paired_with: [security]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS access key ID
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS secret access key
+
+  deploy-kubernetes:
+    name: Kubernetes Deployment
+    description: Deploy to Kubernetes clusters
+    category: deployment
+    detection: null
+    templates:
+      - source: workflows/deploy-kubernetes.yml
+        dest: .github/workflows/deploy-kubernetes.yml
+      - source: workflows/publish-docker.yml
+        dest: .github/workflows/publish-docker.yml
+    commonly_paired_with: [security, docker]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: KUBE_CONFIG
+          description: Base64-encoded kubeconfig file
+
+  # ============================================================================
+  # NOTIFICATION PRESETS
+  # ============================================================================
+
+  notifications-slack:
+    name: Slack Notifications
+    description: Post workflow status to Slack
+    category: notifications
+    detection: null
+    templates:
+      - source: workflows/notify-slack.yml
+        dest: .github/workflows/notify-slack.yml
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: SLACK_WEBHOOK_URL
+          description: Slack incoming webhook URL
+          setup_url: https://api.slack.com/messaging/webhooks
+
+  notifications-discord:
+    name: Discord Notifications
+    description: Post workflow status to Discord
+    category: notifications
+    detection: null
+    templates:
+      - source: workflows/notify-discord.yml
+        dest: .github/workflows/notify-discord.yml
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: DISCORD_WEBHOOK_URL
+          description: Discord webhook URL
+
+  notifications-teams:
+    name: Teams Notifications
+    description: Post workflow status to Microsoft Teams
+    category: notifications
+    detection: null
+    templates:
+      - source: workflows/notify-teams.yml
+        dest: .github/workflows/notify-teams.yml
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: TEAMS_WEBHOOK_URL
+          description: Microsoft Teams webhook URL
+
+  # ============================================================================
+  # SPECIALIZED PRESETS
+  # ============================================================================
+
+  godot:
+    name: Godot Engine
+    description: Godot 4.x game development
+    category: game-dev
+    detection:
+      files: [project.godot]
+      exclude: []
+    templates:
+      - source: workflows/ci-godot.yml
+        dest: .github/workflows/ci-godot.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets: {}
+
+  unity:
+    name: Unity Engine
+    description: Unity game development
+    category: game-dev
+    detection:
+      files: [ProjectSettings/ProjectSettings.asset]
+      exclude: []
+    templates:
+      - source: workflows/ci-unity.yml
+        dest: .github/workflows/ci-unity.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets:
+      required:
+        - name: UNITY_LICENSE
+          description: Unity license file content
+        - name: UNITY_EMAIL
+          description: Unity account email
+        - name: UNITY_PASSWORD
+          description: Unity account password
+
+  ml:
+    name: ML/AI
+    description: Machine learning Python projects with GPU support
+    category: specialized
+    detection:
+      files: [pyproject.toml, requirements.txt]
+      content_match:
+        requirements.txt: "torch|tensorflow|jax|sklearn"
+    templates:
+      - source: workflows/ci-ml-python.yml
+        dest: .github/workflows/ci-ml-python.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [releases, observability]
+    conflicts_with: []
+    secrets: {}
+
+  embedded:
+    name: Embedded/IoT
+    description: PlatformIO embedded development
+    category: specialized
+    detection:
+      files: [platformio.ini]
+      exclude: []
+    templates:
+      - source: workflows/ci-platformio.yml
+        dest: .github/workflows/ci-platformio.yml
+      - source: workflows/release-firmware.yml
+        dest: .github/workflows/release-firmware.yml
+      - source: dependabot.yml
+        dest: .github/dependabot.yml
+      - source: .editorconfig
+        dest: .editorconfig
+    commonly_paired_with: [releases]
+    conflicts_with: []
+    secrets: {}
+
+  cli-tool:
+    name: CLI Distribution
+    description: Cross-platform CLI binary publishing
+    category: specialized
+    detection: null
+    templates:
+      - source: workflows/publish-cli-binaries.yml
+        dest: .github/workflows/publish-cli-binaries.yml
+    commonly_paired_with: [go, rust, releases]
+    conflicts_with: []
+    secrets: {}
+
+  web3:
+    name: Web3/Blockchain
+    description: Ethereum smart contract development
+    category: specialized
+    detection:
+      files: [hardhat.config.js, hardhat.config.ts, foundry.toml]
+      exclude: []
+    templates:
+      - source: workflows/ci-hardhat.yml
+        dest: .github/workflows/ci-hardhat.yml
+        condition: "hardhat.config"
+      - source: workflows/ci-foundry.yml
+        dest: .github/workflows/ci-foundry.yml
+        condition: "foundry.toml"
+      - source: workflows/deploy-contract.yml
+        dest: .github/workflows/deploy-contract.yml
+      - source: .gitignore-solidity
+        dest: .gitignore
+        merge: true
+    commonly_paired_with: [security]
+    conflicts_with: []
+    secrets:
+      optional:
+        - name: DEPLOYER_PRIVATE_KEY
+          description: Deployment wallet private key
+        - name: ETHERSCAN_API_KEY
+          description: Etherscan API key for verification
+
+# ============================================================================
+# PROJECT TYPE DETECTION RULES
+# ============================================================================
+
+detection_priority:
+  # Order matters - first match wins for ambiguous cases
+  - flutter      # Check before nodejs (both have package.json-like files)
+  - react-native # Check before nodejs (has package.json)
+  - expo         # Check before react-native
+  - nodejs
+  - python
+  - go
+  - rust
+  - java
+  - ruby
+  - dotnet
+  - godot
+  - unity
+  - embedded
+  - web3
+
+# ============================================================================
+# WIZARD CONFIGURATION
+# ============================================================================
+
+wizard:
+  essential_questions:
+    - id: confirm_language
+      question: "Detected {detected_type} project. Is this correct?"
+      type: confirm
+      options: ["Yes", "Choose different"]
+
+    - id: releases
+      question: "Do you need automated releases?"
+      type: single
+      options:
+        - label: "Release Please (Recommended)"
+          value: releases
+          description: "Conventional commits → automatic versioning & changelog"
+        - label: "Release Drafter"
+          value: release-drafter
+          description: "Draft releases from PR labels"
+        - label: "No automated releases"
+          value: null
+
+    - id: deployment
+      question: "Which deployment platform?"
+      type: single
+      options:
+        - label: "Vercel"
+          value: deploy-vercel
+        - label: "Netlify"
+          value: deploy-netlify
+        - label: "AWS"
+          value: deploy-aws
+        - label: "Kubernetes"
+          value: deploy-kubernetes
+        - label: "None"
+          value: null
+
+    - id: security
+      question: "Enable security scanning?"
+      type: single
+      options:
+        - label: "Basic (CodeQL, Dependency Review)"
+          value: security
+        - label: "Comprehensive (+ Snyk, DAST)"
+          value: security-comprehensive
+        - label: "None"
+          value: null
+
+  tier2_questions:
+    - id: notifications
+      question: "Add notification integrations?"
+      type: single
+      options:
+        - label: "Slack"
+          value: notifications-slack
+        - label: "Discord"
+          value: notifications-discord
+        - label: "Teams"
+          value: notifications-teams
+        - label: "None"
+          value: null
+
+    - id: observability
+      question: "Add observability?"
+      type: single
+      options:
+        - label: "Sentry"
+          value: sentry
+        - label: "Datadog"
+          value: datadog
+        - label: "Both"
+          value: observability
+        - label: "None"
+          value: null
+
+    - id: quality_extras
+      question: "Add quality checks?"
+      type: multi
+      options:
+        - label: "E2E testing (Playwright)"
+          value: e2e-playwright
+        - label: "Visual regression"
+          value: visual-regression
+        - label: "Load testing (k6)"
+          value: loadtest
+
+    - id: docs
+      question: "Add documentation workflows?"
+      type: single
+      options:
+        - label: "API docs (TypeDoc/OpenAPI)"
+          value: api-docs
+        - label: "Storybook"
+          value: storybook
+        - label: "GitHub Pages"
+          value: github-pages
+        - label: "None"
+          value: null

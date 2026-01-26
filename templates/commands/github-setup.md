@@ -134,6 +134,127 @@ A: See the [Workflow Diagrams](https://github.com/domelic/github-repository-setu
 
 ---
 
+## Interactive Mode (`/github-setup`)
+
+When invoked without arguments, the skill conducts an **adaptive** interactive setup.
+
+### Step 1: Project Detection
+
+Scan the current directory for these files to auto-detect project type:
+
+| Files Present | Detected Type | Suggested Preset |
+|---------------|---------------|------------------|
+| `package.json` | Node.js | `nodejs` |
+| `package.json` + `react-native` in deps | React Native | `react-native` |
+| `package.json` + `expo` in deps | Expo | `react-native` |
+| `pyproject.toml`, `requirements.txt` | Python | `python` |
+| `go.mod` | Go | `go` |
+| `Cargo.toml` | Rust | `rust` |
+| `pom.xml`, `build.gradle` | Java | `java` |
+| `Gemfile` | Ruby | `ruby` |
+| `*.csproj`, `*.sln` | .NET | `dotnet` |
+| `pubspec.yaml` + `flutter:` | Flutter | `flutter` |
+| `project.godot` | Godot | `godot` |
+| `ProjectSettings/ProjectSettings.asset` | Unity | `unity` |
+| `platformio.ini` | PlatformIO | `embedded` |
+| `hardhat.config.js`, `foundry.toml` | Web3 | `web3` |
+
+### Step 2: Essential Questions (Always Asked)
+
+Use the `AskUserQuestion` tool to ask these core questions:
+
+1. **Confirm Detection**
+   - "Detected **{detected_type}** project. Is this correct?"
+   - Options: `Yes` / `Choose different`
+
+2. **Automated Releases**
+   - "Do you need automated releases?"
+   - Options:
+     - `Release Please (Recommended)` - Conventional commits → automatic versioning
+     - `Release Drafter` - Draft releases from PR labels
+     - `No automated releases`
+
+3. **Deployment Platform**
+   - "Which deployment platform?"
+   - Options: `Vercel` / `Netlify` / `AWS` / `Azure` / `GCP` / `Kubernetes` / `None`
+
+4. **Security Scanning**
+   - "Enable security scanning?"
+   - Options:
+     - `Basic` - CodeQL + Dependency Review
+     - `Comprehensive` - Basic + Snyk + Trivy + DAST
+     - `None`
+
+### Step 3: Adaptive Expansion
+
+After essential questions, ask:
+
+**"Would you like to configure additional options?"** `[Yes / No, use defaults]`
+
+If **Yes**, show Tier 2 questions:
+
+5. **Notifications** - "Add notification integrations?"
+   - Options: `Slack` / `Discord` / `Teams` / `None`
+
+6. **Observability** - "Add observability?"
+   - Options: `Sentry` / `Datadog` / `Both` / `None`
+
+7. **Quality Extras** - "Add quality checks?" (multiSelect)
+   - Options: `E2E testing` / `Visual regression` / `Load testing`
+
+8. **Documentation** - "Add documentation workflows?"
+   - Options: `API docs` / `Storybook` / `GitHub Pages` / `None`
+
+### Step 4: Conflict Resolution
+
+Check `presets.yaml` for conflicts between selected presets. Warn if conflicts exist:
+
+| Conflict | Message |
+|----------|---------|
+| `releases` + `release-drafter` | "Release Please conflicts with Release Drafter. Which do you prefer?" |
+
+### Step 5: Summary & Apply
+
+Display a summary before applying:
+
+```
+## Setup Summary
+
+### Language: Node.js
+- ci-nodejs.yml
+- publish-npm.yml
+- .devcontainer/devcontainer.json
+- .gitignore (merged)
+
+### Selected Presets:
+- ✅ Quality Checks (5 workflows)
+- ✅ Security Scanning (4 workflows)
+- ✅ Release Please (3 files)
+- ✅ Vercel Deployment (1 workflow)
+
+### Templates to Install: 15 files
+### Required Secrets:
+- NPM_TOKEN (https://www.npmjs.com/settings/~/tokens)
+- VERCEL_TOKEN (https://vercel.com/account/tokens)
+- VERCEL_ORG_ID
+- VERCEL_PROJECT_ID
+
+Proceed with installation? [Yes / No]
+```
+
+### Preset Data Source
+
+All preset definitions, detection rules, and conflict information are stored in:
+`templates/presets.yaml`
+
+This structured file enables:
+- Project type detection
+- Template → destination mapping
+- Conflict checking between presets
+- Secret requirements listing
+
+---
+
 ## Template Source
 
 **Pinned Version:** `v0.1.21`
@@ -1541,3 +1662,157 @@ Checksums manifest: `templates/checksums.json` (available in v0.1.21+)
 | [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/COMPATIBILITY_MATRIX.md) | Which presets work together, conflicts, and recommended stacks |
 | [Workflow Metadata](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/workflow-metadata.yaml) | Structured data index for all 113 workflows |
 | [Workflow README](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/README.md) | Quick reference tables with triggers, secrets, and complexity |
+| [Template Index](https://github.com/domelic/github-repository-setup/blob/main/templates/template-index.yaml) | Unified index for all templates (configs, devcontainers, gitignores) |
+
+---
+
+## Search (`/github-setup search <query>`)
+
+Search ALL templates (workflows, configs, devcontainers) by tags or keywords.
+
+### Query Syntax
+
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `language:<lang>` | Filter by language | `language:python` |
+| `type:<type>` | Filter by template type | `type:workflow`, `type:devcontainer`, `type:config` |
+| `category:<cat>` | Filter by category (workflows only) | `category:security`, `category:deployment` |
+| `complexity:<level>` | Filter by complexity (workflows only) | `complexity:starter`, `complexity:advanced` |
+| `platform:<platform>` | Filter by platform integration | `platform:aws`, `platform:docker` |
+| `"<text>"` | Text search in names/descriptions | `"bundle size"` |
+
+### Template Types
+
+| Type | Description |
+|------|-------------|
+| `workflow` | GitHub Actions workflow files (`.github/workflows/`) |
+| `config` | Configuration files (`.eslintrc`, `.prettierrc`, `tsconfig.json`, etc.) |
+| `devcontainer` | VS Code devcontainer configurations |
+| `gitignore` | Language-specific `.gitignore` templates |
+| `template` | Documentation templates (`CONTRIBUTING.md`, `SECURITY.md`, etc.) |
+| `hook` | Git hook configurations (pre-commit, lefthook) |
+
+### Example Searches
+
+```bash
+# Find all Python-related templates
+/github-setup search language:python
+
+# Find security workflows
+/github-setup search category:security type:workflow
+
+# Find devcontainer configurations
+/github-setup search type:devcontainer
+
+# Find all Go templates (workflows, devcontainer, gitignore)
+/github-setup search language:go
+
+# Find Docker-related templates
+/github-setup search platform:docker
+
+# Find starter-level workflows
+/github-setup search complexity:starter type:workflow
+
+# Text search for "bundle"
+/github-setup search "bundle"
+
+# Combined filters
+/github-setup search language:nodejs category:ci-testing complexity:starter
+```
+
+### How to Execute Search
+
+When the user runs `/github-setup search <query>`:
+
+1. **Parse the query** into filters:
+   - Extract `key:value` pairs (language, type, category, complexity, platform)
+   - Extract quoted text for name/description search
+   - Unquoted text without `:` is treated as text search
+
+2. **Load template data**:
+   - Fetch `templates/workflow-metadata.yaml` for workflows
+   - Fetch `templates/template-index.yaml` for other templates
+
+3. **Filter templates** matching ALL specified criteria:
+   - For workflows: match against `tags.language`, `category`, `tags.complexity`, `tags.platform`
+   - For other templates: match against `type` and `tags.language`
+   - For text queries: search `name` and `description` fields (case-insensitive)
+
+4. **Display results** grouped by type:
+
+**Workflows:**
+| File | Category | Complexity | Description |
+|------|----------|------------|-------------|
+| ci-python.yml | ci-testing | starter | Python CI with pip/poetry support and matrix testing |
+| publish-pypi.yml | publishing | starter | Publish Python packages to PyPI with trusted publishing |
+
+**Devcontainers:**
+| File | Description |
+|------|-------------|
+| devcontainer-python.json | VS Code devcontainer for Python development with Poetry/pip |
+
+**Configs:**
+| File | Description |
+|------|-------------|
+| pyproject.toml | Python project configuration template |
+
+### Quick Search Hints
+
+Add these hints to relevant sections:
+
+- **Security workflows**: `/github-setup search category:security`
+- **Deployment options**: `/github-setup search category:deployment`
+- **All Node.js templates**: `/github-setup search language:nodejs`
+- **Starter workflows**: `/github-setup search complexity:starter`
+- **Docker publishing**: `/github-setup search platform:docker`
+
+---
+
+## Customizing Templates
+
+After fetching templates, common customizations you might need:
+
+### Auto-Configured Variables
+
+These work automatically without editing:
+
+| Variable | Auto-Fills With |
+|----------|-----------------|
+| `${{ github.repository }}` | `your-org/your-repo` |
+| `${{ secrets.* }}` | Your configured secrets |
+| `${{ vars.* }}` | Your repository variables |
+
+### Common Customizations
+
+#### Node.js CI (`ci-nodejs.yml`)
+
+```yaml
+strategy:
+  matrix:
+    node-version: [18, 20, 22]  # Change versions here
+    os: [ubuntu-latest]         # Add 'macos-latest' for cross-platform
+```
+
+#### Docker Publishing
+
+Set repository variable `DOCKERHUB_REPOSITORY` or edit the workflow:
+```yaml
+env:
+  IMAGE_NAME: your-custom-name  # Override default
+```
+
+#### AWS Deployment
+
+Use repository variables (recommended):
+- `vars.AWS_REGION` - Your AWS region
+- `vars.S3_BUCKET` - Target S3 bucket
+
+Or edit the workflow directly.
+
+### Full Customization Guide
+
+See [docs/TEMPLATE_CUSTOMIZATION.md](https://github.com/domelic/github-repository-setup/blob/main/docs/TEMPLATE_CUSTOMIZATION.md) for:
+- Detailed customization points per workflow
+- Environment-specific configurations
+- Workflow inheritance patterns
+- Troubleshooting common issues

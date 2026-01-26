@@ -9,7 +9,11 @@
     "lint:md:fix": "markdownlint '**/*.md' --ignore-path .markdownlintignore --fix",
     "lint:spell": "cspell '**/*.md' --no-progress",
     "lint:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
-    "prepare": "echo 'Run: pip install pre-commit && pre-commit install' || true"
+    "prepare": "echo 'Run: pip install pre-commit && pre-commit install' || true",
+    "test": "npm run test:schema && npm run test:completeness && npm run test:lint",
+    "test:schema": "ajv validate -s templates/workflows/workflow-metadata.schema.json -d templates/workflows/workflow-metadata.yaml --spec=draft2020 --strict=false",
+    "test:completeness": "node scripts/check-metadata-completeness.js",
+    "test:lint": "actionlint .github/workflows/*.yml || echo 'Note: Install actionlint for local validation'"
   },
   "repository": {
     "type": "git",
@@ -34,8 +38,11 @@
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
+    "ajv-cli": "^5.0.0",
+    "ajv-formats": "^3.0.1",
     "cspell": "^8.17.3",
-    "markdownlint-cli": "^0.47.0"
+    "markdownlint-cli": "^0.47.0",
+    "yaml": "^2.7.0"
   },
   "engines": {
     "node": ">=18.0.0"

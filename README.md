@@ -103,19 +103,29 @@ curl -o .claude/commands/github-setup.md \
 Then use it:
 
 ```bash
-/github-setup                    # Full setup wizard (auto-detects project type)
+/github-setup                    # Interactive wizard (auto-detects project type)
 /github-setup checklist          # Audit what's missing
+/github-setup search <query>     # Search templates by tags/keywords
 /github-setup docs               # Documentation files
 /github-setup protection         # Branch protection + CODEOWNERS
 /github-setup quality            # Linting, spell check, link checker
 /github-setup releases           # Release Please automation
 ```
 
+**Search examples:**
+
+```bash
+/github-setup search language:python           # All Python templates
+/github-setup search category:security         # Security workflows
+/github-setup search type:devcontainer         # Devcontainer configs
+/github-setup search "docker"                  # Text search
+```
+
 **Language presets:** `nodejs`, `python`, `go`, `rust`, `java`, `ruby`, `php`, `dotnet`, `android`, `ios`, `flutter`, `react-native`, `terraform`
 
 **Category presets:** `docs`, `quality`, `releases`, `issues`, `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`, `aws`, `kubernetes`, `monorepo`, `editor`, `gitignore`, `bots`
 
-> **Note:** The skill fetches templates from a pinned release version (`v0.1.20`) ensuring stability. Features include:
+> **Note:** The skill fetches templates from a pinned release version (`v0.1.21`) ensuring stability. Features include:
 >
 > - **Version pinning** - Templates won't change unexpectedly
 > - **SHA-256 checksums** - Verify template integrity after download
@@ -2317,19 +2327,41 @@ show_summary() {
 
 ## 📚 Resources
 
+### External Documentation
+
 - [GitHub Docs](https://docs.github.com)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Release Please](https://github.com/google-github-actions/release-please-action)
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Contributor Covenant](https://www.contributor-covenant.org/)
-- [Serena MCP Documentation](docs/SERENA.md)
-- [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
-- [Obsidian MCP Documentation](docs/OBSIDIAN_MCP.md)
+
+### Project Documentation
+
+- [Templates Directory Guide](templates/README.md)
+- [Template Customization Guide](docs/TEMPLATE_CUSTOMIZATION.md)
+- [Workflow Changelog](docs/WORKFLOW_CHANGELOG.md)
+- [Workflow Diagrams](docs/WORKFLOW_DIAGRAMS.md)
+- [Compatibility Matrix](docs/COMPATIBILITY_MATRIX.md)
 - [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
 - [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
 - [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
 - [Release Drafter Guide](docs/RELEASE_DRAFTER.md)
-- [Templates Directory Guide](templates/README.md)
+
+### MCP Integrations
+
+- [Serena MCP Documentation](docs/SERENA.md)
+- [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
+- [Obsidian MCP Documentation](docs/OBSIDIAN_MCP.md)
+
+### Development
+
+```bash
+# Validate templates locally
+npm install
+npm test                    # Run all validations
+npm run test:schema         # Validate metadata schema
+npm run test:completeness   # Check all workflows have metadata
+```
 
 ---
 

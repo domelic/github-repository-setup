@@ -74,6 +74,47 @@
             "type": "string"
           },
           "description": "Preset configurations that include this workflow"
+        },
+        "customization": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/customizationEntry"
+          },
+          "description": "Customization points for this workflow"
+        }
+      }
+    },
+    "customizationEntry": {
+      "type": "object",
+      "required": ["name", "type", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the customizable variable/setting"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["matrix", "env", "input", "secret", "var"],
+          "description": "Type of customization point"
+        },
+        "path": {
+          "type": "string",
+          "description": "YAML path to the setting (e.g., 'jobs.build.strategy.matrix.node-version')"
+        },
+        "default": {
+          "description": "Default value (can be string, array, or object)"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this setting controls"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Example values"
         }
       }
     },

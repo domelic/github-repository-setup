@@ -1,0 +1,481 @@
+# Unified Template Index
+# Index of ALL templates (workflows, configs, devcontainers, gitignores)
+# Used for search functionality in the /github-setup skill
+#
+# Search queries:
+#   - `language:python` - Filter by language
+#   - `type:workflow` - Filter by template type
+#   - `category:security` - Filter by category (workflows only)
+#   - `"bundle size"` - Text search in names/descriptions
+
+$schema: "./template-index.schema.json"
+version: "1.0.0"
+generated: "2026-01-26"
+
+# Template types:
+#   - workflow: GitHub Actions workflow files
+#   - config: Configuration files (.eslintrc, .prettierrc, etc.)
+#   - devcontainer: VS Code devcontainer configurations
+#   - gitignore: Language-specific .gitignore templates
+#   - template: Documentation/project templates
+#   - hook: Git hook configurations
+
+templates:
+  # ============================================================================
+  # DEVCONTAINER TEMPLATES
+  # ============================================================================
+
+  .devcontainer/devcontainer.json:
+    type: devcontainer
+    name: Generic Devcontainer
+    description: Base VS Code devcontainer configuration
+    tags:
+      language: [any]
+
+  .devcontainer/devcontainer-nodejs.json:
+    type: devcontainer
+    name: Node.js Devcontainer
+    description: VS Code devcontainer for Node.js/TypeScript development
+    tags:
+      language: [nodejs]
+
+  .devcontainer/devcontainer-python.json:
+    type: devcontainer
+    name: Python Devcontainer
+    description: VS Code devcontainer for Python development with Poetry/pip
+    tags:
+      language: [python]
+
+  .devcontainer/devcontainer-go.json:
+    type: devcontainer
+    name: Go Devcontainer
+    description: VS Code devcontainer for Go development
+    tags:
+      language: [go]
+
+  .devcontainer/devcontainer-rust.json:
+    type: devcontainer
+    name: Rust Devcontainer
+    description: VS Code devcontainer for Rust development with Cargo
+    tags:
+      language: [rust]
+
+  .devcontainer/devcontainer-java.json:
+    type: devcontainer
+    name: Java Devcontainer
+    description: VS Code devcontainer for Java development with Maven/Gradle
+    tags:
+      language: [java]
+
+  .devcontainer/devcontainer-dotnet.json:
+    type: devcontainer
+    name: .NET Devcontainer
+    description: VS Code devcontainer for .NET/C# development
+    tags:
+      language: [dotnet]
+
+  .devcontainer/devcontainer-ruby.json:
+    type: devcontainer
+    name: Ruby Devcontainer
+    description: VS Code devcontainer for Ruby development with Bundler
+    tags:
+      language: [ruby]
+
+  .devcontainer/devcontainer-php.json:
+    type: devcontainer
+    name: PHP Devcontainer
+    description: VS Code devcontainer for PHP development with Composer
+    tags:
+      language: [php]
+
+  # ============================================================================
+  # GITIGNORE TEMPLATES
+  # ============================================================================
+
+  .gitignore-nodejs:
+    type: gitignore
+    name: Node.js .gitignore
+    description: Gitignore for Node.js projects (node_modules, dist, etc.)
+    tags:
+      language: [nodejs]
+
+  .gitignore-python:
+    type: gitignore
+    name: Python .gitignore
+    description: Gitignore for Python projects (__pycache__, venv, etc.)
+    tags:
+      language: [python]
+
+  .gitignore-go:
+    type: gitignore
+    name: Go .gitignore
+    description: Gitignore for Go projects (binaries, vendor, etc.)
+    tags:
+      language: [go]
+
+  .gitignore-rust:
+    type: gitignore
+    name: Rust .gitignore
+    description: Gitignore for Rust projects (target, Cargo.lock for libs)
+    tags:
+      language: [rust]
+
+  .gitignore-solidity:
+    type: gitignore
+    name: Solidity .gitignore
+    description: Gitignore for Ethereum/Web3 projects (artifacts, cache)
+    tags:
+      language: [solidity]
+
+  .gitignore-global-macos:
+    type: gitignore
+    name: macOS Global Gitignore
+    description: Global gitignore for macOS users (.DS_Store, etc.)
+    tags:
+      language: [any]
+
+  .gitignore-global-windows:
+    type: gitignore
+    name: Windows Global Gitignore
+    description: Global gitignore for Windows users (Thumbs.db, etc.)
+    tags:
+      language: [any]
+
+  .gitignore-global-jetbrains:
+    type: gitignore
+    name: JetBrains Global Gitignore
+    description: Global gitignore for JetBrains IDEs (.idea, etc.)
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # EDITOR/CONFIG TEMPLATES
+  # ============================================================================
+
+  .editorconfig:
+    type: config
+    name: EditorConfig
+    description: Universal editor configuration for consistent coding styles
+    tags:
+      language: [any]
+
+  .prettierrc:
+    type: config
+    name: Prettier Config
+    description: Prettier code formatter configuration
+    tags:
+      language: [nodejs]
+
+  .eslintrc.json:
+    type: config
+    name: ESLint Config
+    description: ESLint JavaScript/TypeScript linter configuration
+    tags:
+      language: [nodejs]
+
+  .markdownlint.json:
+    type: config
+    name: Markdownlint Config
+    description: Markdown linting rules configuration
+    tags:
+      language: [any]
+
+  .cspell.json:
+    type: config
+    name: cspell Config
+    description: Spell checker configuration with custom dictionaries
+    tags:
+      language: [any]
+
+  biome.json:
+    type: config
+    name: Biome Config
+    description: Biome formatter and linter configuration (Prettier/ESLint alternative)
+    tags:
+      language: [nodejs]
+
+  tsconfig.json:
+    type: config
+    name: TypeScript Config
+    description: TypeScript compiler configuration
+    tags:
+      language: [nodejs]
+
+  jest.config.js:
+    type: config
+    name: Jest Config
+    description: Jest testing framework configuration
+    tags:
+      language: [nodejs]
+
+  vitest.config.js:
+    type: config
+    name: Vitest Config
+    description: Vitest testing framework configuration
+    tags:
+      language: [nodejs]
+
+  commitlint.config.js:
+    type: config
+    name: Commitlint Config
+    description: Conventional commits validation configuration
+    tags:
+      language: [any]
+
+  .lintstagedrc:
+    type: config
+    name: lint-staged Config
+    description: Run linters on staged git files configuration
+    tags:
+      language: [nodejs]
+
+  turbo.json:
+    type: config
+    name: Turborepo Config
+    description: Turborepo monorepo build system configuration
+    tags:
+      language: [nodejs]
+
+  pnpm-workspace.yaml:
+    type: config
+    name: pnpm Workspace
+    description: pnpm monorepo workspace configuration
+    tags:
+      language: [nodejs]
+
+  renovate.json:
+    type: config
+    name: Renovate Config
+    description: Renovate dependency update bot configuration
+    tags:
+      language: [any]
+
+  codecov.yml:
+    type: config
+    name: Codecov Config
+    description: Codecov coverage reporting configuration
+    tags:
+      language: [any]
+
+  .licenseignore:
+    type: config
+    name: License Ignore
+    description: Files to ignore during license scanning
+    tags:
+      language: [any]
+
+  docker-compose.yml:
+    type: config
+    name: Docker Compose
+    description: Docker Compose service orchestration template
+    tags:
+      language: [any]
+
+  .gitattributes:
+    type: config
+    name: Git Attributes
+    description: Git attributes for line endings and diff handling
+    tags:
+      language: [any]
+
+  .env.example:
+    type: config
+    name: Environment Example
+    description: Example environment variables file template
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # VS CODE TEMPLATES
+  # ============================================================================
+
+  .vscode/settings.json:
+    type: config
+    name: VS Code Settings
+    description: VS Code workspace settings for consistent editor behavior
+    tags:
+      language: [any]
+
+  .vscode/extensions.json:
+    type: config
+    name: VS Code Extensions
+    description: Recommended VS Code extensions for the project
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # RELEASE MANAGEMENT TEMPLATES
+  # ============================================================================
+
+  release-please-config.json:
+    type: config
+    name: Release Please Config
+    description: Release Please automated release configuration
+    tags:
+      language: [any]
+
+  .release-please-manifest.json:
+    type: config
+    name: Release Please Manifest
+    description: Release Please version tracking manifest
+    tags:
+      language: [any]
+
+  release-drafter.yml:
+    type: config
+    name: Release Drafter Config
+    description: Release Drafter changelog generation configuration
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # GIT HOOKS TEMPLATES
+  # ============================================================================
+
+  .pre-commit-config.yaml:
+    type: hook
+    name: Pre-commit Config
+    description: Pre-commit hooks framework configuration
+    tags:
+      language: [any]
+
+  lefthook.yml:
+    type: hook
+    name: Lefthook Config
+    description: Lefthook git hooks manager configuration (no Node.js required)
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # DOCUMENTATION TEMPLATES
+  # ============================================================================
+
+  CONTRIBUTING.md:
+    type: template
+    name: Contributing Guide
+    description: Guidelines for contributing to the project
+    tags:
+      language: [any]
+
+  RELEASING.md:
+    type: template
+    name: Release Guide
+    description: Instructions for releasing new versions
+    tags:
+      language: [any]
+
+  SECURITY.md:
+    type: template
+    name: Security Policy
+    description: Security vulnerability reporting guidelines
+    tags:
+      language: [any]
+
+  CLAUDE.md:
+    type: template
+    name: Claude Instructions
+    description: Claude Code AI assistant project instructions
+    tags:
+      language: [any]
+
+  FUNDING.yml:
+    type: template
+    name: GitHub Funding
+    description: GitHub Sponsors and funding configuration
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # GITHUB TEMPLATES
+  # ============================================================================
+
+  ISSUE_TEMPLATE/bug_report.md:
+    type: template
+    name: Bug Report Template
+    description: Issue template for reporting bugs
+    tags:
+      language: [any]
+
+  ISSUE_TEMPLATE/feature_request.md:
+    type: template
+    name: Feature Request Template
+    description: Issue template for requesting features
+    tags:
+      language: [any]
+
+  ISSUE_TEMPLATE/config.yml:
+    type: template
+    name: Issue Template Config
+    description: Issue template chooser configuration
+    tags:
+      language: [any]
+
+  DISCUSSION_TEMPLATE/q-a.yml:
+    type: template
+    name: Q&A Discussion Template
+    description: Discussion template for questions and answers
+    tags:
+      language: [any]
+
+  DISCUSSION_TEMPLATE/ideas.yml:
+    type: template
+    name: Ideas Discussion Template
+    description: Discussion template for feature ideas
+    tags:
+      language: [any]
+
+  .github/copilot-instructions.md:
+    type: template
+    name: Copilot Instructions
+    description: GitHub Copilot repository-specific customization
+    tags:
+      language: [any]
+
+  .github/release.yml:
+    type: config
+    name: GitHub Release Config
+    description: Auto-generated release notes configuration
+    tags:
+      language: [any]
+
+  .all-contributorsrc:
+    type: config
+    name: All Contributors Config
+    description: All Contributors bot configuration
+    tags:
+      language: [any]
+
+  dependabot.yml:
+    type: config
+    name: Dependabot Config
+    description: Dependabot dependency updates configuration
+    tags:
+      language: [any]
+
+  dependabot-full.yml:
+    type: config
+    name: Dependabot Full Config
+    description: Comprehensive Dependabot configuration for multiple ecosystems
+    tags:
+      language: [any]
+
+  # ============================================================================
+  # OPENAPI TEMPLATES
+  # ============================================================================
+
+  openapi/openapi-minimal.yaml:
+    type: template
+    name: OpenAPI Minimal
+    description: Minimal OpenAPI 3.1 specification starter
+    tags:
+      language: [any]
+
+  openapi/openapi-full.yaml:
+    type: template
+    name: OpenAPI Full
+    description: Comprehensive OpenAPI 3.1 specification with examples
+    tags:
+      language: [any]
+
+# Note: Workflow templates are indexed separately in workflow-metadata.yaml
+# This file indexes non-workflow templates for unified search functionality
