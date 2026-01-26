@@ -72,11 +72,11 @@ jobs:
 
             # Prepend to WORKFLOW_CHANGELOG.md
             {
-              head -n 7 docs/WORKFLOW_CHANGELOG.md
+              head -n 7 docs/workflows/WORKFLOW_CHANGELOG.md
               echo "$ENTRY"
-              tail -n +8 docs/WORKFLOW_CHANGELOG.md
-            } > docs/WORKFLOW_CHANGELOG.md.tmp
-            mv docs/WORKFLOW_CHANGELOG.md.tmp docs/WORKFLOW_CHANGELOG.md
+              tail -n +8 docs/workflows/WORKFLOW_CHANGELOG.md
+            } > docs/workflows/WORKFLOW_CHANGELOG.md.tmp
+            mv docs/workflows/WORKFLOW_CHANGELOG.md.tmp docs/workflows/WORKFLOW_CHANGELOG.md
           else
             echo "No workflow changes in this release"
           fi
