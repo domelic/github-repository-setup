@@ -111,11 +111,11 @@ Then use it:
 /github-setup releases           # Release Please automation
 ```
 
-**Language presets:** `nodejs`, `python`, `go`, `rust`, `java`, `ruby`, `php`, `dotnet`
+**Language presets:** `nodejs`, `python`, `go`, `rust`, `java`, `ruby`, `php`, `dotnet`, `android`, `ios`, `flutter`, `react-native`, `terraform`
 
-**Category presets:** `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`
+**Category presets:** `docs`, `quality`, `releases`, `issues`, `ci`, `security`, `deploy`, `testing`, `precommit`, `notifications`, `aws`, `kubernetes`, `monorepo`, `editor`, `gitignore`, `bots`
 
-> **Note:** The skill fetches templates from a pinned release version (`v0.1.13`) ensuring stability. Features include:
+> **Note:** The skill fetches templates from a pinned release version (`v0.1.19`) ensuring stability. Features include:
 >
 > - **Version pinning** - Templates won't change unexpectedly
 > - **SHA-256 checksums** - Verify template integrity after download
@@ -441,6 +441,18 @@ Automatically labels PRs based on conventional commit prefixes in the title:
 
 Also supports path-based labeling via `.github/labeler.yml` configuration.
 
+#### All-Contributors Bot
+
+**Workflow:** [`templates/workflows/all-contributors.yml`](templates/workflows/all-contributors.yml)
+
+Recognizes contributors via issue comments:
+
+```text
+@all-contributors please add @username for code, documentation
+```
+
+Automatically updates README contributor table.
+
 ---
 
 ## ✅ 3. Quality Gates
@@ -577,6 +589,21 @@ ci:
   autoupdate_schedule: monthly
 ```
 
+### Format Check
+
+Validates code formatting across multiple languages.
+
+**Workflow:** [`templates/workflows/format-check.yml`](templates/workflows/format-check.yml)
+
+| Language | Formatter |
+|----------|-----------|
+| Node.js | Prettier |
+| Python | Black + isort |
+| Go | gofmt |
+| Rust | rustfmt |
+
+Auto-detects project language and runs appropriate formatter checks.
+
 ### Super-Linter (All-in-One)
 
 **Workflow:** [`templates/workflows/super-linter.yml`](templates/workflows/super-linter.yml)
@@ -684,6 +711,34 @@ git push origin v1.0.0
 # Release created automatically
 ```
 
+### Release Drafter (Alternative)
+
+For teams that prefer manual release publishing with automated draft generation.
+
+**Workflow:** [`templates/workflows/release-drafter.yml`](templates/workflows/release-drafter.yml)
+**Config:** [`templates/release-drafter.yml`](templates/release-drafter.yml)
+**Full Guide:** [docs/RELEASE_DRAFTER.md](docs/RELEASE_DRAFTER.md)
+
+**How it works:**
+
+```text
+PR merged → Draft release updated → Manual publish when ready
+```
+
+| Feature | Release Drafter | Release Please |
+|---------|-----------------|----------------|
+| Release creation | Draft (manual publish) | Auto-publish on merge |
+| Changelog | Aggregates PR titles | Generates from commits |
+| Version bumping | Label-based | Conventional commits |
+| Best for | Human review before release | Fully automated pipelines |
+
+**When to choose Release Drafter:**
+
+- You want to review releases before publishing
+- Your workflow doesn't use conventional commits
+- You prefer label-based categorization
+- You need manual control over release timing
+
 ---
 
 ## 🔨 5. CI Workflows
@@ -697,6 +752,22 @@ git push origin v1.0.0
 - Updates GitHub Actions weekly
 - Groups updates into single PR
 - Uses conventional commit format
+
+#### Coverage Reporting
+
+**Workflow:** [`templates/workflows/coverage.yml`](templates/workflows/coverage.yml)
+
+| Feature | Details |
+|---------|---------|
+| Languages | Node.js, Python, Go, Rust (auto-detected) |
+| Upload | Codecov integration |
+| Trigger | Push to main, pull requests |
+
+Features:
+
+- Auto-detects project language from manifest files
+- Runs language-appropriate test commands with coverage
+- Uploads results to Codecov
 
 #### Build/Test Workflow
 
@@ -805,6 +876,97 @@ All language-specific CI workflows include:
 - **Matrix testing** — Test across multiple language versions
 - **Fail-fast disabled** — All matrix jobs complete
 - **Caching** — Package manager caches for speed
+
+### Mobile & Infrastructure CI
+
+CI workflows for mobile platforms and infrastructure-as-code.
+
+#### Android CI
+
+**Workflow:** [`templates/workflows/ci-android.yml`](templates/workflows/ci-android.yml)
+
+| Feature | Details |
+|---------|---------|
+| JDK version | 17 (Temurin) |
+| Build tool | Gradle with caching |
+| Testing | Unit tests + emulator instrumented tests |
+| Artifacts | Debug APK + test results |
+
+Features:
+
+- Lint checking with Android Lint
+- Matrix builds for multiple API levels
+- Optional emulator tests with reactivecircus/android-emulator-runner
+
+#### iOS CI
+
+**Workflow:** [`templates/workflows/ci-ios.yml`](templates/workflows/ci-ios.yml)
+
+| Feature | Details |
+|---------|---------|
+| Runner | macOS 14 (Sonoma) |
+| Xcode | 15.2+ |
+| Testing | Simulator-based unit and UI tests |
+| Caching | Swift Package Manager |
+
+Features:
+
+- Matrix builds for multiple iOS versions
+- SwiftLint integration (optional)
+- Code coverage with xcresultparser
+- Test result reporting
+
+#### Flutter CI
+
+**Workflow:** [`templates/workflows/ci-flutter.yml`](templates/workflows/ci-flutter.yml)
+
+| Feature | Details |
+|---------|---------|
+| Flutter version | 3.24.0 (stable) |
+| Analysis | flutter analyze |
+| Testing | Unit + widget tests with coverage |
+| Builds | Android APK, iOS (optional), Web |
+
+Features:
+
+- Dart format verification
+- Code coverage with Codecov
+- Multi-platform builds in parallel
+
+#### React Native CI
+
+**Workflow:** [`templates/workflows/ci-react-native.yml`](templates/workflows/ci-react-native.yml)
+
+| Feature | Details |
+|---------|---------|
+| Node.js | 20.x |
+| Testing | Jest with coverage |
+| Builds | Android APK, iOS (macOS runner) |
+| Caching | npm + Gradle + CocoaPods |
+
+Features:
+
+- TypeScript type checking
+- Supports Expo and bare React Native
+- Optional Detox E2E testing
+
+#### Terraform CI
+
+**Workflow:** [`templates/workflows/ci-terraform.yml`](templates/workflows/ci-terraform.yml)
+
+| Feature | Details |
+|---------|---------|
+| Terraform version | 1.9.x |
+| Validation | fmt, validate, tfsec |
+| Planning | PR plan comments |
+| Authentication | AWS OIDC (recommended) |
+
+Features:
+
+- Format checking with `terraform fmt`
+- Security scanning with tfsec
+- Plan output as PR comment
+- State locking support
 
 ### E2E Testing
 
@@ -991,6 +1153,18 @@ Software Bill of Materials generation:
 - CycloneDX format
 - Automatic attachment to releases
 - Optional Grype vulnerability scanning
+
+### Dependency Review
+
+**Workflow:** [`templates/workflows/dependency-review.yml`](templates/workflows/dependency-review.yml)
+
+GitHub's native dependency review for pull requests:
+
+- Blocks PRs with high/critical vulnerabilities
+- Comments vulnerability summary on PR
+- Optional license compliance checking
+
+Runs automatically on PRs to detect vulnerable dependencies before merge.
 
 ---
 
@@ -2154,6 +2328,8 @@ show_summary() {
 - [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
 - [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
 - [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
+- [Release Drafter Guide](docs/RELEASE_DRAFTER.md)
+- [Templates Directory Guide](templates/README.md)
 
 ---
 

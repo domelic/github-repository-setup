@@ -59,5 +59,5 @@ Closes #
 **By submitting this PR, I confirm that:**
 
 - [ ] I have read and followed the [Contributing Guidelines](../CONTRIBUTING.md)
-- [ ] My commits follow the [Conventional Commits](https://conventionalcommits.org/) specification
+- [ ] My commits follow the [Conventional Commits](https://www.conventionalcommits.org/) specification
 - [ ] I have tested my changes locally

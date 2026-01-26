@@ -1,0 +1,192 @@
+# Maven Central Publishing
+# Publishes Java/Kotlin packages to Maven Central via Sonatype OSSRH.
+#
+# Prerequisites:
+# 1. Create Sonatype JIRA account
+# 2. Claim your namespace (group ID)
+# 3. Generate GPG key for signing
+# 4. Set up repository secrets
+#
+# Required secrets:
+#   OSSRH_USERNAME     - Sonatype OSSRH username
+#   OSSRH_TOKEN        - Sonatype OSSRH token/password
+#   GPG_PRIVATE_KEY    - GPG private key (armor format)
+#   GPG_PASSPHRASE     - GPG key passphrase
+#
+# Build tools supported:
+# - Maven (default)
+# - Gradle (alternative configuration included)
+#
+# Documentation:
+# - https://central.sonatype.org/publish/publish-guide/
+# - https://docs.github.com/actions/publishing-packages/publishing-java-packages-with-maven
+
+name: Publish to Maven Central
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (without 'v' prefix)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "17"
+  JAVA_DISTRIBUTION: "temurin"
+
+jobs:
+  publish-maven:
+    name: Publish (Maven)
+    runs-on: ubuntu-latest
+    # Only run if using Maven (has pom.xml)
+    # if: hashFiles('pom.xml') != ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify POM version
+        run: |
+          POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "POM version: $POM_VERSION"
+          echo "Release version: ${{ steps.version.outputs.version }}"
+
+          # Remove -SNAPSHOT suffix for comparison if needed
+          CLEAN_POM_VERSION="${POM_VERSION%-SNAPSHOT}"
+
+          if [ "$CLEAN_POM_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::warning::POM version ($POM_VERSION) may not match release (${{ steps.version.outputs.version }})"
+          fi
+
+      - name: Build and test
+        run: mvn -B verify --file pom.xml
+
+      - name: Publish to Maven Central
+        run: |
+          mvn -B deploy \
+            -DskipTests \
+            -Prelease \
+            --file pom.xml
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Summary
+        run: |
+          echo "## Maven Central Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Group ID:** $(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact ID:** $(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_STEP_SUMMARY
+
+  # Alternative: Gradle publishing
+  publish-gradle:
+    name: Publish (Gradle)
+    runs-on: ubuntu-latest
+    if: false # Enable and disable Maven job if using Gradle
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          echo "GPG key imported"
+
+      - name: Build and test
+        run: ./gradlew build
+
+      - name: Publish to Maven Central
+        run: |
+          ./gradlew publish \
+            -Pversion=${{ steps.version.outputs.version }} \
+            -PossrhUsername=${{ secrets.OSSRH_USERNAME }} \
+            -PossrhPassword=${{ secrets.OSSRH_TOKEN }} \
+            -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_ID }} \
+            -Psigning.gnupg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+
+      # If using Sonatype Central Portal (newer)
+      # - name: Close and release on Sonatype
+      #   run: ./gradlew closeAndReleaseSonatypeStagingRepository
+
+  # Optional: Publish to GitHub Packages
+  publish-github:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    if: false # Enable if also publishing to GitHub Packages
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Publish to GitHub Packages
+        run: mvn -B deploy -DskipTests -Pgithub
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

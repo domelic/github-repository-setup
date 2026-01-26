@@ -1,0 +1,264 @@
+# Elixir CI Workflow
+# Builds and tests Elixir/Phoenix projects.
+#
+# Features:
+# - Multiple Elixir/OTP version matrix
+# - Mix dependency caching
+# - Dialyzer static analysis with PLT caching
+# - ExCoveralls code coverage
+# - Credo linting
+# - Phoenix framework support
+#
+# Documentation:
+# - https://elixir-lang.org/docs.html
+# - https://hexdocs.pm/phoenix/overview.html
+
+name: Elixir CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.ex"
+      - "**.exs"
+      - "mix.exs"
+      - "mix.lock"
+      - "config/**"
+      - ".github/workflows/ci-elixir.yml"
+  pull_request:
+    paths:
+      - "**.ex"
+      - "**.exs"
+      - "mix.exs"
+      - "mix.lock"
+      - "config/**"
+      - ".github/workflows/ci-elixir.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MIX_ENV: test
+
+jobs:
+  build:
+    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: "1.16"
+            otp: "26"
+          - elixir: "1.15"
+            otp: "26"
+          - elixir: "1.15"
+            otp: "25"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ matrix.elixir }}-${{ matrix.otp }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Compile (warnings as errors)
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test
+
+  # Credo static analysis
+  credo:
+    name: Credo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-credo-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-credo-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run Credo
+        run: mix credo --strict
+
+  # Dialyzer static analysis
+  dialyzer:
+    name: Dialyzer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-dialyzer-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-dialyzer-
+
+      # PLT cache - Dialyzer's Persistent Lookup Table
+      - name: Cache PLT
+        uses: actions/cache@v4
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-plt-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-plt-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Create PLTs directory
+        run: mkdir -p priv/plts
+
+      - name: Run Dialyzer
+        run: mix dialyzer --format github
+
+  # Code coverage
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-coverage-${{ hashFiles('mix.lock') }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run tests with coverage
+        run: mix coveralls.json
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: cover/excoveralls.json
+          fail_ci_if_error: false
+
+  # Phoenix-specific jobs (optional)
+  phoenix:
+    name: Phoenix
+    runs-on: ubuntu-latest
+    if: false # Enable if using Phoenix
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Setup Node.js (for assets)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: assets/package-lock.json
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-phoenix-${{ hashFiles('mix.lock') }}
+
+      - name: Install dependencies
+        run: |
+          mix deps.get
+          cd assets && npm ci
+
+      - name: Build assets
+        run: mix assets.deploy
+
+      - name: Setup database
+        run: mix ecto.setup
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test
+
+      - name: Run tests
+        run: mix test
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app_test

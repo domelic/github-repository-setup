@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+# Husky Commit-msg Hook
+# https://typicode.github.io/husky/
+#
+# This hook validates commit messages against conventional commits format.
+#
+# Installation:
+#   npm install -D husky @commitlint/cli @commitlint/config-conventional
+#   npx husky init
+#   cp this-file .husky/commit-msg
+#
+# Valid commit formats:
+#   feat: add new feature
+#   fix: resolve bug
+#   docs: update documentation
+#   style: formatting changes
+#   refactor: code restructuring
+#   perf: performance improvements
+#   test: add tests
+#   chore: maintenance tasks
+#   ci: CI/CD changes
+#   build: build system changes
+#   revert: revert previous commit
+#
+# With scope:
+#   feat(auth): add login functionality
+#   fix(api): handle edge case
+#
+# Breaking change:
+#   feat!: change API interface
+#   feat(api)!: remove deprecated endpoint
+
+# Exit on error
+set -e
+
+# Run commitlint (if installed)
+if command -v npx >/dev/null 2>&1; then
+  npx --no -- commitlint --edit "${1}"
+fi

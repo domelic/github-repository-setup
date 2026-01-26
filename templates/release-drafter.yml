@@ -1,0 +1,192 @@
+# Release Drafter Configuration
+# Place this file at: .github/release-drafter.yml
+#
+# This configuration controls how release notes are automatically
+# generated from merged pull requests.
+#
+# Documentation: https://github.com/release-drafter/release-drafter
+
+# Template for the release name
+name-template: "v$RESOLVED_VERSION"
+
+# Template for the git tag
+tag-template: "v$RESOLVED_VERSION"
+
+# Categories for grouping changes in release notes
+# PRs are categorized based on their labels
+categories:
+  - title: "Breaking Changes"
+    labels:
+      - "breaking"
+      - "breaking-change"
+    collapse-after: 10
+
+  - title: "New Features"
+    labels:
+      - "feature"
+      - "enhancement"
+      - "feat"
+    collapse-after: 10
+
+  - title: "Bug Fixes"
+    labels:
+      - "bug"
+      - "bugfix"
+      - "fix"
+    collapse-after: 10
+
+  - title: "Performance Improvements"
+    labels:
+      - "performance"
+      - "perf"
+
+  - title: "Documentation"
+    labels:
+      - "documentation"
+      - "docs"
+
+  - title: "Security"
+    labels:
+      - "security"
+
+  - title: "Dependencies"
+    labels:
+      - "dependencies"
+      - "deps"
+    collapse-after: 5
+
+  - title: "CI/CD"
+    labels:
+      - "ci"
+      - "github-actions"
+    collapse-after: 5
+
+  - title: "Other Changes"
+    labels:
+      - "chore"
+      - "refactor"
+      - "style"
+      - "test"
+
+# Exclude certain labels from release notes
+exclude-labels:
+  - "skip-changelog"
+  - "release"
+
+# Exclude contributors (bots)
+exclude-contributors:
+  - "dependabot[bot]"
+  - "renovate[bot]"
+  - "github-actions[bot]"
+
+# Auto-labeling rules based on file paths and PR title
+autolabeler:
+  - label: "documentation"
+    files:
+      - "*.md"
+      - "docs/**/*"
+    branch:
+      - '/docs?\/.+/'
+
+  - label: "bug"
+    title:
+      - '/^fix(\(.+\))?:/i'
+      - '/^bugfix(\(.+\))?:/i'
+
+  - label: "enhancement"
+    title:
+      - '/^feat(\(.+\))?:/i'
+      - '/^feature(\(.+\))?:/i'
+
+  - label: "chore"
+    title:
+      - '/^chore(\(.+\))?:/i'
+
+  - label: "ci"
+    title:
+      - '/^ci(\(.+\))?:/i'
+    files:
+      - ".github/**/*"
+
+  - label: "dependencies"
+    title:
+      - '/^(chore\(deps\)|deps):/i'
+    files:
+      - "package.json"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+      - "requirements*.txt"
+      - "Pipfile*"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "go.mod"
+      - "go.sum"
+      - "Gemfile*"
+      - "composer.json"
+      - "composer.lock"
+
+  - label: "refactor"
+    title:
+      - '/^refactor(\(.+\))?:/i'
+
+  - label: "test"
+    title:
+      - '/^test(\(.+\))?:/i'
+    files:
+      - "**/*test*/**"
+      - "**/*.test.*"
+      - "**/*.spec.*"
+
+  - label: "performance"
+    title:
+      - '/^perf(\(.+\))?:/i'
+
+  - label: "breaking"
+    title:
+      - '/^.+!:/i'
+      - '/BREAKING CHANGE/i'
+
+# Version resolver - determines version bump based on labels
+version-resolver:
+  major:
+    labels:
+      - "breaking"
+      - "breaking-change"
+  minor:
+    labels:
+      - "feature"
+      - "enhancement"
+      - "feat"
+  patch:
+    labels:
+      - "bug"
+      - "bugfix"
+      - "fix"
+      - "documentation"
+      - "chore"
+      - "dependencies"
+      - "ci"
+      - "refactor"
+      - "performance"
+  default: patch
+
+# Template for the release body
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+# Replacers for transforming PR titles
+replacers:
+  # Remove conventional commit prefixes from changelog entries
+  - search: '/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\s*/i'
+    replace: ""

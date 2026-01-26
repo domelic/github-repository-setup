@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/lintstagedrc.json",
+
+  "*.{js,jsx,ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+
+  "*.{json,md,yml,yaml}": [
+    "prettier --write"
+  ],
+
+  "*.css": [
+    "prettier --write"
+  ],
+
+  "*.{scss,sass}": [
+    "prettier --write"
+  ],
+
+  "*.vue": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+
+  "*.svelte": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+
+  "*.py": [
+    "ruff check --fix",
+    "ruff format"
+  ],
+
+  "*.go": [
+    "gofmt -w"
+  ],
+
+  "*.rs": [
+    "rustfmt"
+  ],
+
+  "*.sh": [
+    "shellcheck"
+  ],
+
+  "package.json": [
+    "npx sort-package-json"
+  ]
+}

@@ -1,0 +1,218 @@
+# Kotlin CI Workflow
+# Builds and tests Kotlin/Kotlin Multiplatform projects.
+#
+# Features:
+# - Gradle build with caching
+# - Multiple JDK versions
+# - Kotlin Multiplatform (KMP) support
+# - Android target support (optional)
+# - Code coverage with Kover
+# - Static analysis with Detekt
+#
+# Project types:
+# - JVM (default)
+# - Multiplatform (KMP)
+# - Android library
+#
+# Documentation:
+# - https://kotlinlang.org/docs/home.html
+# - https://kotlinlang.org/docs/multiplatform.html
+
+name: Kotlin CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.kt"
+      - "**.kts"
+      - "gradle/**"
+      - "build.gradle*"
+      - "settings.gradle*"
+      - "gradle.properties"
+      - ".github/workflows/ci-kotlin.yml"
+  pull_request:
+    paths:
+      - "**.kt"
+      - "**.kts"
+      - "gradle/**"
+      - "build.gradle*"
+      - "settings.gradle*"
+      - "gradle.properties"
+      - ".github/workflows/ci-kotlin.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+  JAVA_DISTRIBUTION: "temurin"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew build
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/build/reports/tests/"
+          retention-days: 7
+
+  # Kotlin Multiplatform targets
+  multiplatform:
+    name: Multiplatform
+    runs-on: ${{ matrix.os }}
+    if: false # Enable if using Kotlin Multiplatform
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            tasks: jvmTest linuxX64Test
+
+          - os: macos-latest
+            tasks: macosX64Test macosArm64Test iosSimulatorArm64Test
+
+          - os: windows-latest
+            tasks: mingwX64Test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run multiplatform tests
+        run: ./gradlew ${{ matrix.tasks }}
+
+  # Static analysis with Detekt
+  lint:
+    name: Lint (Detekt)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Detekt
+        run: ./gradlew detekt
+        continue-on-error: true
+
+      - name: Upload Detekt report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-report
+          path: "**/build/reports/detekt/"
+          retention-days: 7
+
+      # Upload SARIF for GitHub Security tab
+      - name: Upload SARIF
+        if: always() && hashFiles('**/build/reports/detekt/*.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: build/reports/detekt/detekt.sarif
+
+  # Code coverage with Kover
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate coverage report
+        run: ./gradlew koverXmlReport
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: "**/build/reports/kover/report.xml"
+          fail_ci_if_error: false
+
+  # Android library build (optional)
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    if: false # Enable if building Android library
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Android
+        run: ./gradlew :android:assembleDebug :android:testDebugUnitTest
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: android/build/outputs/apk/debug/*.apk

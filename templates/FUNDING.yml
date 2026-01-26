@@ -1,0 +1,47 @@
+# GitHub Sponsors / Funding Configuration
+# Place this file at: .github/FUNDING.yml
+#
+# This file enables the "Sponsor" button on your repository.
+# Uncomment and fill in the platforms you use.
+#
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# GitHub Sponsors username(s)
+# github: username
+# github: [username1, username2]
+
+# Patreon username
+# patreon: username
+
+# Open Collective project name
+# open_collective: project-name
+
+# Ko-fi username
+# ko_fi: username
+
+# Tidelift package identifier (platform-name/package-name)
+# tidelift: npm/package-name
+
+# Community Bridge project name (Linux Foundation)
+# community_bridge: project-name
+
+# Liberapay username
+# liberapay: username
+
+# IssueHunt username
+# issuehunt: username
+
+# Otechie username
+# otechie: username
+
+# LFX Crowdfunding project name
+# lfx_crowdfunding: project-name
+
+# Polar username
+# polar: username
+
+# Buy Me a Coffee username
+# buy_me_a_coffee: username
+
+# Custom funding URLs (up to 4)
+# custom: ["https://example.com/donate", "https://paypal.me/username"]

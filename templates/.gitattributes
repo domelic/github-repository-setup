@@ -1,0 +1,246 @@
+# Git Attributes Configuration
+# https://git-scm.com/docs/gitattributes
+#
+# This file controls how Git handles line endings, diff behavior,
+# merge strategies, and binary file detection.
+
+# =============================================================================
+# Line Ending Normalization
+# =============================================================================
+
+# Auto-detect text files and normalize line endings to LF on commit
+* text=auto eol=lf
+
+# =============================================================================
+# Explicit Text Files
+# =============================================================================
+
+# Source code
+*.bash text eol=lf
+*.c text eol=lf
+*.cc text eol=lf
+*.cpp text eol=lf
+*.css text eol=lf
+*.go text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.html text eol=lf
+*.java text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.jsx text eol=lf
+*.kt text eol=lf
+*.lua text eol=lf
+*.md text eol=lf
+*.php text eol=lf
+*.pl text eol=lf
+*.py text eol=lf
+*.rb text eol=lf
+*.rs text eol=lf
+*.scala text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+*.swift text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.xml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Configuration files
+*.cfg text eol=lf
+*.conf text eol=lf
+*.config text eol=lf
+*.editorconfig text eol=lf
+*.env text eol=lf
+*.env.* text eol=lf
+*.gitattributes text eol=lf
+*.gitignore text eol=lf
+*.ini text eol=lf
+*.properties text eol=lf
+*.toml text eol=lf
+
+# Documentation
+*.markdown text eol=lf
+*.mdx text eol=lf
+*.rst text eol=lf
+*.tex text eol=lf
+*.txt text eol=lf
+AUTHORS text eol=lf
+CHANGELOG text eol=lf
+CHANGES text eol=lf
+CONTRIBUTING text eol=lf
+COPYING text eol=lf
+LICENSE text eol=lf
+MAINTAINERS text eol=lf
+NEWS text eol=lf
+README text eol=lf
+TODO text eol=lf
+
+# Build and CI
+Dockerfile text eol=lf
+Makefile text eol=lf
+Rakefile text eol=lf
+Gemfile text eol=lf
+Vagrantfile text eol=lf
+*.cmake text eol=lf
+*.gradle text eol=lf
+*.make text eol=lf
+*.mk text eol=lf
+
+# =============================================================================
+# Windows-Specific (CRLF)
+# =============================================================================
+
+# Windows batch/command files require CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Visual Studio files
+*.sln text eol=crlf
+*.csproj text eol=lf
+*.vbproj text eol=lf
+*.vcxproj text eol=lf
+*.vcproj text eol=lf
+*.dbproj text eol=lf
+*.fsproj text eol=lf
+
+# =============================================================================
+# Binary Files (No Normalization)
+# =============================================================================
+
+# Images
+*.ai binary
+*.bmp binary
+*.eps binary
+*.gif binary
+*.ico binary
+*.jng binary
+*.jp2 binary
+*.jpeg binary
+*.jpg binary
+*.jpx binary
+*.jxr binary
+*.pdf binary
+*.png binary
+*.psb binary
+*.psd binary
+*.svg text eol=lf
+*.svgz binary
+*.tif binary
+*.tiff binary
+*.wbmp binary
+*.webp binary
+
+# Audio
+*.aac binary
+*.flac binary
+*.kar binary
+*.m4a binary
+*.mid binary
+*.midi binary
+*.mp3 binary
+*.ogg binary
+*.opus binary
+*.ra binary
+*.wav binary
+
+# Video
+*.3gp binary
+*.3gpp binary
+*.as binary
+*.asf binary
+*.asx binary
+*.avi binary
+*.fla binary
+*.flv binary
+*.m4v binary
+*.mng binary
+*.mov binary
+*.mp4 binary
+*.mpeg binary
+*.mpg binary
+*.ogv binary
+*.swc binary
+*.swf binary
+*.webm binary
+
+# Fonts
+*.eot binary
+*.otf binary
+*.ttc binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+
+# Archives
+*.7z binary
+*.bz2 binary
+*.gz binary
+*.jar binary
+*.rar binary
+*.tar binary
+*.xz binary
+*.zip binary
+
+# Executables and Libraries
+*.dll binary
+*.dylib binary
+*.exe binary
+*.lib binary
+*.msi binary
+*.o binary
+*.obj binary
+*.pdb binary
+*.pyc binary
+*.pyd binary
+*.pyo binary
+*.so binary
+
+# Other binary files
+*.class binary
+*.db binary
+*.egg binary
+*.lock binary
+*.mo binary
+*.pickle binary
+*.pkl binary
+*.sqlite binary
+*.whl binary
+
+# =============================================================================
+# Diff and Merge Settings
+# =============================================================================
+
+# Use unified diff for these file types
+*.md diff=markdown
+*.mdx diff=markdown
+
+# Treat lock files as generated (no diff in PRs)
+package-lock.json -diff linguist-generated=true
+pnpm-lock.yaml -diff linguist-generated=true
+yarn.lock -diff linguist-generated=true
+Cargo.lock -diff linguist-generated=true
+Gemfile.lock -diff linguist-generated=true
+poetry.lock -diff linguist-generated=true
+composer.lock -diff linguist-generated=true
+go.sum -diff linguist-generated=true
+
+# =============================================================================
+# GitHub Linguist Overrides
+# =============================================================================
+
+# Mark generated files (excluded from language statistics)
+*.min.js linguist-generated=true
+*.min.css linguist-generated=true
+*-lock.json linguist-generated=true
+
+# Mark vendor directories as vendored
+vendor/* linguist-vendored
+node_modules/* linguist-vendored
+third_party/* linguist-vendored
+
+# Mark documentation files
+docs/* linguist-documentation
+*.md linguist-documentation

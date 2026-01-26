@@ -1,0 +1,145 @@
+# Google Cloud Functions Deployment
+# Deploys serverless functions to Cloud Functions (Gen 2).
+#
+# Prerequisites:
+# 1. Enable Cloud Functions API and Cloud Build API
+# 2. Set up Workload Identity Federation (OIDC)
+# 3. Configure required secrets
+#
+# Required secrets:
+#   GCP_PROJECT_ID         - Google Cloud project ID
+#   GCP_WORKLOAD_IDENTITY_PROVIDER - Workload Identity Provider
+#   GCP_SERVICE_ACCOUNT    - Service account email
+#
+# Supported runtimes:
+# - Node.js: nodejs18, nodejs20
+# - Python: python39, python310, python311, python312
+# - Go: go120, go121, go122
+# - Java: java11, java17, java21
+# - .NET: dotnet6, dotnet8
+# - Ruby: ruby32, ruby33
+# - PHP: php82, php83
+#
+# Documentation:
+# - https://cloud.google.com/functions/docs
+# - https://github.com/google-github-actions/deploy-cloud-functions
+
+name: Deploy to Google Cloud Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/**"
+      - ".github/workflows/deploy-gcp-functions.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  FUNCTION_NAME: ${{ vars.FUNCTION_NAME || 'my-function' }}
+  # Configure runtime
+  RUNTIME: nodejs20
+  ENTRY_POINT: main
+  SOURCE_DIR: functions
+
+jobs:
+  deploy:
+    name: Deploy Function
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Deploy using the deploy-cloud-functions action
+      - name: Deploy Function
+        id: deploy
+        uses: google-github-actions/deploy-cloud-functions@v3
+        with:
+          name: ${{ env.FUNCTION_NAME }}
+          runtime: ${{ env.RUNTIME }}
+          region: ${{ env.GCP_REGION }}
+          source_dir: ${{ env.SOURCE_DIR }}
+          entry_point: ${{ env.ENTRY_POINT }}
+          # Gen 2 (Cloud Run based)
+          environment: GEN_2
+          # HTTP trigger (public)
+          https_trigger_security_level: SECURE_OPTIONAL
+          # Memory and timeout
+          memory: 256Mi
+          timeout: 60s
+          # Environment variables
+          # env_vars: |
+          #   NODE_ENV=production
+          #   LOG_LEVEL=info
+          # Secrets from Secret Manager
+          # secrets: |
+          #   API_KEY=projects/${{ env.GCP_PROJECT_ID }}/secrets/api-key:latest
+
+      # Alternative: Deploy using gcloud CLI directly
+      # - name: Deploy using gcloud
+      #   run: |
+      #     gcloud functions deploy ${{ env.FUNCTION_NAME }} \
+      #       --gen2 \
+      #       --runtime=${{ env.RUNTIME }} \
+      #       --region=${{ env.GCP_REGION }} \
+      #       --source=${{ env.SOURCE_DIR }} \
+      #       --entry-point=${{ env.ENTRY_POINT }} \
+      #       --trigger-http \
+      #       --allow-unauthenticated \
+      #       --memory=256Mi \
+      #       --timeout=60s
+
+      - name: Summary
+        run: |
+          echo "## Function Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Function:** ${{ env.FUNCTION_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime:** ${{ env.RUNTIME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region:** ${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+
+  # Optional: Deploy multiple functions
+  # deploy-matrix:
+  #   name: Deploy Functions
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       function:
+  #         - name: function-a
+  #           source: functions/a
+  #           entry: handleA
+  #         - name: function-b
+  #           source: functions/b
+  #           entry: handleB
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: google-github-actions/auth@v2
+  #       with:
+  #         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  #     - uses: google-github-actions/deploy-cloud-functions@v3
+  #       with:
+  #         name: ${{ matrix.function.name }}
+  #         source_dir: ${{ matrix.function.source }}
+  #         entry_point: ${{ matrix.function.entry }}
+  #         runtime: nodejs20
+  #         region: ${{ env.GCP_REGION }}

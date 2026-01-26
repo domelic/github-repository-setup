@@ -104,7 +104,10 @@
     "UDID",
     "udid",
     "GHAS",
-    "Semgrep"
+    "Semgrep",
+    "lefthook",
+    "cloudrun",
+    "rubygems"
   ],
   "ignorePaths": [
     "node_modules/**",

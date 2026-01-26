@@ -1,0 +1,21 @@
+# Serena Project Configuration
+# GitHub Repository Setup - Template & Documentation Repository
+
+name: github-repository-setup
+path: /Users/damiromelic/Projects/github-repository-setup
+
+# This is primarily a documentation/template repository
+# with some Node.js tooling for linting
+programming_languages:
+  - markdown
+  - yaml
+  - javascript
+
+# File encoding
+file_encoding: utf-8
+
+# Exclude patterns for indexing
+exclude_patterns:
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/cache/**"

@@ -1,0 +1,201 @@
+# Swift CI Workflow
+# Builds and tests Swift/SwiftPM projects.
+#
+# Features:
+# - Swift Package Manager support
+# - Multiple Swift versions
+# - macOS and Linux support
+# - Xcode project support (macOS)
+# - iOS/watchOS/tvOS builds (macOS)
+# - Code coverage
+# - SwiftLint integration
+#
+# Documentation:
+# - https://swift.org/documentation/
+# - https://swift.org/getting-started/swiftpm/
+
+name: Swift CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.swift"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".swiftlint.yml"
+      - ".github/workflows/ci-swift.yml"
+  pull_request:
+    paths:
+      - "**.swift"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".swiftlint.yml"
+      - ".github/workflows/ci-swift.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # macOS build (primary)
+  macos:
+    name: macOS / Swift ${{ matrix.swift }}
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        swift: ["5.9", "5.10"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: ${{ matrix.swift }}
+
+      - name: Cache SPM
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ matrix.swift }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-${{ matrix.swift }}-spm-
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Run tests
+        run: swift test --enable-code-coverage
+
+      - name: Generate coverage report
+        run: |
+          xcrun llvm-cov export \
+            .build/debug/*PackageTests.xctest/Contents/MacOS/*PackageTests \
+            -instr-profile .build/debug/codecov/default.profdata \
+            -format lcov > coverage.lcov
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.lcov
+          fail_ci_if_error: false
+
+  # Linux build
+  linux:
+    name: Linux / Swift ${{ matrix.swift }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift: ["5.9", "5.10"]
+
+    container:
+      image: swift:${{ matrix.swift }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Run tests
+        run: swift test
+
+  # SwiftLint
+  lint:
+    name: SwiftLint
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        run: swiftlint lint --reporter github-actions-logging
+
+  # iOS build (optional)
+  ios:
+    name: iOS Build
+    runs-on: macos-14
+    if: false # Enable if building iOS app/framework
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build for iOS
+        run: |
+          xcodebuild build \
+            -scheme YourScheme \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run iOS tests
+        run: |
+          xcodebuild test \
+            -scheme YourScheme \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath TestResults.xcresult
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: TestResults.xcresult
+          retention-days: 7
+
+  # Xcode project build (alternative to SPM)
+  xcode:
+    name: Xcode Build
+    runs-on: macos-14
+    if: false # Enable if using .xcodeproj instead of Package.swift
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+      - name: Install dependencies (CocoaPods)
+        run: |
+          if [ -f "Podfile" ]; then
+            pod install
+          fi
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -workspace YourApp.xcworkspace \
+            -scheme YourScheme \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -workspace YourApp.xcworkspace \
+            -scheme YourScheme \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            CODE_SIGNING_ALLOWED=NO

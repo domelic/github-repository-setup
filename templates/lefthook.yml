@@ -1,0 +1,155 @@
+# Lefthook Configuration
+# https://github.com/evilmartians/lefthook
+#
+# Lefthook is a fast, language-agnostic Git hooks manager.
+# Unlike Husky, it doesn't require Node.js.
+#
+# Installation:
+#   # macOS
+#   brew install lefthook
+#
+#   # npm (if using Node.js)
+#   npm install -D lefthook
+#
+#   # Go
+#   go install github.com/evilmartians/lefthook@latest
+#
+#   # Then initialize
+#   lefthook install
+#
+# Usage:
+#   lefthook run pre-commit  # Run manually
+#   lefthook install         # Install git hooks
+#   lefthook uninstall       # Remove git hooks
+
+# =============================================================================
+# Pre-commit Hook
+# =============================================================================
+
+pre-commit:
+  parallel: true
+  commands:
+    # JavaScript/TypeScript
+    eslint:
+      glob: "*.{js,jsx,ts,tsx,vue,svelte}"
+      run: npx eslint {staged_files} --fix
+      stage_fixed: true
+
+    prettier:
+      glob: "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss}"
+      run: npx prettier --write {staged_files}
+      stage_fixed: true
+
+    # TypeScript type checking
+    typecheck:
+      glob: "*.{ts,tsx}"
+      run: npx tsc --noEmit
+      # Don't fail on type errors in pre-commit (optional)
+      # fail_text: "TypeScript type errors found"
+
+    # Python
+    ruff:
+      glob: "*.py"
+      run: ruff check --fix {staged_files} && ruff format {staged_files}
+      stage_fixed: true
+
+    # Go
+    gofmt:
+      glob: "*.go"
+      run: gofmt -w {staged_files}
+      stage_fixed: true
+
+    golangci:
+      glob: "*.go"
+      run: golangci-lint run --fix
+
+    # Rust
+    rustfmt:
+      glob: "*.rs"
+      run: rustfmt {staged_files}
+      stage_fixed: true
+
+    clippy:
+      glob: "*.rs"
+      run: cargo clippy --fix --allow-dirty --allow-staged
+
+    # Shell
+    shellcheck:
+      glob: "*.sh"
+      run: shellcheck {staged_files}
+
+    # General
+    trailing-whitespace:
+      run: |
+        for file in {staged_files}; do
+          sed -i '' 's/[[:space:]]*$//' "$file" 2>/dev/null || sed -i 's/[[:space:]]*$//' "$file"
+        done
+      stage_fixed: true
+
+# =============================================================================
+# Commit-msg Hook
+# =============================================================================
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --no -- commitlint --edit {1}
+
+    # Alternative: Simple regex check (no dependencies)
+    # conventional-check:
+    #   run: |
+    #     msg=$(cat {1})
+    #     pattern="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?(!)?: .+"
+    #     if ! echo "$msg" | grep -qE "$pattern"; then
+    #       echo "Invalid commit message format"
+    #       echo "Expected: type(scope): description"
+    #       echo "Example: feat(auth): add login functionality"
+    #       exit 1
+    #     fi
+
+# =============================================================================
+# Pre-push Hook
+# =============================================================================
+
+pre-push:
+  parallel: true
+  commands:
+    # Run tests before pushing
+    test:
+      run: npm test -- --watchAll=false --passWithNoTests
+      # Or for other languages:
+      # run: pytest
+      # run: go test ./...
+      # run: cargo test
+
+    # Check for console.log/debugger statements
+    no-debug:
+      glob: "*.{js,jsx,ts,tsx}"
+      run: |
+        if grep -rn "console\.log\|debugger" {staged_files} 2>/dev/null; then
+          echo "Remove console.log/debugger statements before pushing"
+          exit 1
+        fi
+
+# =============================================================================
+# Skip Configuration
+# =============================================================================
+
+# Skip hooks in CI environment
+# skip_in_ci: true
+
+# Skip specific commands
+# skip:
+#   - merge
+#   - rebase
+
+# =============================================================================
+# Remote Configuration (Optional)
+# =============================================================================
+
+# Extend from a remote configuration
+# remotes:
+#   - git_url: https://github.com/org/lefthook-configs
+#     ref: main
+#     configs:
+#       - .lefthook/base.yml

@@ -1,0 +1,155 @@
+# Azure Container Apps Deployment
+# Deploys containerized applications to Azure Container Apps.
+#
+# Azure Container Apps is a serverless container platform for
+# microservices and containerized applications.
+#
+# Prerequisites:
+# 1. Create Azure Container Apps environment
+# 2. Create Azure Container Registry (ACR) or use Docker Hub
+# 3. Configure authentication (OIDC recommended)
+#
+# Required secrets:
+#   AZURE_CLIENT_ID        - Azure AD application (client) ID
+#   AZURE_TENANT_ID        - Azure AD tenant ID
+#   AZURE_SUBSCRIPTION_ID  - Azure subscription ID
+#
+# Required variables:
+#   AZURE_RESOURCE_GROUP   - Resource group name
+#   AZURE_CONTAINER_APP    - Container App name
+#   AZURE_ACR_NAME         - Azure Container Registry name
+#
+# Documentation:
+# - https://learn.microsoft.com/azure/container-apps/
+# - https://github.com/Azure/container-apps-deploy-action
+
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'your-resource-group' }}
+  AZURE_CONTAINER_APP: ${{ vars.AZURE_CONTAINER_APP || 'your-container-app' }}
+  AZURE_ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'youracr' }}
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name ${{ env.AZURE_ACR_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Logout from Azure
+        if: always()
+        run: az logout
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.app-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Container Apps
+        id: deploy
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ env.AZURE_CONTAINER_APP }}
+          imageToDeploy: ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }}
+
+      # Alternative: Deploy using Azure CLI
+      # - name: Deploy using CLI
+      #   run: |
+      #     az containerapp update \
+      #       --name ${{ env.AZURE_CONTAINER_APP }} \
+      #       --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+      #       --image ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }}
+
+      - name: Get app URL
+        id: get-url
+        run: |
+          URL=$(az containerapp show \
+            --name ${{ env.AZURE_CONTAINER_APP }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+          echo "app-url=https://$URL" >> $GITHUB_OUTPUT
+
+      - name: Logout from Azure
+        if: always()
+        run: az logout
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container App:** ${{ env.AZURE_CONTAINER_APP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ steps.get-url.outputs.app-url }}" >> $GITHUB_STEP_SUMMARY

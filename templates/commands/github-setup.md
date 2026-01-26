@@ -14,9 +14,9 @@ Set up GitHub repositories with production-grade automation by fetching template
 
 ## Template Source
 
-**Pinned Version:** `v0.1.18`
+**Pinned Version:** `v0.1.19`
 
-**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.18/templates/`
+**Base URL:** `https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.19/templates/`
 
 All templates are fetched from this pinned release. This ensures stability - templates won't change unexpectedly.
 
@@ -34,7 +34,7 @@ Templates include SHA-256 checksums for integrity verification.
 
 Fetch the checksums file:
 ```bash
-VERSION="v0.1.18"  # Update to match pinned version
+VERSION="v0.1.19"  # Update to match pinned version
 curl -s "https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates/checksums.json"
 ```
 
@@ -44,7 +44,7 @@ After fetching a template, verify its integrity:
 
 ```bash
 # Fetch template
-curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.18/templates/.editorconfig"
+curl -o .editorconfig "https://raw.githubusercontent.com/domelic/github-repository-setup/v0.1.19/templates/.editorconfig"
 
 # Verify checksum (expected: fb56b1f408051f0a09ab65e33be8e7e21e2eeba3bd4f0c4041bc121106d61c71)
 shasum -a 256 .editorconfig
@@ -590,6 +590,133 @@ Plus language-specific template based on detected project type.
 
 ---
 
+## Additional Language Presets
+
+### `/github-setup cpp`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-cpp.yml` | `.github/workflows/ci-cpp.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: CMake, GCC/Clang matrix, sanitizer builds, code coverage.
+
+### `/github-setup kotlin`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-kotlin.yml` | `.github/workflows/ci-kotlin.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Gradle, Detekt linting, Kover coverage, multiplatform support.
+
+### `/github-setup swift`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-swift.yml` | `.github/workflows/ci-swift.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Swift Package Manager, SwiftLint, macOS/Linux, iOS builds.
+
+### `/github-setup scala`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-scala.yml` | `.github/workflows/ci-scala.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: sbt, Scalafmt, Scalafix, scoverage, cross-building.
+
+### `/github-setup elixir`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-elixir.yml` | `.github/workflows/ci-elixir.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Mix, Dialyzer, Credo, ExCoveralls, Phoenix support.
+
+---
+
+## Cloud Platform Presets
+
+### `/github-setup azure`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/deploy-azure-webapp.yml` | `.github/workflows/deploy-azure-webapp.yml` |
+| `workflows/deploy-azure-functions.yml` | `.github/workflows/deploy-azure-functions.yml` |
+| `workflows/deploy-azure-container.yml` | `.github/workflows/deploy-azure-container.yml` |
+
+Features: OIDC authentication, App Service, Functions, Container Apps.
+
+### `/github-setup gcp`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/deploy-gcp-cloudrun.yml` | `.github/workflows/deploy-gcp-cloudrun.yml` |
+| `workflows/deploy-gcp-functions.yml` | `.github/workflows/deploy-gcp-functions.yml` |
+| `workflows/deploy-gcp-gke.yml` | `.github/workflows/deploy-gcp-gke.yml` |
+
+Features: Workload Identity, Cloud Run, Cloud Functions, GKE.
+
+### `/github-setup digitalocean`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/deploy-digitalocean.yml` | `.github/workflows/deploy-digitalocean.yml` |
+
+Features: App Platform deployment, staging/production environments.
+
+---
+
+## Git Hooks Presets
+
+### `/github-setup hooks`
+
+For Node.js projects using Husky + lint-staged:
+
+| Template | Destination |
+|----------|-------------|
+| `.husky/pre-commit` | `.husky/pre-commit` |
+| `.husky/commit-msg` | `.husky/commit-msg` |
+| `.lintstagedrc` | `.lintstagedrc` |
+| `commitlint.config.js` | `commitlint.config.js` |
+
+After installing, run:
+```bash
+npm install -D husky lint-staged @commitlint/cli @commitlint/config-conventional
+npx husky init
+```
+
+### `/github-setup lefthook`
+
+For language-agnostic git hooks (no Node.js required):
+
+| Template | Destination |
+|----------|-------------|
+| `lefthook.yml` | `lefthook.yml` |
+
+After installing, run:
+```bash
+# macOS
+brew install lefthook
+
+# Or with npm
+npm install -D lefthook
+
+# Initialize hooks
+lefthook install
+```
+
+---
+
 ## Full Setup (`/github-setup`)
 
 ### 1. Detect Project Type
@@ -727,7 +854,7 @@ gh api repos/{owner}/{repo} -X PATCH -f has_discussions=true
 ### Using curl
 
 ```bash
-VERSION="v0.1.18"
+VERSION="v0.1.19"
 BASE_URL="https://raw.githubusercontent.com/domelic/github-repository-setup/$VERSION/templates"
 
 # Example: Fetch Node.js CI workflow
@@ -763,4 +890,4 @@ Full documentation: https://github.com/domelic/github-repository-setup
 
 Template directory: https://github.com/domelic/github-repository-setup/tree/main/templates
 
-Checksums manifest: `templates/checksums.json` (available in v0.1.18+)
+Checksums manifest: `templates/checksums.json` (available in v0.1.19+)

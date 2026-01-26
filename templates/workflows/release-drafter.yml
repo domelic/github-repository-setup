@@ -1,0 +1,87 @@
+# Release Drafter Workflow
+# Automatically drafts release notes based on merged pull requests.
+#
+# This workflow:
+# - Updates a draft release whenever PRs are merged to main
+# - Categorizes changes based on PR labels
+# - Auto-labels PRs based on file paths and title patterns
+# - Resolves version numbers based on semver labels
+#
+# Prerequisites:
+# - Create .github/release-drafter.yml config (see templates/release-drafter.yml)
+# - Label your PRs appropriately (or use autolabeler)
+#
+# To publish a release:
+# 1. Review the draft release in GitHub Releases
+# 2. Edit if needed
+# 3. Click "Publish release"
+#
+# Documentation: https://github.com/release-drafter/release-drafter
+
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update-release-draft:
+    name: Draft Release
+    runs-on: ubuntu-latest
+    # Only run on the main repository, not forks
+    if: github.repository == github.event.repository.full_name
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Run Release Drafter
+        uses: release-drafter/release-drafter@v6
+        with:
+          # Path to the config file (default: .github/release-drafter.yml)
+          config-name: release-drafter.yml
+
+          # Disable publishing (keep as draft)
+          # Set to true to auto-publish releases
+          disable-autolabeler: false
+
+          # Disable releaser (only update draft, don't create releases)
+          # disable-releaser: false
+
+          # Prerelease identifier (e.g., "alpha", "beta", "rc")
+          # prerelease: false
+
+          # Filter by commitish (branch or commit SHA)
+          # commitish: main
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Label PRs on open
+  label-pr:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Run Release Drafter (labeler only)
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+          disable-releaser: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

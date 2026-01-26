@@ -1,0 +1,128 @@
+# DigitalOcean App Platform Deployment
+# Deploys applications to DigitalOcean App Platform.
+#
+# DigitalOcean App Platform is a PaaS that builds, deploys, and scales
+# apps automatically from source code or container images.
+#
+# Prerequisites:
+# 1. Create DigitalOcean App Platform application
+# 2. Generate API token with write access
+# 3. Note your App ID from the DigitalOcean dashboard
+#
+# Required secrets:
+#   DIGITALOCEAN_ACCESS_TOKEN - API token with write access
+#   DIGITALOCEAN_APP_ID       - App Platform application ID
+#
+# Documentation:
+# - https://docs.digitalocean.com/products/app-platform/
+# - https://github.com/digitalocean/app_action
+
+name: Deploy to DigitalOcean App Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DIGITALOCEAN_APP_ID: ${{ secrets.DIGITALOCEAN_APP_ID }}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Option 1: Trigger deployment via App Platform (source-based)
+      # This triggers App Platform to pull and build from the repo
+      - name: Deploy to App Platform
+        id: deploy
+        uses: digitalocean/app_action@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          app_id: ${{ env.DIGITALOCEAN_APP_ID }}
+
+      - name: Get deployment URL
+        run: |
+          echo "Deployed to: ${{ steps.deploy.outputs.url }}"
+
+      # Option 2: Deploy using doctl CLI (more control)
+      # - name: Install doctl
+      #   uses: digitalocean/action-doctl@v2
+      #   with:
+      #     token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      #
+      # - name: Deploy using doctl
+      #   run: |
+      #     doctl apps create-deployment ${{ env.DIGITALOCEAN_APP_ID }} --wait
+
+      # Option 3: Deploy container image
+      # - name: Build and push to DOCR
+      #   run: |
+      #     doctl registry login
+      #     docker build -t registry.digitalocean.com/your-registry/app:${{ github.sha }} .
+      #     docker push registry.digitalocean.com/your-registry/app:${{ github.sha }}
+      #
+      # - name: Update app spec
+      #   run: |
+      #     doctl apps update ${{ env.DIGITALOCEAN_APP_ID }} --spec app.yaml
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App ID:** ${{ env.DIGITALOCEAN_APP_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # Optional: Deploy to multiple environments
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   runs-on: ubuntu-latest
+  #   if: github.ref != 'refs/heads/main'
+  #   environment:
+  #     name: staging
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: digitalocean/app_action@v2
+  #       with:
+  #         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+  #         app_id: ${{ secrets.DIGITALOCEAN_STAGING_APP_ID }}
+
+# ---
+# Example app.yaml spec for App Platform
+# Save as app.yaml in your repository root
+#
+# spec:
+#   name: my-app
+#   region: nyc
+#   services:
+#     - name: web
+#       github:
+#         repo: owner/repo
+#         branch: main
+#         deploy_on_push: true
+#       build_command: npm run build
+#       run_command: npm start
+#       http_port: 3000
+#       instance_size_slug: basic-xxs
+#       instance_count: 1
+#       routes:
+#         - path: /
+#       envs:
+#         - key: NODE_ENV
+#           value: production
+#   databases:
+#     - name: db
+#       engine: PG
+#       production: false

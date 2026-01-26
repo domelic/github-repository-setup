@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# Husky Pre-commit Hook
+# https://typicode.github.io/husky/
+#
+# This hook runs before each commit. Use it to:
+# - Run linters on staged files
+# - Format code
+# - Run quick tests
+# - Validate commit contents
+#
+# Installation:
+#   npm install -D husky lint-staged
+#   npx husky init
+#   cp this-file .husky/pre-commit
+#
+# To skip hooks temporarily:
+#   git commit --no-verify -m "message"
+
+# Exit on error
+set -e
+
+# Run lint-staged (if installed)
+if command -v npx >/dev/null 2>&1; then
+  npx lint-staged
+fi
+
+# Alternative: Run specific commands directly
+# npm run lint
+# npm run format:check
+# npm test -- --watchAll=false --passWithNoTests

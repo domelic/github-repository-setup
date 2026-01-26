@@ -1,0 +1,197 @@
+# Scala CI Workflow
+# Builds and tests Scala projects using sbt.
+#
+# Features:
+# - Multiple Scala versions (2.13, 3.x)
+# - sbt with coursier caching
+# - Scalafmt formatting check
+# - Scalafix linting
+# - Code coverage with scoverage
+# - Cross-building support
+#
+# Documentation:
+# - https://www.scala-lang.org/documentation/
+# - https://www.scala-sbt.org/documentation.html
+
+name: Scala CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.scala"
+      - "**.sbt"
+      - "project/**"
+      - ".scalafmt.conf"
+      - ".scalafix.conf"
+      - ".github/workflows/ci-scala.yml"
+  pull_request:
+    paths:
+      - "**.scala"
+      - "**.sbt"
+      - "project/**"
+      - ".scalafmt.conf"
+      - ".scalafix.conf"
+      - ".github/workflows/ci-scala.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+  JAVA_DISTRIBUTION: "temurin"
+
+jobs:
+  build:
+    name: Scala ${{ matrix.scala }} / JDK ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scala: ["2.13", "3.3"]
+        java: ["17", "21"]
+        exclude:
+          # Reduce matrix - only test JDK 21 with latest Scala
+          - scala: "2.13"
+            java: "21"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Compile
+        run: sbt ++${{ matrix.scala }}.* compile
+
+      - name: Run tests
+        run: sbt ++${{ matrix.scala }}.* test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.scala }}-${{ matrix.java }}
+          path: "**/target/test-reports/"
+          retention-days: 7
+
+  # Formatting check
+  format:
+    name: Format (Scalafmt)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Check formatting
+        run: sbt scalafmtCheckAll scalafmtSbtCheck
+
+  # Linting with Scalafix
+  lint:
+    name: Lint (Scalafix)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Run Scalafix
+        run: sbt "scalafix --check"
+        continue-on-error: true
+
+  # Code coverage
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Generate coverage report
+        run: sbt coverage test coverageReport
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: target/scala-*/scoverage-report/scoverage.xml
+          fail_ci_if_error: false
+
+  # Cross-build all versions
+  cross-build:
+    name: Cross Build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Cross compile
+        run: sbt +compile
+
+      - name: Cross test
+        run: sbt +test
+
+  # Documentation build
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    if: false # Enable if using mdoc or similar
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: sbt
+
+      - name: Build documentation
+        run: sbt docs/mdoc
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/target/mdoc/
+          retention-days: 7
