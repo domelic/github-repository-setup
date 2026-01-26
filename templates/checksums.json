@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.17",
-  "version": "0.1.17",
+  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.20",
+  "version": "0.1.20",
   "algorithm": "sha256",
   "checksums": {
     ".all-contributorsrc": "79661319e74f6adb6475a72b8ffdeeb387f545a775c40a367ae9901577317e17",
@@ -137,6 +137,7 @@
     "workflows/publish-nuget.yml": "c59f209ecb7814cce760e57ab929fe1a27cb5c0f4625a83f431a33719369f9c7",
     "workflows/publish-pypi.yml": "0caf4afc2dfe4d7126373aac03c970e3af249b586002c50b8ba16f27c8427106",
     "workflows/publish-rubygems.yml": "00c9c6016042fda78b9f2871275a1ecba5e62b1297e7a3f8b16f23b298aec035",
+    "workflows/README.md": "9c218b6e2440f883da0b8d28bae88eef32e8a8948f857ea0fc8fb3e2428c14d0",
     "workflows/release-drafter.yml": "2cc002a694befdd86e0750d45bbe3347c1449471e8ce6d16d1eb53a6b118e765",
     "workflows/release-manual.yml": "6782c936948ab81d8a7a631049963deefd8e6081f3242f8e594245e76b63e359",
     "workflows/release-please.yml": "c79c30b73e3b0cd3af6736faa329541f8e30502ab6168a8069a9f0e0f4ccea6e",

@@ -57,4 +57,4 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). Be respectful 
 
 ## Questions?
 
-Open an issue with the "question" label.
+Start a discussion in [GitHub Discussions](https://github.com/domelic/github-repository-setup/discussions) for questions, ideas, or general conversations about the project.
