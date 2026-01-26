@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.17",
-  "version": "0.1.17",
+  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.19",
+  "version": "0.1.19",
   "algorithm": "sha256",
   "checksums": {
     ".all-contributorsrc": "79661319e74f6adb6475a72b8ffdeeb387f545a775c40a367ae9901577317e17",
