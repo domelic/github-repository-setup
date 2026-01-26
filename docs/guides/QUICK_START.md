@@ -145,11 +145,11 @@ Run the checklist to confirm everything is configured:
 | Topic | Documentation |
 |-------|---------------|
 | Workflow templates | [templates/workflows/README.md](../templates/workflows/README.md) |
-| Branch protection | [docs/BRANCHING_STRATEGIES.md](./BRANCHING_STRATEGIES.md) |
-| Secret management | [docs/SECRETS_MANAGEMENT.md](./SECRETS_MANAGEMENT.md) |
-| Database testing | [docs/DATABASE_TESTING.md](./DATABASE_TESTING.md) |
-| Monorepo patterns | [docs/MONOREPO_PATTERNS.md](./MONOREPO_PATTERNS.md) |
-| Renovate vs Dependabot | [docs/RENOVATE_VS_DEPENDABOT.md](./RENOVATE_VS_DEPENDABOT.md) |
+| Branch protection | [docs/guides/BRANCHING_STRATEGIES.md](./BRANCHING_STRATEGIES.md) |
+| Secret management | [docs/guides/SECRETS_MANAGEMENT.md](./SECRETS_MANAGEMENT.md) |
+| Database testing | [docs/architecture/DATABASE_TESTING.md](../architecture/DATABASE_TESTING.md) |
+| Monorepo patterns | [docs/architecture/MONOREPO_PATTERNS.md](../architecture/MONOREPO_PATTERNS.md) |
+| Renovate vs Dependabot | [docs/workflows/RENOVATE_VS_DEPENDABOT.md](../workflows/RENOVATE_VS_DEPENDABOT.md) |
 
 ### Get Help
 

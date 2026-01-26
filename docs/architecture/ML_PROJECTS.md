@@ -365,5 +365,5 @@ Enable verbose logging:
 ## Related Documentation
 
 - [Database Testing](./DATABASE_TESTING.md) - For ML pipelines with databases
-- [Secrets Management](./SECRETS_MANAGEMENT.md) - Secure credential handling
-- [Renovate vs Dependabot](./RENOVATE_VS_DEPENDABOT.md) - ML dependency management
+- [Secrets Management](../guides/SECRETS_MANAGEMENT.md) - Secure credential handling
+- [Renovate vs Dependabot](../workflows/RENOVATE_VS_DEPENDABOT.md) - ML dependency management
