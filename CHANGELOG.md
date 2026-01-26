@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.29](https://github.com/domelic/github-repository-setup/compare/v0.1.28...v0.1.29) (2026-01-26)
+
+
+### Bug Fixes
+
+* remove Pages auto-enablement to avoid permission error ([#102](https://github.com/domelic/github-repository-setup/issues/102)) ([25bb01e](https://github.com/domelic/github-repository-setup/commit/25bb01ec8e6f6d346c91f6b3762cddad9cfec176))
+
 ## [0.1.28](https://github.com/domelic/github-repository-setup/compare/v0.1.27...v0.1.28) (2026-01-26)
 
 
