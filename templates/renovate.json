@@ -1,0 +1,185 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration for automated dependency updates",
+
+  "extends": [
+    "config:recommended",
+    "schedule:weekends",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":automergePatch",
+    "group:allNonMajor"
+  ],
+
+  "labels": ["dependencies", "renovate"],
+
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+
+  "platformAutomerge": true,
+
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  },
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 5am on monday"]
+  },
+
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+
+  "packageRules": [
+    {
+      "description": "Auto-merge non-major dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge test dependencies",
+      "matchPackagePatterns": [
+        "jest",
+        "vitest",
+        "mocha",
+        "chai",
+        "sinon",
+        "cypress",
+        "playwright",
+        "@testing-library",
+        "pytest",
+        "unittest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge linting tools",
+      "matchPackagePatterns": [
+        "eslint",
+        "prettier",
+        "stylelint",
+        "biome",
+        "oxlint",
+        "@typescript-eslint",
+        "ruff",
+        "black",
+        "isort",
+        "flake8",
+        "pylint",
+        "golangci-lint",
+        "clippy"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge type definitions",
+      "matchPackagePatterns": ["^@types/"],
+      "automerge": true
+    },
+    {
+      "description": "Group React updates together",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "React"
+    },
+    {
+      "description": "Group Vue updates together",
+      "matchPackagePatterns": ["^vue", "^@vue/", "^vite"],
+      "groupName": "Vue ecosystem"
+    },
+    {
+      "description": "Group Next.js updates together",
+      "matchPackagePatterns": ["^next", "^@next/"],
+      "groupName": "Next.js"
+    },
+    {
+      "description": "Group Angular updates together",
+      "matchPackagePatterns": ["^@angular/"],
+      "groupName": "Angular"
+    },
+    {
+      "description": "Group AWS SDK updates",
+      "matchPackagePatterns": ["^@aws-sdk/", "^aws-sdk"],
+      "groupName": "AWS SDK"
+    },
+    {
+      "description": "Group Google Cloud updates",
+      "matchPackagePatterns": ["^@google-cloud/"],
+      "groupName": "Google Cloud"
+    },
+    {
+      "description": "Group Prisma updates",
+      "matchPackagePatterns": ["^prisma", "^@prisma/"],
+      "groupName": "Prisma"
+    },
+    {
+      "description": "Require manual approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"]
+    },
+    {
+      "description": "Require manual approval for Node.js major updates",
+      "matchPackageNames": ["node"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Security updates get high priority",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["patch"],
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "prPriority": 10
+    },
+    {
+      "description": "Pin GitHub Actions to SHA for security",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
+      "description": "Auto-merge GitHub Actions minor/patch",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Docker base images - manual approval for major",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ],
+
+  "regexManagers": [
+    {
+      "description": "Update Node.js version in .nvmrc",
+      "fileMatch": ["^.nvmrc$"],
+      "matchStrings": ["(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "datasourceTemplate": "node-version",
+      "depNameTemplate": "node"
+    },
+    {
+      "description": "Update tool versions in Dockerfiles",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+(?:ENV|ARG) .*?_VERSION=(?<currentValue>.*)"
+      ]
+    }
+  ],
+
+  "ignoreDeps": [],
+
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/.git/**"
+  ]
+}

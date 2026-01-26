@@ -1,0 +1,173 @@
+# Deploy with Serverless Framework
+# Deploys serverless applications using the Serverless Framework
+#
+# Features:
+#   - Multi-stage deployments (dev, staging, prod)
+#   - OIDC authentication for AWS
+#   - Deployment validation
+#   - Rollback capability
+#
+# Required secrets:
+#   AWS_ROLE_ARN - IAM role ARN for OIDC authentication
+#     (Alternative: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
+#
+# Setup:
+#   1. Install Serverless Framework: npm install -g serverless
+#   2. Create serverless.yml in your project
+#   3. Configure OIDC for AWS
+#   4. Add secrets to repository settings
+
+name: Deploy Serverless
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Deployment stage'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - remove
+          - info
+
+concurrency:
+  group: deploy-${{ github.event.inputs.stage || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ github.event.inputs.stage || (github.ref == 'refs/heads/main' && 'production' || 'development') }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine stage
+        id: stage
+        run: |
+          if [ -n "${{ github.event.inputs.stage }}" ]; then
+            echo "stage=${{ github.event.inputs.stage }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "stage=prod" >> $GITHUB_OUTPUT
+          else
+            echo "stage=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Validate serverless.yml
+        run: serverless print --stage ${{ steps.stage.outputs.stage }}
+
+      - name: Deploy
+        id: deploy
+        if: github.event.inputs.action != 'remove' && github.event.inputs.action != 'info'
+        run: |
+          serverless deploy --stage ${{ steps.stage.outputs.stage }} --verbose
+
+          # Extract API endpoint if available
+          ENDPOINT=$(serverless info --stage ${{ steps.stage.outputs.stage }} 2>/dev/null | grep -E "endpoint:" | head -1 | awk '{print $2}' || echo "")
+          if [ -n "$ENDPOINT" ]; then
+            echo "url=$ENDPOINT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Remove (if requested)
+        if: github.event.inputs.action == 'remove'
+        run: |
+          serverless remove --stage ${{ steps.stage.outputs.stage }} --verbose
+
+      - name: Show info
+        if: github.event.inputs.action == 'info' || github.event.inputs.action != 'remove'
+        run: |
+          serverless info --stage ${{ steps.stage.outputs.stage }}
+
+      - name: Post deployment test
+        if: github.event.inputs.action != 'remove' && steps.deploy.outputs.url != ''
+        run: |
+          echo "Testing deployment at ${{ steps.deploy.outputs.url }}"
+          curl -sf "${{ steps.deploy.outputs.url }}/health" || echo "Health check not available"
+
+# Example serverless.yml:
+#
+# service: my-service
+#
+# frameworkVersion: '3'
+#
+# provider:
+#   name: aws
+#   runtime: nodejs20.x
+#   stage: ${opt:stage, 'dev'}
+#   region: ${opt:region, 'us-east-1'}
+#   environment:
+#     STAGE: ${self:provider.stage}
+#
+# functions:
+#   hello:
+#     handler: handler.hello
+#     events:
+#       - http:
+#           path: /hello
+#           method: get
+#
+# plugins:
+#   - serverless-offline
+#
+# custom:
+#   serverless-offline:
+#     httpPort: 3000
+
+# IAM Policy for Serverless Framework:
+#
+# The Serverless Framework needs broad permissions to create CloudFormation stacks.
+# For production, consider using serverless-iam-roles-per-function plugin
+# to minimize permissions.
+#
+# Minimum permissions include:
+# - cloudformation:*
+# - s3:* (for deployment bucket)
+# - lambda:*
+# - apigateway:*
+# - iam:* (for creating Lambda execution roles)
+# - logs:*

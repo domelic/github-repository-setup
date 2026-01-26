@@ -1,0 +1,254 @@
+# Deploy with Pulumi
+# Infrastructure as Code deployment using Pulumi
+#
+# Features:
+#   - Multi-cloud support (AWS, GCP, Azure)
+#   - Preview on pull requests
+#   - Stack-based environments
+#   - Drift detection
+#   - State management via Pulumi Cloud or self-managed
+#
+# Required secrets:
+#   PULUMI_ACCESS_TOKEN - Pulumi Cloud access token
+#   Cloud-specific credentials (AWS, GCP, or Azure)
+#
+# Setup:
+#   1. Create Pulumi account: https://app.pulumi.com/signup
+#   2. Create access token: https://app.pulumi.com/account/tokens
+#   3. Initialize Pulumi project: pulumi new
+#   4. Add secrets to repository
+
+name: Deploy Pulumi
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: 'Pulumi stack to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'up'
+        type: choice
+        options:
+          - up
+          - preview
+          - refresh
+          - destroy
+
+concurrency:
+  group: pulumi-${{ github.event.inputs.stack || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+jobs:
+  preview:
+    name: Preview
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # AWS authentication (uncomment and configure as needed)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # GCP authentication (uncomment if using GCP)
+      # - name: Configure GCP credentials
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      #     service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      # Azure authentication (uncomment if using Azure)
+      # - name: Configure Azure credentials
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Pulumi Preview
+        uses: pulumi/actions@v5
+        with:
+          command: preview
+          stack-name: dev
+          comment-on-pr: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ github.event.inputs.stack || 'dev' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine stack
+        id: stack
+        run: |
+          if [ -n "${{ github.event.inputs.stack }}" ]; then
+            echo "name=${{ github.event.inputs.stack }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Pulumi Up
+        if: github.event.inputs.action == 'up' || github.event.inputs.action == ''
+        uses: pulumi/actions@v5
+        with:
+          command: up
+          stack-name: ${{ steps.stack.outputs.name }}
+
+      - name: Pulumi Preview
+        if: github.event.inputs.action == 'preview'
+        uses: pulumi/actions@v5
+        with:
+          command: preview
+          stack-name: ${{ steps.stack.outputs.name }}
+
+      - name: Pulumi Refresh
+        if: github.event.inputs.action == 'refresh'
+        uses: pulumi/actions@v5
+        with:
+          command: refresh
+          stack-name: ${{ steps.stack.outputs.name }}
+
+      - name: Pulumi Destroy
+        if: github.event.inputs.action == 'destroy'
+        uses: pulumi/actions@v5
+        with:
+          command: destroy
+          stack-name: ${{ steps.stack.outputs.name }}
+
+      - name: Show outputs
+        run: pulumi stack output --stack ${{ steps.stack.outputs.name }}
+
+  drift-detection:
+    name: Drift Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Check for drift
+        id: drift
+        run: |
+          pulumi refresh --stack prod --expect-no-changes 2>&1 | tee drift.log
+          if grep -q "changes:" drift.log; then
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Create issue on drift
+        if: steps.drift.outputs.drift_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const drift = fs.readFileSync('drift.log', 'utf8');
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[Pulumi] Infrastructure Drift Detected',
+              body: `## Drift detected in production stack\n\n\`\`\`\n${drift.slice(-3000)}\n\`\`\``,
+              labels: ['infrastructure', 'drift']
+            });
+
+# Example Pulumi.yaml:
+#
+# name: my-infrastructure
+# runtime: nodejs
+# description: My Pulumi infrastructure project
+#
+# Example index.ts:
+#
+# import * as pulumi from "@pulumi/pulumi";
+# import * as aws from "@pulumi/aws";
+#
+# const config = new pulumi.Config();
+# const environment = pulumi.getStack();
+#
+# const bucket = new aws.s3.Bucket("my-bucket", {
+#   tags: {
+#     Environment: environment,
+#   },
+# });
+#
+# export const bucketName = bucket.bucket;

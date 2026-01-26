@@ -1,0 +1,60 @@
+# License Check Ignore File
+# Exclude packages from license compliance checks
+#
+# Use this file to:
+# - Ignore false positives from license scanners
+# - Exclude packages that have been manually reviewed
+# - Skip packages with custom/approved license agreements
+#
+# Format: One package name per line
+# Comments start with #
+
+# =============================================================================
+# Dev-only packages (not included in production builds)
+# =============================================================================
+# These packages are only used during development and don't need strict
+# license compliance for production use.
+
+# Testing frameworks (example)
+# jest
+# mocha
+# chai
+# pytest
+
+# Linters (example)
+# eslint
+# prettier
+
+# =============================================================================
+# Manually reviewed packages
+# =============================================================================
+# These packages have been reviewed and approved by legal/compliance.
+# Document the review date and approver.
+
+# Reviewed: 2024-01-15 by Legal Team
+# some-package-with-custom-license
+
+# =============================================================================
+# Dual-licensed packages
+# =============================================================================
+# Packages with dual licensing where we're using the permissive option.
+# Document which license we're using.
+
+# Using MIT license (also available under GPL)
+# some-dual-licensed-package
+
+# =============================================================================
+# Internal/first-party packages
+# =============================================================================
+# Packages owned by our organization that don't need external license review.
+
+# @myorg/*
+
+# =============================================================================
+# False positives
+# =============================================================================
+# Packages incorrectly flagged by license scanners.
+# Document why it's a false positive.
+
+# License scanner misidentifies, actual license is MIT
+# some-mislabeled-package

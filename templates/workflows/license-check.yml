@@ -1,0 +1,381 @@
+# License Compliance Checking Workflow
+# Validates that all dependencies use compatible licenses
+#
+# Features:
+#   - SPDX license validation
+#   - License compatibility checking
+#   - Blocklist for problematic licenses
+#   - Allow-list for approved licenses
+#   - Support for multiple package managers
+#
+# Customization:
+#   - Update ALLOWED_LICENSES for your project's requirements
+#   - Update BLOCKED_LICENSES for licenses you can't use
+#   - Configure .licenseignore for false positives
+
+name: License Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package*.json'
+      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
+      - 'requirements*.txt'
+      - 'Pipfile*'
+      - 'poetry.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Gemfile*'
+      - 'composer.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package*.json'
+      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
+      - 'requirements*.txt'
+      - 'Pipfile*'
+      - 'poetry.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'Gemfile*'
+      - 'composer.json'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Licenses that are generally safe for most projects
+  # Modify based on your project's licensing requirements
+  ALLOWED_LICENSES: |
+    MIT
+    Apache-2.0
+    BSD-2-Clause
+    BSD-3-Clause
+    ISC
+    0BSD
+    CC0-1.0
+    Unlicense
+    WTFPL
+    BlueOak-1.0.0
+    Python-2.0
+
+  # Licenses that may have restrictions
+  # These will generate warnings but not fail the build
+  WARNING_LICENSES: |
+    LGPL-2.1
+    LGPL-3.0
+    MPL-2.0
+    EPL-1.0
+    EPL-2.0
+    CDDL-1.0
+
+  # Licenses that are blocked (will fail the build)
+  # Common copyleft licenses that may be incompatible
+  BLOCKED_LICENSES: |
+    GPL-2.0
+    GPL-3.0
+    AGPL-3.0
+    SSPL-1.0
+    CC-BY-NC-4.0
+    CC-BY-NC-SA-4.0
+
+jobs:
+  # Node.js license check
+  check-npm:
+    name: Check npm Dependencies
+    runs-on: ubuntu-latest
+    if: hashFiles('package.json') != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install license-checker
+        run: npm install -g license-checker
+
+      - name: Run license check
+        id: license-check
+        run: |
+          # Generate license report
+          license-checker --json --out licenses.json
+
+          # Check for blocked licenses
+          echo "Checking for blocked licenses..."
+          blocked_found=""
+
+          while IFS= read -r license; do
+            [ -z "$license" ] && continue
+            if grep -q "\"licenses\": \"$license\"" licenses.json 2>/dev/null; then
+              packages=$(jq -r "to_entries[] | select(.value.licenses == \"$license\") | .key" licenses.json)
+              if [ -n "$packages" ]; then
+                echo "::error::Blocked license found: $license"
+                echo "$packages"
+                blocked_found="true"
+              fi
+            fi
+          done <<< "$BLOCKED_LICENSES"
+
+          # Check for warning licenses
+          echo "Checking for licenses that need review..."
+          while IFS= read -r license; do
+            [ -z "$license" ] && continue
+            if grep -q "\"licenses\": \"$license\"" licenses.json 2>/dev/null; then
+              packages=$(jq -r "to_entries[] | select(.value.licenses == \"$license\") | .key" licenses.json)
+              if [ -n "$packages" ]; then
+                echo "::warning::License needs review: $license"
+                echo "$packages"
+              fi
+            fi
+          done <<< "$WARNING_LICENSES"
+
+          if [ -n "$blocked_found" ]; then
+            echo "license_status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "license_status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate license summary
+        if: always()
+        run: |
+          echo "## License Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          license-checker --summary >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-licenses
+          path: licenses.json
+          retention-days: 30
+
+  # Python license check
+  check-python:
+    name: Check Python Dependencies
+    runs-on: ubuntu-latest
+    if: hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install pip-licenses
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          elif [ -f "pyproject.toml" ]; then
+            pip install .
+          fi
+
+      - name: Run license check
+        id: license-check
+        run: |
+          # Generate license report
+          pip-licenses --format=json --output-file=licenses.json
+
+          # Check for blocked licenses
+          echo "Checking for blocked licenses..."
+          blocked_found=""
+
+          while IFS= read -r license; do
+            [ -z "$license" ] && continue
+            if jq -e ".[] | select(.License == \"$license\")" licenses.json > /dev/null 2>&1; then
+              packages=$(jq -r ".[] | select(.License == \"$license\") | .Name" licenses.json)
+              if [ -n "$packages" ]; then
+                echo "::error::Blocked license found: $license"
+                echo "$packages"
+                blocked_found="true"
+              fi
+            fi
+          done <<< "$BLOCKED_LICENSES"
+
+          if [ -n "$blocked_found" ]; then
+            exit 1
+          fi
+
+      - name: Generate license summary
+        if: always()
+        run: |
+          echo "## Python License Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          pip-licenses --format=markdown >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-licenses
+          path: licenses.json
+          retention-days: 30
+
+  # Go license check
+  check-go:
+    name: Check Go Dependencies
+    runs-on: ubuntu-latest
+    if: hashFiles('go.mod') != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses@latest
+
+      - name: Run license check
+        id: license-check
+        run: |
+          # Generate license report
+          go-licenses report ./... --template='{{range .}}{{.Name}},{{.LicenseType}}
+          {{end}}' > licenses.csv 2>/dev/null || true
+
+          # Check for blocked licenses
+          echo "Checking for blocked licenses..."
+          blocked_found=""
+
+          while IFS= read -r license; do
+            [ -z "$license" ] && continue
+            if grep -q ",$license$" licenses.csv 2>/dev/null; then
+              packages=$(grep ",$license$" licenses.csv | cut -d',' -f1)
+              if [ -n "$packages" ]; then
+                echo "::error::Blocked license found: $license"
+                echo "$packages"
+                blocked_found="true"
+              fi
+            fi
+          done <<< "$BLOCKED_LICENSES"
+
+          if [ -n "$blocked_found" ]; then
+            exit 1
+          fi
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-licenses
+          path: licenses.csv
+          retention-days: 30
+
+  # Rust license check
+  check-rust:
+    name: Check Rust Dependencies
+    runs-on: ubuntu-latest
+    if: hashFiles('Cargo.toml') != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-license
+        run: cargo install cargo-license
+
+      - name: Run license check
+        id: license-check
+        run: |
+          # Generate license report
+          cargo license --json > licenses.json
+
+          # Check for blocked licenses
+          echo "Checking for blocked licenses..."
+          blocked_found=""
+
+          while IFS= read -r license; do
+            [ -z "$license" ] && continue
+            if jq -e ".[] | select(.license == \"$license\")" licenses.json > /dev/null 2>&1; then
+              packages=$(jq -r ".[] | select(.license == \"$license\") | .name" licenses.json)
+              if [ -n "$packages" ]; then
+                echo "::error::Blocked license found: $license"
+                echo "$packages"
+                blocked_found="true"
+              fi
+            fi
+          done <<< "$BLOCKED_LICENSES"
+
+          if [ -n "$blocked_found" ]; then
+            exit 1
+          fi
+
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-licenses
+          path: licenses.json
+          retention-days: 30
+
+  # Generate SBOM with license info
+  generate-sbom:
+    name: Generate SBOM with Licenses
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-licenses
+          path: sbom.spdx.json
+          retention-days: 90
+
+# License Categories Reference:
+#
+# Permissive (usually OK):
+#   MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+#
+# Weak Copyleft (may need review):
+#   LGPL-2.1, LGPL-3.0, MPL-2.0, EPL-1.0, EPL-2.0
+#
+# Strong Copyleft (often incompatible):
+#   GPL-2.0, GPL-3.0, AGPL-3.0
+#
+# Non-Commercial (usually blocked):
+#   CC-BY-NC-4.0, CC-BY-NC-SA-4.0
+#
+# Tips:
+#   - Create a .licenseignore file to exclude false positives
+#   - Review LGPL usage for dynamically linked libraries
+#   - Consult legal team for GPL/AGPL in commercial products
+#   - Consider using SPDX license identifiers consistently

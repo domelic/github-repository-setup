@@ -1,0 +1,173 @@
+# Datadog CI Visibility
+# Integrates CI pipeline with Datadog for observability
+#
+# Features:
+#   - Test visibility and performance tracking
+#   - CI pipeline traces
+#   - Deployment tracking
+#   - Synthetic test triggers
+#   - Log correlation
+#
+# Required secrets:
+#   DATADOG_API_KEY - Datadog API key
+#   DATADOG_APP_KEY - Datadog application key (for some features)
+#
+# Required variables:
+#   DATADOG_SITE - Datadog site (datadoghq.com, datadoghq.eu, etc.)
+#
+# Setup:
+#   1. Create API key: https://app.datadoghq.com/organization-settings/api-keys
+#   2. Create app key: https://app.datadoghq.com/organization-settings/application-keys
+#   3. Add secrets to repository settings
+
+name: Datadog CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+  DATADOG_SITE: ${{ vars.DATADOG_SITE || 'datadoghq.com' }}
+  DD_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+  DD_SERVICE: ${{ github.event.repository.name }}
+  DD_VERSION: ${{ github.sha }}
+
+jobs:
+  test-with-visibility:
+    name: Test with CI Visibility
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # For Jest
+      - name: Run tests with Datadog (Jest)
+        if: hashFiles('jest.config.*') != ''
+        run: |
+          npm install --save-dev @datadog/datadog-ci
+          npx datadog-ci junit upload --service ${{ env.DD_SERVICE }} ./junit.xml
+        env:
+          DD_CIVISIBILITY_AGENTLESS_ENABLED: true
+          DD_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+
+      # Alternative: Using jest-circus with Datadog
+      # - name: Run tests with Datadog tracer
+      #   run: |
+      #     npm install dd-trace
+      #     NODE_OPTIONS="-r dd-trace/ci/init" npm test
+
+  # Send deployment events to Datadog
+  deployment-event:
+    name: Deployment Event
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: test-with-visibility
+
+    steps:
+      - name: Send deployment event
+        run: |
+          curl -X POST "https://api.${{ env.DATADOG_SITE }}/api/v1/events" \
+            -H "Content-Type: application/json" \
+            -H "DD-API-KEY: ${{ secrets.DATADOG_API_KEY }}" \
+            -d '{
+              "title": "Deployment: ${{ github.event.repository.name }}",
+              "text": "Deployed version ${{ github.sha }} to production",
+              "priority": "normal",
+              "tags": [
+                "environment:production",
+                "service:${{ github.event.repository.name }}",
+                "version:${{ github.sha }}",
+                "repository:${{ github.repository }}"
+              ],
+              "alert_type": "info",
+              "source_type_name": "github"
+            }'
+
+  # Trigger synthetic tests after deployment
+  synthetic-tests:
+    name: Run Synthetic Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: deployment-event
+
+    steps:
+      - name: Trigger Datadog Synthetics
+        uses: DataDog/synthetics-ci-github-action@v1
+        with:
+          api_key: ${{ secrets.DATADOG_API_KEY }}
+          app_key: ${{ secrets.DATADOG_APP_KEY }}
+          # Specify test IDs or use search query
+          # public_ids: 'abc-123-def, ghi-456-jkl'
+          # Or use variables to filter tests
+          variables: 'ENVIRONMENT=production'
+
+  # Upload code coverage to Datadog
+  coverage:
+    name: Upload Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage
+
+      - name: Upload coverage to Datadog
+        run: |
+          npm install -g @datadog/datadog-ci
+          datadog-ci coverage upload ./coverage
+        env:
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+
+# Integration example for your application:
+#
+# Node.js APM setup:
+#
+# // At the very top of your entry file
+# const tracer = require('dd-trace').init({
+#   service: process.env.DD_SERVICE,
+#   env: process.env.DD_ENV,
+#   version: process.env.DD_VERSION,
+# });
+#
+# Python APM setup:
+#
+# from ddtrace import patch_all
+# patch_all()
+#
+# # Or with Flask/Django
+# from ddtrace.contrib.flask import TraceMiddleware
+# app = Flask(__name__)
+# TraceMiddleware(app)
+#
+# Environment variables for APM:
+#
+# DD_AGENT_HOST=localhost       # Or your Datadog Agent host
+# DD_TRACE_AGENT_PORT=8126
+# DD_SERVICE=my-service
+# DD_ENV=production
+# DD_VERSION=$GITHUB_SHA
+# DD_LOGS_INJECTION=true        # Correlate logs with traces

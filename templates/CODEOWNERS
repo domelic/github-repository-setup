@@ -4,26 +4,191 @@
 # Each line is a file pattern followed by one or more owners.
 # Order matters - later patterns override earlier ones.
 # Owners can be @usernames, @org/team-names, or email addresses.
+#
+# See docs/CODEOWNERS_PATTERNS.md for advanced usage examples.
 
-# Default owners for everything in the repo
+# =============================================================================
+# DEFAULT OWNERS
+# =============================================================================
+# These owners will be requested for review when no other pattern matches.
 # Uncomment and customize:
+
 # * @your-username
+# * @your-org/core-team
 
-# Examples by file type:
-# *.js @frontend-team
-# *.py @backend-team
-# *.go @backend-team
+# =============================================================================
+# DIRECTORY OWNERSHIP
+# =============================================================================
 
-# Examples by directory:
-# /src/ @dev-team
-# /docs/ @docs-team
-# /.github/ @devops-team
+# Source code
+# /src/                     @your-org/dev-team
 
-# Protect sensitive files:
-# /security/ @security-team
-# *.env.example @security-team
+# API layer
+# /src/api/                 @your-org/api-team
+# /src/graphql/             @your-org/api-team
 
-# Require specific reviewers for CI/CD:
-# /.github/workflows/ @devops-team @security-team
-# Dockerfile @devops-team
-# docker-compose*.yml @devops-team
+# Frontend
+# /src/components/          @your-org/frontend-team
+# /src/pages/               @your-org/frontend-team
+# /src/styles/              @your-org/frontend-team
+
+# Backend
+# /src/services/            @your-org/backend-team
+# /src/models/              @your-org/backend-team
+
+# Infrastructure
+# /infra/                   @your-org/platform-team
+# /terraform/               @your-org/platform-team
+# /k8s/                     @your-org/platform-team
+
+# Documentation
+# /docs/                    @your-org/docs-team
+
+# =============================================================================
+# LANGUAGE-SPECIFIC OWNERSHIP
+# =============================================================================
+
+# JavaScript/TypeScript
+# *.js                      @your-org/js-team
+# *.jsx                     @your-org/js-team
+# *.ts                      @your-org/js-team
+# *.tsx                     @your-org/js-team
+
+# Python
+# *.py                      @your-org/python-team
+
+# Go
+# *.go                      @your-org/go-team
+
+# Rust
+# *.rs                      @your-org/rust-team
+
+# =============================================================================
+# CONFIGURATION FILES
+# =============================================================================
+
+# Package managers
+# package.json              @your-org/dev-team
+# package-lock.json         @your-org/dev-team
+# pnpm-lock.yaml            @your-org/dev-team
+# yarn.lock                 @your-org/dev-team
+# requirements.txt          @your-org/dev-team
+# go.mod                    @your-org/dev-team
+# Cargo.toml                @your-org/dev-team
+
+# Build configuration
+# Dockerfile                @your-org/platform-team
+# docker-compose*.yml       @your-org/platform-team
+# Makefile                  @your-org/platform-team
+
+# Linting and formatting
+# .eslintrc*                @your-org/dev-team
+# .prettierrc*              @your-org/dev-team
+# .editorconfig             @your-org/dev-team
+
+# =============================================================================
+# CI/CD AND DEVOPS
+# =============================================================================
+
+# GitHub Actions
+# /.github/                 @your-org/devops-team
+# /.github/workflows/       @your-org/devops-team
+
+# Deployment configurations
+# /.github/workflows/deploy* @your-org/platform-team @your-org/security-team
+
+# =============================================================================
+# SECURITY-SENSITIVE FILES
+# =============================================================================
+# These patterns ensure security team reviews sensitive changes
+
+# Security configurations
+# /security/                @your-org/security-team
+# **/security/              @your-org/security-team
+
+# Authentication and authorization
+# /src/auth/                @your-org/security-team
+# **/auth/**                @your-org/security-team
+# **/authentication/**      @your-org/security-team
+# **/authorization/**       @your-org/security-team
+
+# Secrets and environment templates
+# *.env.example             @your-org/security-team
+# .env.template             @your-org/security-team
+
+# Cryptography
+# **/crypto/**              @your-org/security-team
+# **/encryption/**          @your-org/security-team
+
+# Dependency lockfiles (supply chain security)
+# package-lock.json         @your-org/security-team
+# pnpm-lock.yaml            @your-org/security-team
+# yarn.lock                 @your-org/security-team
+# requirements.txt          @your-org/security-team
+# Pipfile.lock              @your-org/security-team
+# poetry.lock               @your-org/security-team
+# go.sum                    @your-org/security-team
+# Cargo.lock                @your-org/security-team
+# Gemfile.lock              @your-org/security-team
+
+# GitHub repository settings
+# CODEOWNERS                @your-org/security-team @your-org/admin-team
+# SECURITY.md               @your-org/security-team
+
+# =============================================================================
+# CRITICAL FILES (Multiple Approvers)
+# =============================================================================
+# These files require approval from multiple teams
+
+# Release configuration
+# /release/                 @your-org/dev-team @your-org/devops-team
+
+# Database migrations
+# /migrations/              @your-org/backend-team @your-org/dba-team
+# **/migrations/**          @your-org/backend-team @your-org/dba-team
+
+# API contracts/schemas
+# /openapi/                 @your-org/api-team @your-org/frontend-team
+# **/schemas/               @your-org/api-team
+
+# =============================================================================
+# LEGAL AND COMPLIANCE
+# =============================================================================
+
+# LICENSE*                  @your-org/legal-team
+# NOTICE*                   @your-org/legal-team
+# COPYRIGHT*                @your-org/legal-team
+# PATENTS*                  @your-org/legal-team
+
+# =============================================================================
+# GLOB PATTERN EXAMPLES
+# =============================================================================
+# These are commented examples showing glob pattern capabilities
+
+# Match files in root only (not subdirectories)
+# /*.md                     @your-org/docs-team
+
+# Match files anywhere in the repo
+# **/README.md              @your-org/docs-team
+
+# Match specific file types in specific directories
+# /src/**/*.test.ts         @your-org/qa-team
+# /src/**/*.spec.ts         @your-org/qa-team
+
+# Exclude patterns (use later rules to override)
+# /tests/                   @your-org/qa-team
+# /tests/fixtures/          @your-org/dev-team  # Override: fixtures owned by dev
+
+# =============================================================================
+# TEAM HIERARCHY EXAMPLE
+# =============================================================================
+# Demonstrate escalation patterns
+
+# Base ownership
+# /src/                     @your-org/dev-team
+
+# Specialized sub-ownership (overrides base)
+# /src/core/                @your-org/core-team
+
+# Critical core modules (most specific wins)
+# /src/core/engine/         @your-org/core-team @your-org/architecture-team

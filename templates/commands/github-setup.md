@@ -676,6 +676,91 @@ Features: App Platform deployment, staging/production environments.
 
 ---
 
+## Advanced Deployment Presets
+
+### `/github-setup multienv`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/deploy-multi-env.yml` | `.github/workflows/deploy-multi-env.yml` |
+| `.env.example` | `.env.example` |
+
+Features: Staging → production promotion, manual approval gates, rollback capability, Slack/Discord notifications.
+
+### `/github-setup database`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-with-services.yml` | `.github/workflows/ci-with-services.yml` |
+
+Features: PostgreSQL, MySQL, Redis, MongoDB service containers, database migration testing, health checks.
+
+See also: [`docs/DATABASE_TESTING.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/DATABASE_TESTING.md)
+
+### `/github-setup serverless`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/deploy-serverless.yml` | `.github/workflows/deploy-serverless.yml` |
+| `workflows/deploy-sam.yml` | `.github/workflows/deploy-sam.yml` |
+| `workflows/deploy-pulumi.yml` | `.github/workflows/deploy-pulumi.yml` |
+
+Features: Serverless Framework, AWS SAM, Pulumi IaC deployments with OIDC authentication.
+
+### `/github-setup renovate`
+
+| Template | Destination |
+|----------|-------------|
+| `renovate.json` | `renovate.json` |
+
+Features: Advanced dependency management with auto-merge, grouping, and scheduling. Alternative to Dependabot.
+
+See also: [`docs/RENOVATE_VS_DEPENDABOT.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/RENOVATE_VS_DEPENDABOT.md)
+
+### `/github-setup observability`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/sentry-release.yml` | `.github/workflows/sentry-release.yml` |
+| `workflows/datadog-ci.yml` | `.github/workflows/datadog-ci.yml` |
+| `otel/otel-collector-config.yaml` | `otel/otel-collector-config.yaml` |
+| `otel/docker-compose.otel.yaml` | `otel/docker-compose.otel.yaml` |
+
+Features: Sentry release tracking, Datadog CI visibility, OpenTelemetry collector configuration.
+
+### `/github-setup license`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/license-check.yml` | `.github/workflows/license-check.yml` |
+| `.licenseignore` | `.licenseignore` |
+
+Features: SPDX license validation, license compatibility checking, blocklist for problematic licenses.
+
+### `/github-setup openapi`
+
+| Template | Destination |
+|----------|-------------|
+| `openapi/openapi-minimal.yaml` | `openapi/openapi.yaml` |
+
+Or for full example:
+| `openapi/openapi-full.yaml` | `openapi/openapi.yaml` |
+
+Features: OpenAPI 3.1 starter specs with authentication, pagination, error handling patterns.
+
+### `/github-setup docker-registry`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/publish-docker-ecr.yml` | `.github/workflows/publish-docker-ecr.yml` |
+| `workflows/publish-docker-gcr.yml` | `.github/workflows/publish-docker-gcr.yml` |
+| `workflows/publish-docker-acr.yml` | `.github/workflows/publish-docker-acr.yml` |
+| `workflows/publish-docker-hub.yml` | `.github/workflows/publish-docker-hub.yml` |
+
+Features: AWS ECR, Google GCR/Artifact Registry, Azure ACR, Docker Hub with OIDC authentication.
+
+---
+
 ## Git Hooks Presets
 
 ### `/github-setup hooks`
@@ -797,6 +882,15 @@ Check for existence of these files/settings:
 
 ### Security
 - [ ] `.github/workflows/dependency-review.yml`
+- [ ] `.github/workflows/license-check.yml`
+- [ ] `.github/workflows/secrets-rotation.yml`
+
+### Advanced
+- [ ] `.github/workflows/deploy-multi-env.yml` (multi-environment deployment)
+- [ ] `.github/workflows/ci-with-services.yml` (database testing)
+- [ ] `renovate.json` (alternative to Dependabot)
+- [ ] OpenAPI specification in `openapi/`
+- [ ] Observability integration (Sentry/Datadog/OpenTelemetry)
 
 Report missing items grouped by priority: Essential -> Recommended -> Optional.
 

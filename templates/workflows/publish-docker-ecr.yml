@@ -1,0 +1,197 @@
+# Publish Docker Image to AWS ECR
+# Builds and pushes container images to Amazon Elastic Container Registry
+#
+# Features:
+#   - OIDC authentication (recommended)
+#   - Multi-architecture builds (amd64, arm64)
+#   - Build caching with GitHub Actions cache
+#   - Image scanning with ECR
+#
+# Required secrets:
+#   AWS_ROLE_ARN - IAM role ARN for OIDC authentication
+#     (Alternative: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
+#
+# Required variables:
+#   AWS_REGION - AWS region (e.g., us-east-1)
+#   ECR_REPOSITORY - ECR repository name
+#
+# Setup:
+#   1. Create ECR repository: aws ecr create-repository --repository-name myapp
+#   2. Configure OIDC: https://docs.github.com/en/actions/security-guides/configuring-openid-connect-in-amazon-web-services
+#   3. Add secrets and variables to repository settings
+
+name: Publish to ECR
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'src/**'
+      - '.github/workflows/publish-docker-ecr.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || github.event.repository.name }}
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Alternative: Use access keys instead of OIDC
+      # - name: Configure AWS credentials (Access Keys)
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+      - name: Output image URI
+        run: |
+          echo "Image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}"
+          echo "Digest: ${{ steps.build.outputs.digest }}"
+          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+  # Optional: Scan image for vulnerabilities
+  scan:
+    name: Scan Image
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Start ECR image scan
+        run: |
+          aws ecr start-image-scan \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-id imageDigest=${{ needs.build-and-push.outputs.digest }}
+
+      - name: Wait for scan
+        run: |
+          aws ecr wait image-scan-complete \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-id imageDigest=${{ needs.build-and-push.outputs.digest }}
+
+      - name: Get scan results
+        run: |
+          aws ecr describe-image-scan-findings \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-id imageDigest=${{ needs.build-and-push.outputs.digest }} \
+            --query 'imageScanFindings.findingSeverityCounts'
+
+# IAM Policy for GitHub Actions OIDC:
+#
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Action": [
+#         "ecr:GetAuthorizationToken",
+#         "ecr:BatchGetImage",
+#         "ecr:BatchCheckLayerAvailability",
+#         "ecr:CompleteLayerUpload",
+#         "ecr:GetDownloadUrlForLayer",
+#         "ecr:InitiateLayerUpload",
+#         "ecr:PutImage",
+#         "ecr:UploadLayerPart",
+#         "ecr:DescribeImageScanFindings",
+#         "ecr:StartImageScan"
+#       ],
+#       "Resource": "*"
+#     }
+#   ]
+# }
+#
+# Trust Policy:
+#
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Principal": {
+#         "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+#       },
+#       "Action": "sts:AssumeRoleWithWebIdentity",
+#       "Condition": {
+#         "StringEquals": {
+#           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+#         },
+#         "StringLike": {
+#           "token.actions.githubusercontent.com:sub": "repo:OWNER/REPO:*"
+#         }
+#       }
+#     }
+#   ]
+# }
