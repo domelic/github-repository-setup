@@ -167,7 +167,7 @@ For detailed documentation on each template, see the [main README](../README.md)
 
 Additional guides in `docs/`:
 
-- [Secrets Management](../docs/SECRETS_MANAGEMENT.md)
-- [Monorepo Patterns](../docs/MONOREPO_PATTERNS.md)
-- [Release Drafter](../docs/RELEASE_DRAFTER.md)
-- [Markdown Lint](../docs/MARKDOWN_LINT.md)
+- [Secrets Management](../docs/guides/SECRETS_MANAGEMENT.md)
+- [Monorepo Patterns](../docs/architecture/MONOREPO_PATTERNS.md)
+- [Release Drafter](../docs/workflows/RELEASE_DRAFTER.md)
+- [Markdown Lint](../docs/guides/MARKDOWN_LINT.md)

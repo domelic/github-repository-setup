@@ -304,4 +304,4 @@ gh api repos/{owner}/{repo}/codeowners/errors
 
 - [GitHub CODEOWNERS Documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [Branch Protection Rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
-- [`templates/CODEOWNERS`](../templates/CODEOWNERS) - Template file
+- [`templates/CODEOWNERS`](../../templates/CODEOWNERS) - Template file

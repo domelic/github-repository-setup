@@ -271,8 +271,8 @@ Service containers are automatically cleaned up after the job completes. No manu
 
 ## Related Templates
 
-- [`ci-with-services.yml`](../templates/workflows/ci-with-services.yml) - Full CI workflow with services
-- [`docker-compose.yml`](../templates/docker-compose.yml) - Local development with Docker Compose
+- [`ci-with-services.yml`](../../templates/workflows/ci-with-services.yml) - Full CI workflow with services
+- [`docker-compose.yml`](../../templates/docker-compose.yml) - Local development with Docker Compose
 
 ## References
 

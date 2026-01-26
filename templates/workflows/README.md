@@ -14,8 +14,8 @@ cp templates/workflows/{ci-nodejs,release-please,deploy-vercel}.yml .github/work
 
 ## Quick Links
 
-- [Workflow Diagrams](../../docs/WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
-- [Compatibility Matrix](../../docs/COMPATIBILITY_MATRIX.md) - Preset compatibility
+- [Workflow Diagrams](../../docs/workflows/WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
+- [Compatibility Matrix](../../docs/reference/COMPATIBILITY_MATRIX.md) - Preset compatibility
 - [Metadata Index](workflow-metadata.yaml) - Structured workflow data
 - [/github-setup skill](../commands/github-setup.md) - Interactive setup wizard
 
@@ -448,8 +448,8 @@ Each workflow includes comments explaining configuration options. Key things to 
 
 ## See Also
 
-- [Workflow Diagrams](../../docs/WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
-- [Compatibility Matrix](../../docs/COMPATIBILITY_MATRIX.md) - Preset compatibility
+- [Workflow Diagrams](../../docs/workflows/WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
+- [Compatibility Matrix](../../docs/reference/COMPATIBILITY_MATRIX.md) - Preset compatibility
 - [Metadata Index](workflow-metadata.yaml) - Structured workflow data
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Workflow Syntax Reference](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions)

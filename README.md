@@ -28,7 +28,7 @@ This guide covers everything needed to set up a professional GitHub repository:
 | **Publishing** | npm, PyPI, Docker, crates.io publishing workflows |
 | **Deployment** | GitHub Pages, Vercel, Netlify, AWS, Kubernetes |
 | **Discovery** | Topics, social preview, FUNDING.yml, CITATION.cff |
-| **MCP Integrations** | [Serena](docs/SERENA.md), [Zotero](docs/ZOTERO_MCP.md), [Obsidian](docs/OBSIDIAN_MCP.md) |
+| **MCP Integrations** | [Serena](docs/integrations/SERENA.md), [Zotero](docs/integrations/ZOTERO_MCP.md), [Obsidian](docs/integrations/OBSIDIAN_MCP.md) |
 
 ### CI/CD Pipeline Flow
 
@@ -543,7 +543,7 @@ Enforces consistent markdown formatting.
 
 **Workflow:** [`templates/workflows/markdown-lint.yml`](templates/workflows/markdown-lint.yml)
 **Config:** [`templates/.markdownlint.json`](templates/.markdownlint.json)
-**Guide:** [docs/MARKDOWN_LINT.md](docs/MARKDOWN_LINT.md) — Common rules and fixes
+**Guide:** [docs/guides/MARKDOWN_LINT.md](docs/guides/MARKDOWN_LINT.md) — Common rules and fixes
 
 ### Pre-commit Hooks
 
@@ -727,7 +727,7 @@ For teams that prefer manual release publishing with automated draft generation.
 
 **Workflow:** [`templates/workflows/release-drafter.yml`](templates/workflows/release-drafter.yml)
 **Config:** [`templates/release-drafter.yml`](templates/release-drafter.yml)
-**Full Guide:** [docs/RELEASE_DRAFTER.md](docs/RELEASE_DRAFTER.md)
+**Full Guide:** [docs/workflows/RELEASE_DRAFTER.md](docs/workflows/RELEASE_DRAFTER.md)
 
 **How it works:**
 
@@ -1798,7 +1798,7 @@ MCP (Model Context Protocol) servers extend Claude Code with additional capabili
 
 Serena is an MCP server that provides semantic code understanding for Claude Code.
 
-**Full Documentation:** [docs/SERENA.md](docs/SERENA.md)
+**Full Documentation:** [docs/integrations/SERENA.md](docs/integrations/SERENA.md)
 
 #### Quick Setup
 
@@ -1846,7 +1846,7 @@ cp -r templates/serena/ .serena/
 
 Zotero MCP connects your research library with Claude Code for AI-powered literature management.
 
-**Full Documentation:** [docs/ZOTERO_MCP.md](docs/ZOTERO_MCP.md)
+**Full Documentation:** [docs/integrations/ZOTERO_MCP.md](docs/integrations/ZOTERO_MCP.md)
 
 #### Quick Setup
 
@@ -1904,7 +1904,7 @@ zotero-mcp update-db --fulltext
 
 Obsidian MCP connects your Obsidian vault with Claude Code for AI-assisted knowledge management.
 
-**Full Documentation:** [docs/OBSIDIAN_MCP.md](docs/OBSIDIAN_MCP.md)
+**Full Documentation:** [docs/integrations/OBSIDIAN_MCP.md](docs/integrations/OBSIDIAN_MCP.md)
 
 #### Quick Setup
 
@@ -2339,42 +2339,42 @@ show_summary() {
 
 **Getting Started:**
 
-- [Quick Start Guide](docs/QUICK_START.md)
+- [Quick Start Guide](docs/guides/QUICK_START.md)
 - [Templates Directory Guide](templates/README.md)
-- [Template Customization Guide](docs/TEMPLATE_CUSTOMIZATION.md)
+- [Template Customization Guide](docs/guides/TEMPLATE_CUSTOMIZATION.md)
 
 **Workflow Resources:**
 
-- [Workflow Diagrams](docs/WORKFLOW_DIAGRAMS.md)
-- [Workflow Changelog](docs/WORKFLOW_CHANGELOG.md)
-- [Compatibility Matrix](docs/COMPATIBILITY_MATRIX.md)
+- [Workflow Diagrams](docs/workflows/WORKFLOW_DIAGRAMS.md)
+- [Workflow Changelog](docs/workflows/WORKFLOW_CHANGELOG.md)
+- [Compatibility Matrix](docs/reference/COMPATIBILITY_MATRIX.md)
 
 **Configuration Guides:**
 
-- [Branching Strategies](docs/BRANCHING_STRATEGIES.md)
-- [CODEOWNERS Patterns](docs/CODEOWNERS_PATTERNS.md)
-- [Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)
-- [Feature Flags](docs/FEATURE_FLAGS.md)
-- [Markdown Lint Guide](docs/MARKDOWN_LINT.md)
-- [Release Drafter Guide](docs/RELEASE_DRAFTER.md)
-- [Renovate vs Dependabot](docs/RENOVATE_VS_DEPENDABOT.md)
+- [Branching Strategies](docs/guides/BRANCHING_STRATEGIES.md)
+- [CODEOWNERS Patterns](docs/guides/CODEOWNERS_PATTERNS.md)
+- [Secrets Management Guide](docs/guides/SECRETS_MANAGEMENT.md)
+- [Feature Flags](docs/architecture/FEATURE_FLAGS.md)
+- [Markdown Lint Guide](docs/guides/MARKDOWN_LINT.md)
+- [Release Drafter Guide](docs/workflows/RELEASE_DRAFTER.md)
+- [Renovate vs Dependabot](docs/workflows/RENOVATE_VS_DEPENDABOT.md)
 
 **Specialized Guides:**
 
-- [Monorepo Patterns Guide](docs/MONOREPO_PATTERNS.md)
-- [ML/AI Projects](docs/ML_PROJECTS.md)
-- [Database Testing](docs/DATABASE_TESTING.md)
+- [Monorepo Patterns Guide](docs/architecture/MONOREPO_PATTERNS.md)
+- [ML/AI Projects](docs/architecture/ML_PROJECTS.md)
+- [Database Testing](docs/architecture/DATABASE_TESTING.md)
 
 **Project Development:**
 
-- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
-- [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
+- [Implementation Plan](docs/project/IMPLEMENTATION_PLAN.md)
+- [Future Improvements](docs/project/FUTURE_IMPROVEMENTS.md)
 
 ### MCP Integrations
 
-- [Serena MCP Documentation](docs/SERENA.md)
-- [Zotero MCP Documentation](docs/ZOTERO_MCP.md)
-- [Obsidian MCP Documentation](docs/OBSIDIAN_MCP.md)
+- [Serena MCP Documentation](docs/integrations/SERENA.md)
+- [Zotero MCP Documentation](docs/integrations/ZOTERO_MCP.md)
+- [Obsidian MCP Documentation](docs/integrations/OBSIDIAN_MCP.md)
 
 ### Development
 

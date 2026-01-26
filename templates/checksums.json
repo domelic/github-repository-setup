@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.21",
-  "version": "0.1.21",
+  "$comment": "SHA-256 checksums for template integrity verification. Generated for v0.1.22",
+  "version": "0.1.22",
   "algorithm": "sha256",
   "checksums": {
     ".all-contributorsrc": "79661319e74f6adb6475a72b8ffdeeb387f545a775c40a367ae9901577317e17",
@@ -77,7 +77,7 @@
     "presets.yaml": "6317107821ee943cf0be22dd45f488543c0859b221cea778120414a5696f74a3",
     "PULL_REQUEST_TEMPLATE.md": "5cdfdb8203589c9ad4db68778bbf4dcd7f0aaf878a3a31922ff933748681a868",
     "pyproject.toml": "3c570b18b5faa9f5aea448f42103161d7746335e03f982e57a6099ddc6ccf1b2",
-    "README.md": "eeea07d0c328a81746f936af2aa266e4d6386458a1c4aa4e4cbfd6a802667dd7",
+    "README.md": "77901fd1e88fbbdae917b1b658f47e799769abca84f4060995da7a059c475c99",
     "release-drafter.yml": "13759c19aeb08e18653df225ac4dfb557d2c4c28fd310f67daa80776ad9d7870",
     "release-please-config.json": "0426deba3388994a33e1b8a65483b3d60c8842f380ded92f8ee9d4d2593c8596",
     "RELEASING.md": "4f4c4d0fc1b2d99f7500fc8baf608d075fedbe832d422756b3bb371619a6efc0",
@@ -191,7 +191,7 @@
     "workflows/publish-pypi.yml": "0caf4afc2dfe4d7126373aac03c970e3af249b586002c50b8ba16f27c8427106",
     "workflows/publish-rubygems.yml": "00c9c6016042fda78b9f2871275a1ecba5e62b1297e7a3f8b16f23b298aec035",
     "workflows/publish-testflight.yml": "85d3d403246d1c8d98b877676b03869e04abb929fd5cbd73e2174b319450638f",
-    "workflows/README.md": "3a3dca6fa5ef301e8fa7455a19f6999e799f8dcb9636e836f3d362a761dabd1e",
+    "workflows/README.md": "7167eee493bb172a88f923cf1d97ad219dde93bbc318773461eef09b894fc209",
     "workflows/release-drafter.yml": "2cc002a694befdd86e0750d45bbe3347c1449471e8ce6d16d1eb53a6b118e765",
     "workflows/release-firmware.yml": "da1ad59b0ac52aaea1fd0c44994389d6d2f3cefa0d49485c2aa29de7fbb8caf7",
     "workflows/release-manual.yml": "6782c936948ab81d8a7a631049963deefd8e6081f3242f8e594245e76b63e359",

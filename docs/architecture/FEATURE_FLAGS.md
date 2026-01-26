@@ -376,7 +376,7 @@ client.on('flag-change', (key, value) => {
 
 ## Related Resources
 
-- [Branching Strategies](./BRANCHING_STRATEGIES.md) - Trunk-based development with flags
+- [Branching Strategies](../guides/BRANCHING_STRATEGIES.md) - Trunk-based development with flags
 - [LaunchDarkly Docs](https://docs.launchdarkly.com/)
 - [Flagsmith Docs](https://docs.flagsmith.com/)
 - [Martin Fowler on Feature Toggles](https://martinfowler.com/articles/feature-toggles.html)
