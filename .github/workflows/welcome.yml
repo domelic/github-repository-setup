@@ -19,12 +19,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Welcome first-time issue creator
-        if: github.event_name == 'issues'
+      - name: Welcome first-time contributor
         uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: |
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: |
             Welcome to the GitHub Repository Setup project! :wave:
 
             Thank you for opening your first issue. We appreciate you taking the time to contribute.
@@ -35,13 +34,7 @@ jobs:
             - Feel free to check out our [Contributing Guidelines](../CONTRIBUTING.md)
 
             If you're interested in contributing code or documentation, check out the issues labeled `good first issue` or `help wanted`.
-
-      - name: Welcome first-time PR contributor
-        if: github.event_name == 'pull_request_target'
-        uses: actions/first-interaction@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-message: |
+          pr_message: |
             Welcome to the GitHub Repository Setup project! :tada:
 
             Thank you for opening your first pull request. We're excited to review your contribution!
