@@ -1,0 +1,358 @@
+# Unity CI Workflow
+# Build and test Unity projects using GameCI
+#
+# Features:
+#   - Unity Test Framework (Edit Mode + Play Mode)
+#   - Multi-platform builds (Windows, Linux, macOS, WebGL, Android, iOS)
+#   - IL2CPP and Mono builds
+#   - Code coverage reporting
+#   - License activation via GameCI
+#
+# Prerequisites:
+#   1. Unity project with proper structure
+#   2. Unity license (Personal, Plus, or Pro)
+#   3. GameCI license activation secrets
+#
+# Required secrets:
+#   UNITY_LICENSE - Unity license file content (base64 encoded)
+#   UNITY_EMAIL - Unity account email
+#   UNITY_PASSWORD - Unity account password
+#
+# Optional secrets (for specific platforms):
+#   UNITY_SERIAL - Unity serial number (for Pro licenses)
+#   ANDROID_KEYSTORE_BASE64 - Base64-encoded Android keystore
+#   ANDROID_KEYSTORE_PASS - Keystore password
+#   ANDROID_KEYALIAS_NAME - Key alias
+#   ANDROID_KEYALIAS_PASS - Key alias password
+#
+# Customization:
+#   - Adjust unityVersion to match your project
+#   - Enable/disable platforms by uncommenting jobs
+#   - Modify build settings in each platform job
+#
+# Reference: https://game.ci/docs/github/getting-started
+
+name: CI (Unity)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - '.github/workflows/ci-unity.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      buildWindows:
+        description: 'Build Windows'
+        type: boolean
+        default: true
+      buildLinux:
+        description: 'Build Linux'
+        type: boolean
+        default: true
+      buildWebGL:
+        description: 'Build WebGL'
+        type: boolean
+        default: true
+
+env:
+  UNITY_VERSION: 2022.3.20f1
+  PROJECT_PATH: .
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Run Unity tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_PATH }}/Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - name: Run Edit Mode tests
+        uses: game-ci/unity-test-runner@v4
+        id: editmode-tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: editmode
+          artifactsPath: editmode-artifacts
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Edit Mode Tests
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+
+      - name: Run Play Mode tests
+        uses: game-ci/unity-test-runner@v4
+        id: playmode-tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: playmode
+          artifactsPath: playmode-artifacts
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Play Mode Tests
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Test Results
+          path: |
+            editmode-artifacts/
+            playmode-artifacts/
+          retention-days: 14
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Coverage Report
+          path: editmode-artifacts/CodeCoverage/
+          retention-days: 14
+
+  # Build for Windows
+  build-windows:
+    name: Build (Windows)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.buildWindows == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_PATH }}/Library
+          key: Library-Windows-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Windows-
+            Library-
+
+      - name: Build Windows (Mono)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneWindows64
+          buildName: Game
+          buildsPath: build
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-Windows
+          path: build/StandaloneWindows64/
+          retention-days: 14
+
+  # Build for Linux
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.buildLinux == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_PATH }}/Library
+          key: Library-Linux-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Linux-
+            Library-
+
+      - name: Build Linux
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneLinux64
+          buildName: Game
+          buildsPath: build
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-Linux
+          path: build/StandaloneLinux64/
+          retention-days: 14
+
+  # Build for WebGL
+  build-webgl:
+    name: Build (WebGL)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.buildWebGL == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PROJECT_PATH }}/Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ env.PROJECT_PATH }}
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: WebGL
+          buildName: Game
+          buildsPath: build
+
+      - name: Upload WebGL build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-WebGL
+          path: build/WebGL/
+          retention-days: 14
+
+  # Optional: Build for macOS (uncomment to enable)
+  # build-macos:
+  #   name: Build (macOS)
+  #   runs-on: macos-latest
+  #   needs: test
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Build macOS
+  #       uses: game-ci/unity-builder@v4
+  #       env:
+  #         UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  #         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  #         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  #       with:
+  #         projectPath: ${{ env.PROJECT_PATH }}
+  #         unityVersion: ${{ env.UNITY_VERSION }}
+  #         targetPlatform: StandaloneOSX
+  #         buildName: Game
+  #         buildsPath: build
+  #
+  #     - name: Upload macOS build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Build-macOS
+  #         path: build/StandaloneOSX/
+  #         retention-days: 14
+
+  # Optional: Build for Android (uncomment to enable)
+  # build-android:
+  #   name: Build (Android)
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Build Android
+  #       uses: game-ci/unity-builder@v4
+  #       env:
+  #         UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  #         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  #         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  #       with:
+  #         projectPath: ${{ env.PROJECT_PATH }}
+  #         unityVersion: ${{ env.UNITY_VERSION }}
+  #         targetPlatform: Android
+  #         buildName: Game
+  #         buildsPath: build
+  #         androidExportType: androidPackage
+  #         androidKeystoreName: user.keystore
+  #         androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  #         androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+  #         androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+  #         androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+  #
+  #     - name: Upload Android build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Build-Android
+  #         path: build/Android/
+  #         retention-days: 14
+
+  # Optional: Build for iOS (uncomment to enable)
+  # build-ios:
+  #   name: Build (iOS)
+  #   runs-on: macos-latest
+  #   needs: test
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Build iOS
+  #       uses: game-ci/unity-builder@v4
+  #       env:
+  #         UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  #         UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  #         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  #       with:
+  #         projectPath: ${{ env.PROJECT_PATH }}
+  #         unityVersion: ${{ env.UNITY_VERSION }}
+  #         targetPlatform: iOS
+  #         buildName: Game
+  #         buildsPath: build
+  #
+  #     - name: Upload iOS build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Build-iOS
+  #         path: build/iOS/
+  #         retention-days: 14

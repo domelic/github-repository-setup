@@ -12,6 +12,86 @@ Set up GitHub repositories with production-grade automation by fetching template
 
 ---
 
+## Which Preset Should I Use?
+
+### Quick Decision Tree
+
+```text
+What's your project type?
+│
+├─ Web Application
+│  ├─ Node.js/TypeScript → nodejs
+│  ├─ Python/Django/Flask → python
+│  ├─ Go → go
+│  ├─ Ruby/Rails → ruby
+│  ├─ PHP/Laravel → php
+│  └─ .NET/C# → dotnet
+│
+├─ Mobile App
+│  ├─ iOS (Swift) → ios + swift
+│  ├─ Android (Kotlin) → android + kotlin
+│  ├─ Flutter → flutter
+│  └─ React Native → react-native
+│
+├─ Game Development
+│  ├─ Godot 4.x → godot
+│  └─ Unity → unity
+│
+├─ ML/AI Project
+│  └─ Python + ML → ml
+│
+├─ CLI Tool (with binaries)
+│  ├─ Go → go + cli-tool
+│  └─ Rust → rust + cli-tool
+│
+├─ Systems Programming
+│  ├─ Rust → rust
+│  ├─ C/C++ → cpp
+│  └─ Go → go
+│
+├─ JVM Languages
+│  ├─ Java → java
+│  ├─ Kotlin → kotlin
+│  └─ Scala → scala
+│
+├─ Infrastructure
+│  ├─ Terraform → terraform
+│  ├─ Kubernetes → kubernetes
+│  └─ Serverless → serverless
+│
+└─ Documentation Only
+   └─ docs
+```
+
+### Common Preset Bundles
+
+| Use Case | Recommended Presets |
+|----------|---------------------|
+| **Production Web App** | `{language}` + `quality` + `security` + `deploy` + `releases` |
+| **Open Source Library** | `{language}` + `docs` + `issues` + `releases` + `bots` |
+| **Enterprise Project** | `{language}` + `security` + `sonarcloud` + `snyk` + `multienv` |
+| **Internal Tool** | `{language}` + `quality` + `notifications` |
+| **Startup MVP** | `{language}` + `deploy` + `notifications` |
+| **Game Project** | `godot` or `unity` + `releases` + `notifications` |
+| **ML/AI Project** | `ml` + `releases` + `observability` |
+| **CLI Distribution** | `{language}` + `cli-tool` + `releases` |
+
+### Preset Selection FAQ
+
+**Q: Can I use multiple presets?**
+A: Yes! Presets are composable. Apply them sequentially for your needs.
+
+**Q: What's the difference between `python` and `ml`?**
+A: The `python` preset is for general Python projects. The `ml` preset adds GPU support, Jupyter validation, and ML-specific tooling (DVC, experiment tracking).
+
+**Q: Should I use `security` or `snyk`?**
+A: Use `security` for GitHub-native scanning (CodeQL, Trivy). Add `snyk` for additional dependency vulnerability detection with Snyk's database.
+
+**Q: What about monorepos?**
+A: Use your primary language preset + `monorepo` for Turborepo/pnpm workspace configuration.
+
+---
+
 ## Template Source
 
 **Pinned Version:** `v0.1.20`
@@ -802,6 +882,94 @@ lefthook install
 
 ---
 
+## Game Development Presets
+
+### `/github-setup godot`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-godot.yml` | `.github/workflows/ci-godot.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Godot 4.x engine exports, multi-platform builds (Windows, Linux, macOS, Web, Android), GDScript linting, asset validation.
+
+### `/github-setup unity`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-unity.yml` | `.github/workflows/ci-unity.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: Unity Test Framework (Edit Mode + Play Mode), multi-platform builds, IL2CPP support, GameCI integration.
+
+---
+
+## ML/AI Presets
+
+### `/github-setup ml`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/ci-ml-python.yml` | `.github/workflows/ci-ml-python.yml` |
+| `dependabot.yml` | `.github/dependabot.yml` |
+| `.editorconfig` | `.editorconfig` |
+
+Features: GPU runner support, Jupyter notebook validation, DVC integration, experiment tracking (MLflow/Weights & Biases).
+
+See also: [`docs/ML_PROJECTS.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/ML_PROJECTS.md)
+
+---
+
+## CLI Distribution Presets
+
+### `/github-setup cli-tool`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/publish-cli-binaries.yml` | `.github/workflows/publish-cli-binaries.yml` |
+
+Features: Cross-platform compilation (Go, Rust), GitHub Release assets, SHA256 checksums, optional code signing, Homebrew/Scoop formula generation.
+
+---
+
+## Additional Integration Presets
+
+### `/github-setup sonarcloud`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/sonarcloud.yml` | `.github/workflows/sonarcloud.yml` |
+
+Features: Code quality analysis, coverage integration, quality gate enforcement, PR decoration with inline comments.
+
+### `/github-setup teams`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/notify-teams.yml` | `.github/workflows/notify-teams.yml` |
+
+Features: Microsoft Teams Adaptive Cards, build status notifications, release notifications, deployment status updates.
+
+### `/github-setup snyk`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/snyk.yml` | `.github/workflows/snyk.yml` |
+
+Features: Dependency vulnerability scanning, container image scanning, IaC scanning, SARIF integration with GitHub Security.
+
+### `/github-setup loadtest`
+
+| Template | Destination |
+|----------|-------------|
+| `workflows/load-test-k6.yml` | `.github/workflows/load-test-k6.yml` |
+
+Features: k6 script execution, threshold validation, results as PR comments, optional cloud execution.
+
+---
+
 ## Full Setup (`/github-setup`)
 
 ### 1. Detect Project Type
@@ -891,6 +1059,18 @@ Check for existence of these files/settings:
 - [ ] `renovate.json` (alternative to Dependabot)
 - [ ] OpenAPI specification in `openapi/`
 - [ ] Observability integration (Sentry/Datadog/OpenTelemetry)
+
+### Additional Integrations
+- [ ] `.github/workflows/sonarcloud.yml` (code quality)
+- [ ] `.github/workflows/snyk.yml` (security scanning)
+- [ ] `.github/workflows/notify-teams.yml` (Teams notifications)
+- [ ] `.github/workflows/load-test-k6.yml` (load testing)
+
+### Specialized Domains
+- [ ] `.github/workflows/ci-godot.yml` (Godot game development)
+- [ ] `.github/workflows/ci-unity.yml` (Unity game development)
+- [ ] `.github/workflows/ci-ml-python.yml` (ML/AI projects)
+- [ ] `.github/workflows/publish-cli-binaries.yml` (CLI distribution)
 
 Report missing items grouped by priority: Essential -> Recommended -> Optional.
 

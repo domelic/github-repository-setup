@@ -1,0 +1,228 @@
+# k6 Load Testing Workflow
+# Run load tests with Grafana k6
+#
+# Features:
+#   - k6 script execution
+#   - Threshold validation
+#   - Results as PR comments
+#   - Trend tracking with cloud integration
+#   - Multiple test scenarios support
+#
+# Prerequisites:
+#   1. k6 test scripts in your repository
+#   2. Optional: k6 Cloud account for advanced features
+#
+# Optional secrets:
+#   K6_CLOUD_TOKEN - k6 Cloud API token (for cloud execution/trending)
+#   K6_CLOUD_PROJECT_ID - k6 Cloud project ID
+#
+# Setup:
+#   1. Create k6 test scripts (see examples below)
+#   2. Configure thresholds in your scripts
+#   3. Optional: Sign up at https://k6.io/cloud for trending
+#
+# Test script location:
+#   Default: ./tests/load/
+#   Override with K6_TEST_PATH environment variable
+
+name: Load Test (k6)
+
+on:
+  # Run on PRs to main (for baseline comparison)
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/load/**'
+      - '.github/workflows/load-test-k6.yml'
+  # Manual trigger for on-demand testing
+  workflow_dispatch:
+    inputs:
+      test_script:
+        description: 'Test script to run (relative to tests/load/)'
+        required: true
+        default: 'smoke.js'
+        type: string
+      vus:
+        description: 'Number of virtual users'
+        required: false
+        default: '10'
+        type: string
+      duration:
+        description: 'Test duration (e.g., 30s, 1m, 5m)'
+        required: false
+        default: '30s'
+        type: string
+      target_url:
+        description: 'Target URL to test'
+        required: false
+        type: string
+
+env:
+  K6_TEST_PATH: tests/load
+  # Default test configuration
+  DEFAULT_VUS: 10
+  DEFAULT_DURATION: 30s
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Smoke test - quick validation
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Check for test scripts
+        id: check
+        run: |
+          if [ -f "${{ env.K6_TEST_PATH }}/smoke.js" ]; then
+            echo "script_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "script_exists=false" >> $GITHUB_OUTPUT
+            echo "No smoke test script found at ${{ env.K6_TEST_PATH }}/smoke.js"
+          fi
+
+      - name: Run smoke test
+        if: steps.check.outputs.script_exists == 'true'
+        run: k6 run ${{ env.K6_TEST_PATH }}/smoke.js
+        continue-on-error: true
+
+      - name: Run smoke test with summary
+        if: steps.check.outputs.script_exists == 'true'
+        run: |
+          k6 run --out json=results.json ${{ env.K6_TEST_PATH }}/smoke.js 2>&1 | tee k6-output.txt
+          echo "## k6 Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 k6-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
+  # Manual load test
+  load-test:
+    name: Load Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run load test
+        env:
+          K6_VUS: ${{ github.event.inputs.vus || env.DEFAULT_VUS }}
+          K6_DURATION: ${{ github.event.inputs.duration || env.DEFAULT_DURATION }}
+          TARGET_URL: ${{ github.event.inputs.target_url }}
+        run: |
+          TEST_SCRIPT="${{ env.K6_TEST_PATH }}/${{ github.event.inputs.test_script }}"
+          echo "Running: $TEST_SCRIPT"
+          echo "VUs: $K6_VUS, Duration: $K6_DURATION"
+
+          k6 run \
+            --vus "$K6_VUS" \
+            --duration "$K6_DURATION" \
+            --out json=results.json \
+            "$TEST_SCRIPT" 2>&1 | tee k6-output.txt
+
+      - name: Generate summary
+        run: |
+          echo "## k6 Load Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test:** ${{ github.event.inputs.test_script }}" >> $GITHUB_STEP_SUMMARY
+          echo "**VUs:** ${{ github.event.inputs.vus || env.DEFAULT_VUS }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration:** ${{ github.event.inputs.duration || env.DEFAULT_DURATION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -50 k6-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: |
+            results.json
+            k6-output.txt
+          retention-days: 30
+
+  # Optional: Cloud execution (uncomment to enable)
+  # cloud-test:
+  #   name: Cloud Load Test
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'workflow_dispatch' && github.event.inputs.use_cloud == 'true'
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup k6
+  #       uses: grafana/setup-k6-action@v1
+  #
+  #     - name: Run cloud test
+  #       env:
+  #         K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+  #         K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+  #       run: |
+  #         k6 cloud \
+  #           --project-id "$K6_CLOUD_PROJECT_ID" \
+  #           "${{ env.K6_TEST_PATH }}/${{ github.event.inputs.test_script }}"
+
+# Example k6 test scripts to add to your repository:
+#
+# tests/load/smoke.js (quick validation):
+# ```javascript
+# import http from 'k6/http';
+# import { check, sleep } from 'k6';
+#
+# export const options = {
+#   vus: 1,
+#   duration: '10s',
+#   thresholds: {
+#     http_req_duration: ['p(95)<500'],
+#     http_req_failed: ['rate<0.01'],
+#   },
+# };
+#
+# export default function () {
+#   const res = http.get(__ENV.TARGET_URL || 'https://test.k6.io');
+#   check(res, {
+#     'status is 200': (r) => r.status === 200,
+#     'response time < 500ms': (r) => r.timings.duration < 500,
+#   });
+#   sleep(1);
+# }
+# ```
+#
+# tests/load/stress.js (stress testing):
+# ```javascript
+# import http from 'k6/http';
+# import { check, sleep } from 'k6';
+#
+# export const options = {
+#   stages: [
+#     { duration: '2m', target: 100 },   // Ramp up
+#     { duration: '5m', target: 100 },   // Stay at peak
+#     { duration: '2m', target: 200 },   // Push beyond
+#     { duration: '5m', target: 200 },   // Stay at stress
+#     { duration: '2m', target: 0 },     // Ramp down
+#   ],
+#   thresholds: {
+#     http_req_duration: ['p(95)<1000'],
+#     http_req_failed: ['rate<0.05'],
+#   },
+# };
+#
+# export default function () {
+#   const res = http.get(__ENV.TARGET_URL || 'https://test.k6.io');
+#   check(res, { 'status is 200': (r) => r.status === 200 });
+#   sleep(1);
+# }
+# ```

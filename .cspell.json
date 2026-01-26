@@ -107,7 +107,20 @@
     "Semgrep",
     "lefthook",
     "cloudrun",
-    "rubygems"
+    "rubygems",
+    "WANDB",
+    "MLFLOW",
+    "nbstripout",
+    "sonarcloud",
+    "multienv",
+    "nbqa",
+    "Godot",
+    "godot",
+    "gdlint",
+    "gdtoolkit",
+    "gdshader",
+    "GameCI",
+    "barichello"
   ],
   "ignorePaths": [
     "node_modules/**",
