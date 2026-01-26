@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.28](https://github.com/domelic/github-repository-setup/compare/v0.1.27...v0.1.28) (2026-01-26)
+
+
+### Bug Fixes
+
+* workflow fixes for Pages, welcome, and CI loop ([#94](https://github.com/domelic/github-repository-setup/issues/94)) ([09bfad0](https://github.com/domelic/github-repository-setup/commit/09bfad09a2b3c72626513267219b5c2bc61197eb))
+
+
+### Documentation
+
+* update workflow changelog for v0.1.27 ([#97](https://github.com/domelic/github-repository-setup/issues/97)) ([08ba22e](https://github.com/domelic/github-repository-setup/commit/08ba22e497284ef893591cd5caed8affa6f9614a))
+
 ## [0.1.27](https://github.com/domelic/github-repository-setup/compare/v0.1.26...v0.1.27) (2026-01-26)
 
 
