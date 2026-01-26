@@ -1,0 +1,2208 @@
+# Workflow Metadata Index
+# Structured metadata for all 113 GitHub Actions workflow templates
+#
+# This file enables:
+#   - Workflow discovery and filtering
+#   - Dependency visualization
+#   - Preset compatibility checking
+#   - Automated documentation generation
+#
+# Schema: workflow-metadata.schema.json
+
+$schema: "./workflow-metadata.schema.json"
+version: "1.0.0"
+generated: "2025-01-26"
+
+metadata:
+  # ============================================================================
+  # CI/TESTING WORKFLOWS
+  # ============================================================================
+
+  ci:
+    file: ci.yml
+    name: CI (Generic)
+    category: ci-testing
+    description: Basic CI template with configurable steps for any project type
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please, dependency-review]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-cross-os:
+    file: ci-cross-os.yml
+    name: CI (Cross-Platform)
+    category: ci-testing
+    description: Test on Linux, macOS, and Windows using matrix strategy
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go, ci-rust]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-nodejs:
+    file: ci-nodejs.yml
+    name: CI (Node.js)
+    category: ci-testing
+    description: Node.js CI with npm/yarn/pnpm support and matrix testing
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-npm, release-please, e2e-playwright]
+    secrets:
+      required: []
+      optional:
+        - name: CODECOV_TOKEN
+          description: Token for code coverage reporting
+          setup_url: https://codecov.io
+    presets: [nodejs, quality]
+
+  ci-python:
+    file: ci-python.yml
+    name: CI (Python)
+    category: ci-testing
+    description: Python CI with pip/poetry support and matrix testing
+    tags:
+      language: [python]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-pypi, release-please, codeql]
+    secrets:
+      required: []
+      optional:
+        - name: CODECOV_TOKEN
+          description: Token for code coverage reporting
+    presets: [python, quality]
+
+  ci-go:
+    file: ci-go.yml
+    name: CI (Go)
+    category: ci-testing
+    description: Go CI with modules support, linting, and testing
+    tags:
+      language: [go]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please, codeql, trivy]
+    secrets:
+      required: []
+      optional: []
+    presets: [go, quality]
+
+  ci-rust:
+    file: ci-rust.yml
+    name: CI (Rust)
+    category: ci-testing
+    description: Rust CI with Cargo build, test, and clippy linting
+    tags:
+      language: [rust]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-crates, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [rust, quality]
+
+  ci-java:
+    file: ci-java.yml
+    name: CI (Java)
+    category: ci-testing
+    description: Java CI with Maven/Gradle support and JDK matrix testing
+    tags:
+      language: [java]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-maven, release-please, codeql]
+    secrets:
+      required: []
+      optional: []
+    presets: [java, quality]
+
+  ci-kotlin:
+    file: ci-kotlin.yml
+    name: CI (Kotlin)
+    category: ci-testing
+    description: Kotlin CI with Gradle build and testing
+    tags:
+      language: [kotlin]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-maven, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-scala:
+    file: ci-scala.yml
+    name: CI (Scala)
+    category: ci-testing
+    description: Scala CI with sbt build and testing
+    tags:
+      language: [scala]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-maven, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-dotnet:
+    file: ci-dotnet.yml
+    name: CI (.NET)
+    category: ci-testing
+    description: .NET CI supporting .NET Core, .NET 5/6/7/8
+    tags:
+      language: [dotnet]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-nuget, release-please, codeql]
+    secrets:
+      required: []
+      optional: []
+    presets: [dotnet, quality]
+
+  ci-ruby:
+    file: ci-ruby.yml
+    name: CI (Ruby)
+    category: ci-testing
+    description: Ruby CI with Bundler and matrix testing
+    tags:
+      language: [ruby]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-rubygems, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [ruby, quality]
+
+  ci-php:
+    file: ci-php.yml
+    name: CI (PHP)
+    category: ci-testing
+    description: PHP CI with Composer and PHPUnit testing
+    tags:
+      language: [php]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please, codeql]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-elixir:
+    file: ci-elixir.yml
+    name: CI (Elixir)
+    category: ci-testing
+    description: Elixir CI with Mix build and testing
+    tags:
+      language: [elixir]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-swift:
+    file: ci-swift.yml
+    name: CI (Swift)
+    category: ci-testing
+    description: Swift CI with Swift Package Manager
+    tags:
+      language: [swift]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-ios, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-cpp:
+    file: ci-cpp.yml
+    name: CI (C/C++)
+    category: ci-testing
+    description: C/C++ CI with CMake/Make builds
+    tags:
+      language: [cpp]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please, codeql]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  ci-terraform:
+    file: ci-terraform.yml
+    name: CI (Terraform)
+    category: ci-testing
+    description: Terraform validate, plan, and security scanning
+    tags:
+      language: [terraform]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github, aws, azure, gcp]
+    dependencies:
+      commonly_paired_with: [trivy, snyk]
+    secrets:
+      required: []
+      optional:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS credentials for plan
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS credentials for plan
+    presets: [infrastructure]
+
+  ci-android:
+    file: ci-android.yml
+    name: CI (Android)
+    category: ci-testing
+    description: Android CI with Gradle build and instrumented tests
+    tags:
+      language: [android]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-play-store, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [mobile]
+
+  ci-ios:
+    file: ci-ios.yml
+    name: CI (iOS)
+    category: ci-testing
+    description: iOS CI with Xcode builds and testing
+    tags:
+      language: [ios]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-testflight, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [mobile]
+
+  ci-flutter:
+    file: ci-flutter.yml
+    name: CI (Flutter)
+    category: ci-testing
+    description: Flutter CI for cross-platform mobile/web apps
+    tags:
+      language: [flutter]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-play-store, publish-testflight]
+    secrets:
+      required: []
+      optional: []
+    presets: [mobile]
+
+  ci-react-native:
+    file: ci-react-native.yml
+    name: CI (React Native)
+    category: ci-testing
+    description: React Native CI with Jest testing and build validation
+    tags:
+      language: [react-native]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-play-store, publish-testflight]
+    secrets:
+      required: []
+      optional: []
+    presets: [mobile]
+
+  ci-electron:
+    file: ci-electron.yml
+    name: CI (Electron)
+    category: ci-testing
+    description: Electron CI for desktop apps with cross-platform builds
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-electron, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  ci-browser-extension:
+    file: ci-browser-extension.yml
+    name: CI (Browser Extension)
+    category: ci-testing
+    description: Browser extension CI with manifest validation
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github, chrome-web-store, firefox-addons]
+    dependencies:
+      commonly_paired_with: [publish-chrome-extension, publish-firefox-addon]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  ci-with-services:
+    file: ci-with-services.yml
+    name: CI with Services
+    category: ci-testing
+    description: CI template with database and cache service containers
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  ci-ml-python:
+    file: ci-ml-python.yml
+    name: CI (ML/Python)
+    category: ci-testing
+    description: Machine learning Python CI with GPU support and model testing
+    tags:
+      language: [python]
+      trigger: [push, pull_request]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-pypi, release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [ml-ai]
+
+  ci-unity:
+    file: ci-unity.yml
+    name: CI (Unity)
+    category: ci-testing
+    description: Unity game engine CI with build and test automation
+    tags:
+      language: [unity]
+      trigger: [push, pull_request]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required:
+        - name: UNITY_LICENSE
+          description: Unity license file content
+        - name: UNITY_EMAIL
+          description: Unity account email
+        - name: UNITY_PASSWORD
+          description: Unity account password
+      optional: []
+    presets: [game-dev]
+
+  ci-godot:
+    file: ci-godot.yml
+    name: CI (Godot)
+    category: ci-testing
+    description: Godot game engine CI with export automation
+    tags:
+      language: [godot]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [game-dev]
+
+  ci-platformio:
+    file: ci-platformio.yml
+    name: CI (PlatformIO)
+    category: ci-testing
+    description: Embedded/IoT CI with PlatformIO builds
+    tags:
+      language: [platformio]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-firmware]
+    secrets:
+      required: []
+      optional: []
+    presets: [iot-embedded]
+
+  ci-hardhat:
+    file: ci-hardhat.yml
+    name: CI (Hardhat)
+    category: ci-testing
+    description: Ethereum smart contract CI with Hardhat testing
+    tags:
+      language: [solidity]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-contract]
+    secrets:
+      required: []
+      optional: []
+    presets: [web3]
+
+  ci-foundry:
+    file: ci-foundry.yml
+    name: CI (Foundry)
+    category: ci-testing
+    description: Solidity smart contract CI with Foundry testing
+    tags:
+      language: [solidity]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-contract]
+    secrets:
+      required: []
+      optional: []
+    presets: [web3]
+
+  e2e-cypress:
+    file: e2e-cypress.yml
+    name: E2E (Cypress)
+    category: ci-testing
+    description: End-to-end testing with Cypress and video recording
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, deploy-vercel, deploy-netlify]
+    secrets:
+      required: []
+      optional:
+        - name: CYPRESS_RECORD_KEY
+          description: Cypress Dashboard recording key
+    presets: [quality]
+
+  e2e-playwright:
+    file: e2e-playwright.yml
+    name: E2E (Playwright)
+    category: ci-testing
+    description: End-to-end testing with Playwright and trace recording
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, deploy-vercel, deploy-netlify]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  coverage:
+    file: coverage.yml
+    name: Code Coverage
+    category: ci-testing
+    description: Code coverage reporting with multiple provider support
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github, codecov]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required: []
+      optional:
+        - name: CODECOV_TOKEN
+          description: Codecov upload token
+          setup_url: https://codecov.io
+    presets: [quality]
+
+  codecov:
+    file: codecov.yml
+    name: Codecov Coverage
+    category: ci-testing
+    description: Dedicated Codecov integration with PR comments
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github, codecov]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required:
+        - name: CODECOV_TOKEN
+          description: Codecov upload token
+          setup_url: https://codecov.io
+      optional: []
+    presets: [codecov]
+
+  format-check:
+    file: format-check.yml
+    name: Format Check
+    category: ci-testing
+    description: Code formatting validation with Prettier/Black/gofmt
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  bundle-size:
+    file: bundle-size.yml
+    name: Bundle Size
+    category: ci-testing
+    description: JavaScript/CSS bundle size monitoring with thresholds
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, lighthouse]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  contract-pact:
+    file: contract-pact.yml
+    name: Contract Testing (Pact)
+    category: ci-testing
+    description: Consumer-driven contract testing with Pact
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required: []
+      optional:
+        - name: PACT_BROKER_TOKEN
+          description: Pact Broker authentication token
+    presets: [integrations]
+
+  load-test-k6:
+    file: load-test-k6.yml
+    name: Load Testing (k6)
+    category: ci-testing
+    description: Performance and load testing with Grafana k6
+    tags:
+      language: [any]
+      trigger: [push, pull_request, workflow_dispatch]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-kubernetes, deploy-vercel]
+    secrets:
+      required: []
+      optional:
+        - name: K6_CLOUD_TOKEN
+          description: k6 Cloud token for cloud execution
+    presets: [quality]
+
+  visual-regression-percy:
+    file: visual-regression-percy.yml
+    name: Visual Regression (Percy)
+    category: ci-testing
+    description: Visual regression testing with Percy/BrowserStack
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [e2e-cypress, e2e-playwright]
+    secrets:
+      required:
+        - name: PERCY_TOKEN
+          description: Percy project token
+          setup_url: https://percy.io
+      optional: []
+    presets: [quality]
+
+  visual-regression-chromatic:
+    file: visual-regression-chromatic.yml
+    name: Visual Regression (Chromatic)
+    category: ci-testing
+    description: Storybook visual testing with Chromatic
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [storybook-publish]
+    secrets:
+      required:
+        - name: CHROMATIC_PROJECT_TOKEN
+          description: Chromatic project token
+          setup_url: https://chromatic.com
+      optional: []
+    presets: [quality]
+
+  visual-regression-backstop:
+    file: visual-regression-backstop.yml
+    name: Visual Regression (BackstopJS)
+    category: ci-testing
+    description: Open-source visual regression with BackstopJS
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [e2e-playwright]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  # ============================================================================
+  # DEPLOYMENT WORKFLOWS
+  # ============================================================================
+
+  deploy-github-pages:
+    file: deploy-github-pages.yml
+    name: Deploy to GitHub Pages
+    category: deployment
+    description: Deploy static sites to GitHub Pages
+    tags:
+      language: [any]
+      trigger: [push, workflow_dispatch]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, docs-api]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs]
+
+  deploy-vercel:
+    file: deploy-vercel.yml
+    name: Deploy to Vercel
+    category: deployment
+    description: Deploy to Vercel with preview deployments on PRs
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [vercel]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, e2e-playwright]
+    secrets:
+      required:
+        - name: VERCEL_TOKEN
+          description: Vercel API token
+          setup_url: https://vercel.com/account/tokens
+        - name: VERCEL_ORG_ID
+          description: Vercel organization ID
+        - name: VERCEL_PROJECT_ID
+          description: Vercel project ID
+      optional: []
+    presets: [vercel]
+
+  deploy-netlify:
+    file: deploy-netlify.yml
+    name: Deploy to Netlify
+    category: deployment
+    description: Deploy to Netlify with preview deployments
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [netlify]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, e2e-playwright]
+    secrets:
+      required:
+        - name: NETLIFY_AUTH_TOKEN
+          description: Netlify personal access token
+          setup_url: https://app.netlify.com/user/applications#personal-access-tokens
+        - name: NETLIFY_SITE_ID
+          description: Netlify site ID
+      optional: []
+    presets: [netlify]
+
+  deploy-render:
+    file: deploy-render.yml
+    name: Deploy to Render
+    category: deployment
+    description: Deploy to Render via webhook trigger
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: starter
+      platform: [render]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: RENDER_DEPLOY_HOOK_URL
+          description: Render deploy hook URL
+      optional: []
+    presets: []
+
+  deploy-railway:
+    file: deploy-railway.yml
+    name: Deploy to Railway
+    category: deployment
+    description: Deploy to Railway platform
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: starter
+      platform: [railway]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: RAILWAY_TOKEN
+          description: Railway API token
+      optional: []
+    presets: []
+
+  deploy-fly:
+    file: deploy-fly.yml
+    name: Deploy to Fly.io
+    category: deployment
+    description: Deploy to Fly.io global edge platform
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: starter
+      platform: [fly]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-go, ci-rust]
+    secrets:
+      required:
+        - name: FLY_API_TOKEN
+          description: Fly.io API token
+          setup_url: https://fly.io/docs/reference/private-networking/#app-token
+      optional: []
+    presets: [fly]
+
+  deploy-digitalocean:
+    file: deploy-digitalocean.yml
+    name: Deploy to DigitalOcean
+    category: deployment
+    description: Deploy to DigitalOcean App Platform
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: starter
+      platform: [digitalocean]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: DIGITALOCEAN_ACCESS_TOKEN
+          description: DigitalOcean API token
+      optional: []
+    presets: []
+
+  deploy-aws-s3:
+    file: deploy-aws-s3.yml
+    name: Deploy to AWS S3
+    category: deployment
+    description: Deploy static files to AWS S3 bucket
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: intermediate
+      platform: [aws]
+    dependencies:
+      commonly_paired_with: [ci-nodejs]
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS access key ID
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS secret access key
+      optional:
+        - name: AWS_S3_BUCKET
+          description: S3 bucket name
+    presets: [aws]
+
+  deploy-aws-lambda:
+    file: deploy-aws-lambda.yml
+    name: Deploy to AWS Lambda
+    category: deployment
+    description: Deploy serverless functions to AWS Lambda
+    tags:
+      language: [nodejs, python]
+      trigger: [push]
+      complexity: intermediate
+      platform: [aws]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS access key ID
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS secret access key
+      optional: []
+    presets: [aws]
+
+  deploy-azure-webapp:
+    file: deploy-azure-webapp.yml
+    name: Deploy to Azure App Service
+    category: deployment
+    description: Deploy to Azure Web Apps
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: intermediate
+      platform: [azure]
+    dependencies:
+      commonly_paired_with: [ci-dotnet, ci-nodejs]
+    secrets:
+      required:
+        - name: AZURE_CREDENTIALS
+          description: Azure service principal credentials (JSON)
+        - name: AZURE_WEBAPP_NAME
+          description: Azure Web App name
+      optional: []
+    presets: [azure]
+
+  deploy-azure-functions:
+    file: deploy-azure-functions.yml
+    name: Deploy to Azure Functions
+    category: deployment
+    description: Deploy serverless functions to Azure Functions
+    tags:
+      language: [nodejs, python, dotnet]
+      trigger: [push]
+      complexity: intermediate
+      platform: [azure]
+    dependencies:
+      commonly_paired_with: [ci-dotnet, ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: AZURE_CREDENTIALS
+          description: Azure service principal credentials
+        - name: AZURE_FUNCTIONAPP_NAME
+          description: Azure Function App name
+      optional: []
+    presets: [azure]
+
+  deploy-azure-container:
+    file: deploy-azure-container.yml
+    name: Deploy to Azure Container Apps
+    category: deployment
+    description: Deploy containerized apps to Azure Container Apps
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: advanced
+      platform: [azure, docker]
+    dependencies:
+      commonly_paired_with: [publish-docker]
+    secrets:
+      required:
+        - name: AZURE_CREDENTIALS
+          description: Azure service principal credentials
+      optional: []
+    presets: [azure]
+
+  deploy-gcp-cloudrun:
+    file: deploy-gcp-cloudrun.yml
+    name: Deploy to Cloud Run
+    category: deployment
+    description: Deploy containerized apps to Google Cloud Run
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: intermediate
+      platform: [gcp, docker]
+    dependencies:
+      commonly_paired_with: [publish-docker-gcr]
+    secrets:
+      required:
+        - name: GCP_CREDENTIALS
+          description: GCP service account key (JSON)
+        - name: GCP_PROJECT_ID
+          description: GCP project ID
+      optional: []
+    presets: [gcp]
+
+  deploy-gcp-functions:
+    file: deploy-gcp-functions.yml
+    name: Deploy to Cloud Functions
+    category: deployment
+    description: Deploy serverless functions to Google Cloud Functions
+    tags:
+      language: [nodejs, python, go]
+      trigger: [push]
+      complexity: intermediate
+      platform: [gcp]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-go]
+    secrets:
+      required:
+        - name: GCP_CREDENTIALS
+          description: GCP service account key
+        - name: GCP_PROJECT_ID
+          description: GCP project ID
+      optional: []
+    presets: [gcp]
+
+  deploy-gcp-gke:
+    file: deploy-gcp-gke.yml
+    name: Deploy to GKE
+    category: deployment
+    description: Deploy to Google Kubernetes Engine
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: advanced
+      platform: [gcp, kubernetes]
+    dependencies:
+      commonly_paired_with: [publish-docker-gcr, deploy-kubernetes]
+    secrets:
+      required:
+        - name: GCP_CREDENTIALS
+          description: GCP service account key
+        - name: GKE_CLUSTER_NAME
+          description: GKE cluster name
+        - name: GKE_CLUSTER_LOCATION
+          description: GKE cluster location
+      optional: []
+    presets: [gcp, kubernetes]
+
+  deploy-kubernetes:
+    file: deploy-kubernetes.yml
+    name: Deploy to Kubernetes
+    category: deployment
+    description: Generic Kubernetes deployment with kubectl/kustomize
+    tags:
+      language: [any]
+      trigger: [push, workflow_dispatch]
+      complexity: advanced
+      platform: [kubernetes]
+    dependencies:
+      commonly_paired_with: [publish-docker]
+    secrets:
+      required:
+        - name: KUBE_CONFIG
+          description: Base64-encoded kubeconfig file
+      optional: []
+    presets: [kubernetes]
+
+  deploy-serverless:
+    file: deploy-serverless.yml
+    name: Deploy with Serverless Framework
+    category: deployment
+    description: Deploy using Serverless Framework to AWS/Azure/GCP
+    tags:
+      language: [nodejs, python]
+      trigger: [push]
+      complexity: intermediate
+      platform: [aws, azure, gcp]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS credentials
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS credentials
+      optional: []
+    presets: []
+
+  deploy-sam:
+    file: deploy-sam.yml
+    name: Deploy with AWS SAM
+    category: deployment
+    description: Deploy serverless apps with AWS SAM
+    tags:
+      language: [nodejs, python]
+      trigger: [push]
+      complexity: intermediate
+      platform: [aws]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS credentials
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS credentials
+      optional: []
+    presets: [aws]
+
+  deploy-pulumi:
+    file: deploy-pulumi.yml
+    name: Deploy with Pulumi
+    category: deployment
+    description: Infrastructure deployment with Pulumi IaC
+    tags:
+      language: [nodejs, python, go]
+      trigger: [push, pull_request]
+      complexity: advanced
+      platform: [aws, azure, gcp, kubernetes]
+    dependencies:
+      commonly_paired_with: [ci-terraform]
+    secrets:
+      required:
+        - name: PULUMI_ACCESS_TOKEN
+          description: Pulumi Cloud access token
+      optional:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS credentials
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS credentials
+    presets: [infrastructure]
+
+  deploy-multi-env:
+    file: deploy-multi-env.yml
+    name: Multi-Environment Deploy
+    category: deployment
+    description: Staged deployments to dev/staging/production
+    tags:
+      language: [any]
+      trigger: [push, workflow_dispatch]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-kubernetes, deploy-vercel]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  deploy-contract:
+    file: deploy-contract.yml
+    name: Deploy Smart Contract
+    category: deployment
+    description: Deploy Ethereum smart contracts to networks
+    tags:
+      language: [solidity]
+      trigger: [push, workflow_dispatch]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-hardhat, ci-foundry]
+    secrets:
+      required:
+        - name: DEPLOYER_PRIVATE_KEY
+          description: Wallet private key for deployment
+      optional:
+        - name: ETHERSCAN_API_KEY
+          description: Etherscan API key for verification
+    presets: [web3]
+
+  # ============================================================================
+  # PUBLISHING WORKFLOWS
+  # ============================================================================
+
+  publish-npm:
+    file: publish-npm.yml
+    name: Publish to npm
+    category: publishing
+    description: Publish packages to npm registry with provenance
+    tags:
+      language: [nodejs]
+      trigger: [release]
+      complexity: starter
+      platform: [npm]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-nodejs, release-please]
+    secrets:
+      required:
+        - name: NPM_TOKEN
+          description: npm automation token
+          setup_url: https://www.npmjs.com/settings/~/tokens
+      optional: []
+    presets: [nodejs, releases]
+
+  publish-pypi:
+    file: publish-pypi.yml
+    name: Publish to PyPI
+    category: publishing
+    description: Publish Python packages to PyPI with trusted publishing
+    tags:
+      language: [python]
+      trigger: [release]
+      complexity: starter
+      platform: [pypi]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-python, release-please]
+    secrets:
+      required:
+        - name: PYPI_API_TOKEN
+          description: PyPI API token
+          setup_url: https://pypi.org/manage/account/
+      optional: []
+    presets: [python, releases]
+
+  publish-crates:
+    file: publish-crates.yml
+    name: Publish to crates.io
+    category: publishing
+    description: Publish Rust crates to crates.io
+    tags:
+      language: [rust]
+      trigger: [release]
+      complexity: starter
+      platform: [crates]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-rust, release-please]
+    secrets:
+      required:
+        - name: CRATES_TOKEN
+          description: crates.io API token
+          setup_url: https://crates.io/settings/tokens
+      optional: []
+    presets: [rust, releases]
+
+  publish-rubygems:
+    file: publish-rubygems.yml
+    name: Publish to RubyGems
+    category: publishing
+    description: Publish Ruby gems to RubyGems.org
+    tags:
+      language: [ruby]
+      trigger: [release]
+      complexity: starter
+      platform: [rubygems]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-ruby, release-please]
+    secrets:
+      required:
+        - name: RUBYGEMS_API_KEY
+          description: RubyGems API key
+          setup_url: https://rubygems.org/profile/api_keys
+      optional: []
+    presets: [ruby, releases]
+
+  publish-nuget:
+    file: publish-nuget.yml
+    name: Publish to NuGet
+    category: publishing
+    description: Publish .NET packages to NuGet.org
+    tags:
+      language: [dotnet]
+      trigger: [release]
+      complexity: starter
+      platform: [nuget]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-dotnet, release-please]
+    secrets:
+      required:
+        - name: NUGET_API_KEY
+          description: NuGet.org API key
+          setup_url: https://www.nuget.org/account/apikeys
+      optional: []
+    presets: [dotnet, releases]
+
+  publish-maven:
+    file: publish-maven.yml
+    name: Publish to Maven Central
+    category: publishing
+    description: Publish Java artifacts to Maven Central
+    tags:
+      language: [java]
+      trigger: [release]
+      complexity: intermediate
+      platform: [maven]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-java, release-please]
+    secrets:
+      required:
+        - name: MAVEN_USERNAME
+          description: Maven Central username
+        - name: MAVEN_PASSWORD
+          description: Maven Central password
+        - name: GPG_PRIVATE_KEY
+          description: GPG signing key
+        - name: GPG_PASSPHRASE
+          description: GPG key passphrase
+      optional: []
+    presets: [java, releases]
+
+  publish-docker:
+    file: publish-docker.yml
+    name: Publish Docker Image
+    category: publishing
+    description: Build and push Docker images to registries
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: starter
+      platform: [docker, ghcr]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [release-please, deploy-kubernetes]
+    secrets:
+      required: []
+      optional:
+        - name: DOCKER_USERNAME
+          description: Docker Hub username
+        - name: DOCKER_PASSWORD
+          description: Docker Hub password
+    presets: [docker, releases]
+
+  publish-docker-hub:
+    file: publish-docker-hub.yml
+    name: Publish to Docker Hub
+    category: publishing
+    description: Publish Docker images to Docker Hub
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: starter
+      platform: [docker]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [release-please]
+    secrets:
+      required:
+        - name: DOCKER_USERNAME
+          description: Docker Hub username
+        - name: DOCKER_PASSWORD
+          description: Docker Hub password/token
+          setup_url: https://hub.docker.com/settings/security
+      optional: []
+    presets: [docker]
+
+  publish-docker-ecr:
+    file: publish-docker-ecr.yml
+    name: Publish to Amazon ECR
+    category: publishing
+    description: Publish Docker images to Amazon ECR
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: intermediate
+      platform: [ecr, aws]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [deploy-aws-lambda]
+    secrets:
+      required:
+        - name: AWS_ACCESS_KEY_ID
+          description: AWS access key
+        - name: AWS_SECRET_ACCESS_KEY
+          description: AWS secret key
+      optional: []
+    presets: [aws, docker]
+
+  publish-docker-gcr:
+    file: publish-docker-gcr.yml
+    name: Publish to Google GCR
+    category: publishing
+    description: Publish Docker images to Google Container Registry
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: intermediate
+      platform: [gcr, gcp]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [deploy-gcp-cloudrun, deploy-gcp-gke]
+    secrets:
+      required:
+        - name: GCP_CREDENTIALS
+          description: GCP service account key
+      optional: []
+    presets: [gcp, docker]
+
+  publish-docker-acr:
+    file: publish-docker-acr.yml
+    name: Publish to Azure ACR
+    category: publishing
+    description: Publish Docker images to Azure Container Registry
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: intermediate
+      platform: [acr, azure]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [deploy-azure-container]
+    secrets:
+      required:
+        - name: AZURE_CREDENTIALS
+          description: Azure service principal
+      optional: []
+    presets: [azure, docker]
+
+  publish-chrome-extension:
+    file: publish-chrome-extension.yml
+    name: Publish Chrome Extension
+    category: publishing
+    description: Publish browser extensions to Chrome Web Store
+    tags:
+      language: [nodejs]
+      trigger: [release]
+      complexity: intermediate
+      platform: [chrome-web-store]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-browser-extension]
+    secrets:
+      required:
+        - name: CHROME_EXTENSION_ID
+          description: Chrome extension ID
+        - name: CHROME_CLIENT_ID
+          description: Chrome Web Store client ID
+        - name: CHROME_CLIENT_SECRET
+          description: Chrome Web Store client secret
+        - name: CHROME_REFRESH_TOKEN
+          description: Chrome Web Store refresh token
+      optional: []
+    presets: [browser-extension]
+
+  publish-firefox-addon:
+    file: publish-firefox-addon.yml
+    name: Publish Firefox Add-on
+    category: publishing
+    description: Publish browser extensions to Firefox Add-ons
+    tags:
+      language: [nodejs]
+      trigger: [release]
+      complexity: intermediate
+      platform: [firefox-addons]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-browser-extension]
+    secrets:
+      required:
+        - name: FIREFOX_JWT_ISSUER
+          description: Firefox Add-on API key
+        - name: FIREFOX_JWT_SECRET
+          description: Firefox Add-on API secret
+      optional: []
+    presets: [browser-extension]
+
+  publish-electron:
+    file: publish-electron.yml
+    name: Publish Electron App
+    category: publishing
+    description: Build and publish Electron desktop apps
+    tags:
+      language: [nodejs]
+      trigger: [release]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-electron]
+    secrets:
+      required: []
+      optional:
+        - name: APPLE_ID
+          description: Apple ID for macOS notarization
+        - name: APPLE_ID_PASSWORD
+          description: App-specific password
+        - name: CSC_LINK
+          description: Code signing certificate
+        - name: CSC_KEY_PASSWORD
+          description: Certificate password
+    presets: []
+
+  publish-cli-binaries:
+    file: publish-cli-binaries.yml
+    name: Publish CLI Binaries
+    category: publishing
+    description: Build and publish cross-platform CLI binaries
+    tags:
+      language: [go, rust]
+      trigger: [release]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-go, ci-rust]
+    secrets:
+      required: []
+      optional: []
+    presets: [cli-tools]
+
+  publish-play-store:
+    file: publish-play-store.yml
+    name: Publish to Play Store
+    category: publishing
+    description: Deploy Android apps to Google Play Store via Fastlane
+    tags:
+      language: [android, flutter, react-native]
+      trigger: [release]
+      complexity: advanced
+      platform: [play-store]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-android, ci-flutter]
+    secrets:
+      required:
+        - name: PLAY_STORE_SERVICE_ACCOUNT_JSON
+          description: Google Play service account JSON
+        - name: ANDROID_KEYSTORE_BASE64
+          description: Base64-encoded signing keystore
+        - name: ANDROID_KEYSTORE_PASSWORD
+          description: Keystore password
+        - name: ANDROID_KEY_ALIAS
+          description: Key alias
+        - name: ANDROID_KEY_PASSWORD
+          description: Key password
+      optional: []
+    presets: [mobile]
+
+  publish-testflight:
+    file: publish-testflight.yml
+    name: Publish to TestFlight
+    category: publishing
+    description: Deploy iOS apps to TestFlight and App Store
+    tags:
+      language: [ios, flutter, react-native]
+      trigger: [release]
+      complexity: advanced
+      platform: [app-store]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [ci-ios, ci-flutter]
+    secrets:
+      required:
+        - name: APP_STORE_CONNECT_API_KEY_ID
+          description: App Store Connect API key ID
+        - name: APP_STORE_CONNECT_API_ISSUER_ID
+          description: App Store Connect issuer ID
+        - name: APP_STORE_CONNECT_API_KEY_CONTENT
+          description: App Store Connect API key content
+        - name: MATCH_PASSWORD
+          description: Fastlane match password
+        - name: MATCH_GIT_URL
+          description: Git URL for certificates repo
+      optional: []
+    presets: [mobile]
+
+  amazon-kdp-publish:
+    file: amazon-kdp-publish.yml
+    name: Publish to Amazon KDP
+    category: publishing
+    description: Publish books to Kindle Direct Publishing
+    tags:
+      language: [any]
+      trigger: [release, workflow_dispatch]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  # ============================================================================
+  # SECURITY WORKFLOWS
+  # ============================================================================
+
+  codeql:
+    file: codeql.yml
+    name: CodeQL Analysis
+    category: security
+    description: GitHub code scanning for security vulnerabilities
+    tags:
+      language: [any]
+      trigger: [push, pull_request, schedule]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [dependency-review, trivy]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  dependency-review:
+    file: dependency-review.yml
+    name: Dependency Review
+    category: security
+    description: Audit PR dependencies for vulnerabilities and licenses
+    tags:
+      language: [any]
+      trigger: [pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [codeql, trivy]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  trivy:
+    file: trivy.yml
+    name: Trivy Security Scan
+    category: security
+    description: Container and IaC vulnerability scanning with Trivy
+    tags:
+      language: [any]
+      trigger: [push, pull_request, schedule]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [publish-docker, codeql]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  snyk:
+    file: snyk.yml
+    name: Snyk Security Scan
+    category: security
+    description: Dependency, container, IaC, and code scanning with Snyk
+    tags:
+      language: [any]
+      trigger: [push, pull_request, schedule]
+      complexity: intermediate
+      platform: [snyk]
+    dependencies:
+      commonly_paired_with: [codeql, dependency-review]
+    secrets:
+      required:
+        - name: SNYK_TOKEN
+          description: Snyk API token
+          setup_url: https://app.snyk.io/account
+      optional: []
+    presets: [security]
+
+  scorecard:
+    file: scorecard.yml
+    name: OpenSSF Scorecard
+    category: security
+    description: OpenSSF Scorecard security health metrics
+    tags:
+      language: [any]
+      trigger: [push, schedule]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [codeql, dependency-review]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  sbom:
+    file: sbom.yml
+    name: SBOM Generation
+    category: security
+    description: Generate Software Bill of Materials
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please, trivy]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  dast-zap:
+    file: dast-zap.yml
+    name: DAST (OWASP ZAP)
+    category: security
+    description: Dynamic application security testing with OWASP ZAP
+    tags:
+      language: [any]
+      trigger: [push, pull_request, schedule]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [codeql, deploy-vercel]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  license-check:
+    file: license-check.yml
+    name: License Check
+    category: security
+    description: Scan dependencies for license compliance
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [dependency-review]
+    secrets:
+      required: []
+      optional: []
+    presets: [security]
+
+  secrets-rotation:
+    file: secrets-rotation.yml
+    name: Secrets Rotation
+    category: security
+    description: Automated secrets rotation reminders
+    tags:
+      language: [any]
+      trigger: [schedule]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [notify-slack]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  # ============================================================================
+  # RELEASE MANAGEMENT WORKFLOWS
+  # ============================================================================
+
+  release-please:
+    file: release-please.yml
+    name: Release Please
+    category: release-management
+    description: Automated releases via conventional commits
+    tags:
+      language: [any]
+      trigger: [push]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      triggers: [publish-npm, publish-pypi, publish-docker, publish-crates, publish-rubygems, publish-nuget, publish-maven]
+      commonly_paired_with: [commitlint, dependency-review]
+      conflicts_with: [release-drafter]
+    secrets:
+      required: []
+      optional: []
+    presets: [releases]
+
+  release-drafter:
+    file: release-drafter.yml
+    name: Release Drafter
+    category: release-management
+    description: Draft releases from PR labels
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [auto-labeler]
+      conflicts_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  release-manual:
+    file: release-manual.yml
+    name: Manual Release
+    category: release-management
+    description: Manual release workflow with workflow_dispatch
+    tags:
+      language: [any]
+      trigger: [workflow_dispatch]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  release-firmware:
+    file: release-firmware.yml
+    name: Firmware Release
+    category: release-management
+    description: Embedded firmware release with binary artifacts
+    tags:
+      language: [platformio]
+      trigger: [release]
+      complexity: advanced
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [ci-platformio]
+    secrets:
+      required: []
+      optional: []
+    presets: [iot-embedded]
+
+  # ============================================================================
+  # DOCUMENTATION WORKFLOWS
+  # ============================================================================
+
+  docs-api:
+    file: docs-api.yml
+    name: API Documentation
+    category: documentation
+    description: Generate and deploy API documentation
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-github-pages]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs, api-docs]
+
+  api-docs:
+    file: api-docs.yml
+    name: OpenAPI Documentation
+    category: documentation
+    description: Generate docs from OpenAPI/Swagger specs
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-github-pages]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs, api-docs]
+
+  markdown-lint:
+    file: markdown-lint.yml
+    name: Markdown Lint
+    category: documentation
+    description: Lint markdown files for consistency
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [spell-check, link-checker]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs, quality]
+
+  spell-check:
+    file: spell-check.yml
+    name: Spell Check
+    category: documentation
+    description: Check spelling in documentation
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [markdown-lint, link-checker]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs, quality]
+
+  link-checker:
+    file: link-checker.yml
+    name: Link Checker
+    category: documentation
+    description: Validate URLs in documentation
+    tags:
+      language: [any]
+      trigger: [push, pull_request, schedule]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [markdown-lint, spell-check]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs, quality]
+
+  super-linter:
+    file: super-linter.yml
+    name: Super-Linter
+    category: documentation
+    description: Multi-language linter for polyglot projects
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [codeql]
+      conflicts_with: []
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  commitlint:
+    file: commitlint.yml
+    name: Commitlint
+    category: documentation
+    description: Validate commit messages against conventional commits
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality]
+
+  lighthouse:
+    file: lighthouse.yml
+    name: Lighthouse CI
+    category: documentation
+    description: Performance, accessibility, and SEO audits
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-vercel, deploy-netlify, a11y]
+    secrets:
+      required: []
+      optional:
+        - name: LHCI_GITHUB_APP_TOKEN
+          description: Lighthouse CI GitHub App token
+    presets: [quality, accessibility]
+
+  a11y:
+    file: a11y.yml
+    name: Accessibility Testing
+    category: documentation
+    description: Automated accessibility testing with axe-core
+    tags:
+      language: [nodejs]
+      trigger: [push, pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [lighthouse, e2e-playwright]
+    secrets:
+      required: []
+      optional: []
+    presets: [quality, accessibility]
+
+  storybook-publish:
+    file: storybook-publish.yml
+    name: Storybook Publish
+    category: documentation
+    description: Auto-publish Storybook to GitHub Pages
+    tags:
+      language: [nodejs]
+      trigger: [push]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [visual-regression-chromatic]
+    secrets:
+      required: []
+      optional: []
+    presets: [docs]
+
+  # ============================================================================
+  # COMMUNITY WORKFLOWS
+  # ============================================================================
+
+  welcome:
+    file: welcome.yml
+    name: Welcome Bot
+    category: community
+    description: Greet new contributors on first PR/issue
+    tags:
+      language: [any]
+      trigger: [issues, pull_request_target]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [all-contributors, auto-labeler]
+    secrets:
+      required: []
+      optional: []
+    presets: [community]
+
+  stale:
+    file: stale.yml
+    name: Stale Bot
+    category: community
+    description: Mark and close inactive issues and PRs
+    tags:
+      language: [any]
+      trigger: [schedule]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [auto-labeler]
+    secrets:
+      required: []
+      optional: []
+    presets: [community]
+
+  all-contributors:
+    file: all-contributors.yml
+    name: All Contributors
+    category: community
+    description: Recognize contributors in README
+    tags:
+      language: [any]
+      trigger: [issue_comment]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [welcome]
+    secrets:
+      required: []
+      optional: []
+    presets: [community]
+
+  auto-labeler:
+    file: auto-labeler.yml
+    name: Auto Labeler
+    category: community
+    description: Auto-label PRs based on files changed
+    tags:
+      language: [any]
+      trigger: [pull_request]
+      complexity: starter
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [release-drafter, stale]
+    secrets:
+      required: []
+      optional: []
+    presets: [community]
+
+  artifact-preview:
+    file: artifact-preview.yml
+    name: Artifact Preview
+    category: community
+    description: Generate PR preview deployment links
+    tags:
+      language: [any]
+      trigger: [pull_request]
+      complexity: intermediate
+      platform: [github]
+    dependencies:
+      commonly_paired_with: [deploy-vercel, deploy-netlify]
+    secrets:
+      required: []
+      optional: []
+    presets: []
+
+  # ============================================================================
+  # NOTIFICATIONS WORKFLOWS
+  # ============================================================================
+
+  notify-slack:
+    file: notify-slack.yml
+    name: Slack Notifications
+    category: notifications
+    description: Post workflow status to Slack channels
+    tags:
+      language: [any]
+      trigger: [workflow_call, push]
+      complexity: starter
+      platform: [slack]
+    dependencies:
+      commonly_paired_with: [release-please, deploy-kubernetes]
+    secrets:
+      required:
+        - name: SLACK_WEBHOOK_URL
+          description: Slack incoming webhook URL
+          setup_url: https://api.slack.com/messaging/webhooks
+      optional: []
+    presets: [notifications]
+
+  notify-discord:
+    file: notify-discord.yml
+    name: Discord Notifications
+    category: notifications
+    description: Post workflow status to Discord webhooks
+    tags:
+      language: [any]
+      trigger: [workflow_call, push]
+      complexity: starter
+      platform: [discord]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required:
+        - name: DISCORD_WEBHOOK_URL
+          description: Discord webhook URL
+      optional: []
+    presets: [notifications]
+
+  notify-teams:
+    file: notify-teams.yml
+    name: Teams Notifications
+    category: notifications
+    description: Post workflow status to Microsoft Teams
+    tags:
+      language: [any]
+      trigger: [workflow_call, push]
+      complexity: starter
+      platform: [teams]
+    dependencies:
+      commonly_paired_with: [release-please]
+    secrets:
+      required:
+        - name: TEAMS_WEBHOOK_URL
+          description: Microsoft Teams webhook URL
+      optional: []
+    presets: [notifications]
+
+  # ============================================================================
+  # OBSERVABILITY WORKFLOWS
+  # ============================================================================
+
+  datadog-ci:
+    file: datadog-ci.yml
+    name: Datadog CI
+    category: observability
+    description: Send CI metrics and traces to Datadog
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [datadog]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python]
+    secrets:
+      required:
+        - name: DD_API_KEY
+          description: Datadog API key
+          setup_url: https://app.datadoghq.com/organization-settings/api-keys
+      optional: []
+    presets: [observability]
+
+  sentry-release:
+    file: sentry-release.yml
+    name: Sentry Release
+    category: observability
+    description: Create Sentry releases with source maps
+    tags:
+      language: [any]
+      trigger: [release, push]
+      complexity: intermediate
+      platform: [sentry]
+    dependencies:
+      triggered_by: [release-please]
+      commonly_paired_with: [release-please, publish-npm]
+    secrets:
+      required:
+        - name: SENTRY_AUTH_TOKEN
+          description: Sentry authentication token
+          setup_url: https://sentry.io/settings/account/api/auth-tokens/
+        - name: SENTRY_ORG
+          description: Sentry organization slug
+        - name: SENTRY_PROJECT
+          description: Sentry project slug
+      optional: []
+    presets: [observability]
+
+  sonarcloud:
+    file: sonarcloud.yml
+    name: SonarCloud Analysis
+    category: observability
+    description: Code quality and security analysis with SonarCloud
+    tags:
+      language: [any]
+      trigger: [push, pull_request]
+      complexity: intermediate
+      platform: [sonarcloud]
+    dependencies:
+      commonly_paired_with: [ci-nodejs, ci-python, ci-java]
+    secrets:
+      required:
+        - name: SONAR_TOKEN
+          description: SonarCloud authentication token
+          setup_url: https://sonarcloud.io/account/security
+      optional: []
+    presets: [quality]

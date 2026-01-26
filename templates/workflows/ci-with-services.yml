@@ -1,0 +1,299 @@
+# CI with Database Service Containers
+# Run tests with PostgreSQL, MySQL, Redis, and other services
+#
+# Features:
+#   - PostgreSQL, MySQL, Redis service containers
+#   - Database migration testing
+#   - Health checks before running tests
+#   - Automatic cleanup
+#
+# Usage:
+#   Uncomment the database service you need and update your test configuration
+#   to use the appropriate connection string.
+
+name: CI with Services
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-postgres:
+    name: Test with PostgreSQL
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        # Health checks to wait until postgres is ready
+        options: >-
+          --health-cmd="pg_isready -U test -d test_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      # Optional: Redis for caching
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+      REDIS_URL: redis://localhost:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js example
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run database migrations
+        run: npm run db:migrate
+        # Or: npx prisma migrate deploy
+        # Or: npx knex migrate:latest
+
+      - name: Seed test data (optional)
+        run: npm run db:seed
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm test
+
+      # Python example (uncomment to use)
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      #     cache: 'pip'
+      #
+      # - name: Install dependencies
+      #   run: pip install -r requirements.txt
+      #
+      # - name: Run migrations
+      #   run: alembic upgrade head
+      #
+      # - name: Run tests
+      #   run: pytest
+
+  test-mysql:
+    name: Test with MySQL
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql://test:test@localhost:3306/test_db
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for MySQL
+        run: |
+          until mysql -h 127.0.0.1 -u test -ptest -e "SELECT 1" 2>/dev/null; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Run database migrations
+        run: npm run db:migrate
+
+      - name: Run tests
+        run: npm test
+
+  test-mongodb:
+    name: Test with MongoDB
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      MONGODB_URI: mongodb://localhost:27017/test_db
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # Multi-service example with all databases
+  test-multi-service:
+    name: Test with Multiple Services
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      # Elasticsearch
+      elasticsearch:
+        image: elasticsearch:8.11.0
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: 'false'
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd="curl -s http://localhost:9200/_cluster/health"
+          --health-interval=10s
+          --health-timeout=10s
+          --health-retries=10
+
+      # RabbitMQ
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q check_running"
+          --health-interval=10s
+          --health-timeout=10s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+      REDIS_URL: redis://localhost:6379
+      ELASTICSEARCH_URL: http://localhost:9200
+      RABBITMQ_URL: amqp://guest:guest@localhost:5672
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        run: npm run db:migrate
+
+      - name: Run tests
+        run: npm test
+
+# Available service images:
+#
+# Databases:
+#   - postgres:16-alpine, postgres:15-alpine
+#   - mysql:8.0, mysql:5.7
+#   - mariadb:11, mariadb:10
+#   - mongo:7, mongo:6
+#   - redis:7-alpine, redis:6-alpine
+#   - memcached:1.6-alpine
+#
+# Message Queues:
+#   - rabbitmq:3-management-alpine
+#   - nats:2-alpine
+#
+# Search:
+#   - elasticsearch:8.11.0
+#   - opensearchproject/opensearch:2
+#   - meilisearch/meilisearch:latest
+#
+# Storage:
+#   - minio/minio:latest
+#   - localstack/localstack:latest
+#
+# Tips:
+#   - Use Alpine variants when available for faster startup
+#   - Set appropriate health checks to avoid test flakiness
+#   - Use environment variables for connection strings
+#   - Consider using Docker Compose for complex local setups

@@ -1,0 +1,185 @@
+# Sentry Release Tracking
+# Creates Sentry releases and uploads source maps for error tracking
+#
+# Features:
+#   - Automatic release creation on deploy
+#   - Source map upload for JavaScript projects
+#   - Commit association
+#   - Deploy tracking per environment
+#   - Release health monitoring
+#
+# Required secrets:
+#   SENTRY_AUTH_TOKEN - Sentry authentication token
+#   SENTRY_ORG - Sentry organization slug
+#   SENTRY_PROJECT - Sentry project slug
+#
+# Setup:
+#   1. Create auth token: https://sentry.io/settings/account/api/auth-tokens/
+#   2. Token needs: project:releases, project:write, org:read
+#   3. Add secrets to repository settings
+
+name: Sentry Release
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+concurrency:
+  group: sentry-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+  SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+jobs:
+  create-release:
+    name: Create Sentry Release
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ github.sha }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: ${{ github.event.inputs.environment || 'production' }}
+          version: ${{ steps.version.outputs.version }}
+
+  # Upload source maps (for JavaScript/TypeScript projects)
+  upload-sourcemaps:
+    name: Upload Source Maps
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: hashFiles('package.json') != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with source maps
+        run: npm run build
+        env:
+          # Ensure source maps are generated
+          GENERATE_SOURCEMAP: true
+          NODE_ENV: production
+
+      - name: Install Sentry CLI
+        run: npm install -g @sentry/cli
+
+      - name: Upload source maps
+        run: |
+          sentry-cli sourcemaps upload \
+            --release=${{ needs.create-release.outputs.version }} \
+            --org=${{ env.SENTRY_ORG }} \
+            --project=${{ env.SENTRY_PROJECT }} \
+            ./dist \
+            --url-prefix '~/' \
+            --validate
+
+      - name: Finalize release
+        run: |
+          sentry-cli releases finalize ${{ needs.create-release.outputs.version }}
+
+  # Set deploy for environment tracking
+  set-deploy:
+    name: Set Deploy
+    needs: [create-release, upload-sourcemaps]
+    runs-on: ubuntu-latest
+    if: always() && needs.create-release.result == 'success'
+
+    steps:
+      - name: Install Sentry CLI
+        run: npm install -g @sentry/cli
+
+      - name: Create deploy
+        run: |
+          sentry-cli releases deploys ${{ needs.create-release.outputs.version }} new \
+            --env ${{ github.event.inputs.environment || 'production' }} \
+            --name "${{ github.event.inputs.environment || 'production' }} deployment"
+
+# Integration example for your application:
+#
+# JavaScript/TypeScript (Node.js):
+#
+# import * as Sentry from "@sentry/node";
+#
+# Sentry.init({
+#   dsn: process.env.SENTRY_DSN,
+#   release: process.env.SENTRY_RELEASE || process.env.GITHUB_SHA,
+#   environment: process.env.NODE_ENV,
+#   integrations: [
+#     Sentry.httpIntegration(),
+#     Sentry.expressIntegration(),
+#   ],
+#   tracesSampleRate: 1.0,
+# });
+#
+# JavaScript (Browser):
+#
+# import * as Sentry from "@sentry/browser";
+#
+# Sentry.init({
+#   dsn: process.env.REACT_APP_SENTRY_DSN,
+#   release: process.env.REACT_APP_SENTRY_RELEASE,
+#   environment: process.env.NODE_ENV,
+# });
+#
+# Python:
+#
+# import sentry_sdk
+#
+# sentry_sdk.init(
+#     dsn=os.environ["SENTRY_DSN"],
+#     release=os.environ.get("SENTRY_RELEASE"),
+#     environment=os.environ.get("ENVIRONMENT", "production"),
+#     traces_sample_rate=1.0,
+# )
+
+# Auth token permissions needed:
+# - project:releases
+# - project:write
+# - org:read

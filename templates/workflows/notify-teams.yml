@@ -1,0 +1,222 @@
+# Microsoft Teams Notifications Workflow
+# Sends notifications to Microsoft Teams for releases and CI events
+#
+# Features:
+#   - Adaptive Cards format for rich messages
+#   - Build status notifications (success/failure)
+#   - Release notifications
+#   - Deployment notifications
+#   - Customizable message templates
+#
+# Prerequisites:
+#   1. Microsoft Teams workspace
+#   2. Incoming Webhook connector configured on a channel
+#
+# Required secrets:
+#   TEAMS_WEBHOOK_URL - Microsoft Teams Incoming Webhook URL
+#
+# Setup:
+#   1. Open Microsoft Teams
+#   2. Go to the channel where you want notifications
+#   3. Click "..." > Connectors > Incoming Webhook
+#   4. Configure the webhook and copy the URL
+#   5. Add TEAMS_WEBHOOK_URL to repository secrets
+#
+# Customization:
+#   - Modify Adaptive Card JSON for different layouts
+#   - Add more workflow_run triggers for other workflows
+#   - Adjust colors and styling to match your team's preferences
+
+name: Notify Teams
+
+on:
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  deployment_status:
+
+jobs:
+  # Notify on new releases
+  notify-release:
+    name: Release Notification
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Teams of Release
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": "New release published",
+            "sections": [{
+              "activityTitle": "🚀 New Release: ${{ github.event.release.tag_name }}",
+              "activitySubtitle": "${{ github.repository }}",
+              "activityImage": "https://github.com/${{ github.actor }}.png",
+              "facts": [{
+                "name": "Version",
+                "value": "${{ github.event.release.tag_name }}"
+              }, {
+                "name": "Published by",
+                "value": "${{ github.actor }}"
+              }, {
+                "name": "Pre-release",
+                "value": "${{ github.event.release.prerelease }}"
+              }],
+              "markdown": true
+            }],
+            "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View Release",
+              "targets": [{
+                "os": "default",
+                "uri": "${{ github.event.release.html_url }}"
+              }]
+            }, {
+              "@type": "OpenUri",
+              "name": "View Repository",
+              "targets": [{
+                "os": "default",
+                "uri": "https://github.com/${{ github.repository }}"
+              }]
+            }]
+          }' "${{ secrets.TEAMS_WEBHOOK_URL }}"
+
+  # Notify on CI failures
+  notify-ci-failure:
+    name: CI Failure Notification
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Teams of CI Failure
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "DC3545",
+            "summary": "CI workflow failed",
+            "sections": [{
+              "activityTitle": "❌ CI Workflow Failed",
+              "activitySubtitle": "${{ github.repository }}",
+              "activityImage": "https://github.com/${{ github.event.workflow_run.actor.login }}.png",
+              "facts": [{
+                "name": "Branch",
+                "value": "${{ github.event.workflow_run.head_branch }}"
+              }, {
+                "name": "Commit",
+                "value": "${{ github.event.workflow_run.head_sha }}"
+              }, {
+                "name": "Triggered by",
+                "value": "${{ github.event.workflow_run.actor.login }}"
+              }, {
+                "name": "Workflow",
+                "value": "${{ github.event.workflow_run.name }}"
+              }],
+              "markdown": true
+            }],
+            "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View Workflow Run",
+              "targets": [{
+                "os": "default",
+                "uri": "${{ github.event.workflow_run.html_url }}"
+              }]
+            }]
+          }' "${{ secrets.TEAMS_WEBHOOK_URL }}"
+
+  # Notify on CI success (optional - uncomment to enable)
+  # notify-ci-success:
+  #   name: CI Success Notification
+  #   if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Notify Teams of CI Success
+  #       run: |
+  #         curl -H "Content-Type: application/json" -d '{
+  #           "@type": "MessageCard",
+  #           "@context": "http://schema.org/extensions",
+  #           "themeColor": "28A745",
+  #           "summary": "CI workflow succeeded",
+  #           "sections": [{
+  #             "activityTitle": "✅ CI Workflow Passed",
+  #             "activitySubtitle": "${{ github.repository }}",
+  #             "facts": [{
+  #               "name": "Branch",
+  #               "value": "${{ github.event.workflow_run.head_branch }}"
+  #             }, {
+  #               "name": "Commit",
+  #               "value": "${{ github.event.workflow_run.head_sha }}"
+  #             }],
+  #             "markdown": true
+  #           }],
+  #           "potentialAction": [{
+  #             "@type": "OpenUri",
+  #             "name": "View Workflow Run",
+  #             "targets": [{
+  #               "os": "default",
+  #               "uri": "${{ github.event.workflow_run.html_url }}"
+  #             }]
+  #           }]
+  #         }' "${{ secrets.TEAMS_WEBHOOK_URL }}"
+
+  # Notify on deployment status
+  notify-deployment:
+    name: Deployment Notification
+    if: github.event_name == 'deployment_status'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set color based on status
+        id: color
+        run: |
+          case "${{ github.event.deployment_status.state }}" in
+            success)
+              echo "color=28A745" >> $GITHUB_OUTPUT
+              echo "emoji=✅" >> $GITHUB_OUTPUT
+              ;;
+            failure)
+              echo "color=DC3545" >> $GITHUB_OUTPUT
+              echo "emoji=❌" >> $GITHUB_OUTPUT
+              ;;
+            pending)
+              echo "color=FFC107" >> $GITHUB_OUTPUT
+              echo "emoji=⏳" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "color=6C757D" >> $GITHUB_OUTPUT
+              echo "emoji=ℹ️" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Notify Teams of Deployment
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "${{ steps.color.outputs.color }}",
+            "summary": "Deployment ${{ github.event.deployment_status.state }}",
+            "sections": [{
+              "activityTitle": "${{ steps.color.outputs.emoji }} Deployment ${{ github.event.deployment_status.state }}",
+              "activitySubtitle": "${{ github.repository }}",
+              "facts": [{
+                "name": "Environment",
+                "value": "${{ github.event.deployment_status.environment }}"
+              }, {
+                "name": "Status",
+                "value": "${{ github.event.deployment_status.state }}"
+              }, {
+                "name": "Deployed by",
+                "value": "${{ github.event.deployment.creator.login }}"
+              }],
+              "markdown": true
+            }],
+            "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View Deployment",
+              "targets": [{
+                "os": "default",
+                "uri": "${{ github.event.deployment_status.target_url }}"
+              }]
+            }]
+          }' "${{ secrets.TEAMS_WEBHOOK_URL }}"

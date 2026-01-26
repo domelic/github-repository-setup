@@ -1,0 +1,70 @@
+name: Visual Regression (Percy)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+jobs:
+  percy:
+    name: Percy Visual Tests
+    runs-on: ubuntu-latest
+    # Skip if PERCY_TOKEN is not set
+    if: ${{ vars.ENABLE_PERCY == 'true' || github.event_name == 'push' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      # Option 1: Percy with Playwright (recommended)
+      - name: Run Percy snapshots (Playwright)
+        run: npx percy exec -- npx playwright test --project=chromium
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+      # Option 2: Percy with Cypress (uncomment if using Cypress)
+      # - name: Run Percy snapshots (Cypress)
+      #   run: npx percy exec -- npx cypress run
+      #   env:
+      #     PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+      # Option 3: Percy with Storybook (uncomment if using Storybook)
+      # - name: Build Storybook
+      #   run: npm run build-storybook
+      #
+      # - name: Run Percy Storybook
+      #   run: npx percy storybook ./storybook-static
+      #   env:
+      #     PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+  # Auto-accept baselines on main branch (optional)
+  finalize:
+    name: Finalize Percy Build
+    runs-on: ubuntu-latest
+    needs: percy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Finalize Percy build
+        run: |
+          echo "Percy baselines auto-accepted on main branch"
+          # Percy automatically uses main branch as baseline source

@@ -1,0 +1,187 @@
+name: CI (Electron)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint --if-present
+
+      - name: Type check
+        run: npm run type-check --if-present
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # For E2E tests with Electron, we need xvfb on Linux
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run unit tests
+        run: npm test --if-present
+
+      - name: Run E2E tests
+        run: xvfb-run --auto-servernum npm run test:e2e --if-present
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [lint, test]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Linux: Install build dependencies
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      # Build without code signing for CI
+      - name: Build Electron app
+        run: npm run build
+        env:
+          # Skip code signing in CI builds (non-release)
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Build for specific architecture
+          npm_config_arch: ${{ matrix.arch }}
+
+      # Package with electron-builder
+      - name: Package app (Linux)
+        if: matrix.platform == 'linux'
+        run: npx electron-builder --linux --${{ matrix.arch }} --publish never
+
+      - name: Package app (macOS)
+        if: matrix.platform == 'darwin'
+        run: npx electron-builder --mac --${{ matrix.arch }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Package app (Windows)
+        if: matrix.platform == 'win32'
+        run: npx electron-builder --win --${{ matrix.arch }} --publish never
+
+      # Upload artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.exe
+            dist/*.msi
+            dist/*.zip
+            !dist/*.blockmap
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Security scan for Electron vulnerabilities
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Check for known Electron vulnerabilities
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      # Check Electron version for known issues
+      - name: Check Electron version
+        run: |
+          ELECTRON_VERSION=$(node -e "console.log(require('./package.json').devDependencies.electron || require('./package.json').dependencies.electron)")
+          echo "Electron version: $ELECTRON_VERSION"
+
+          # Check if version is reasonably recent (major version >= 25)
+          MAJOR_VERSION=$(echo $ELECTRON_VERSION | sed 's/[\^~]*//' | cut -d. -f1)
+          if [ "$MAJOR_VERSION" -lt 25 ]; then
+            echo "::warning::Electron version $ELECTRON_VERSION may have security issues. Consider upgrading."
+          fi

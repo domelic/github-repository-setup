@@ -1,0 +1,253 @@
+name: CI (PlatformIO)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: |
+          pip install platformio
+          pio --version
+
+      - name: Check code style (cppcheck)
+        run: pio check --skip-packages
+        continue-on-error: true
+
+      # Optional: clang-format check
+      - name: Check formatting
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+          find src include lib -name "*.cpp" -o -name "*.h" -o -name "*.c" | xargs clang-format --dry-run --Werror
+        continue-on-error: true
+
+  build:
+    name: Build (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - esp32dev
+          - esp8266
+          - teensy41
+          # - stm32
+          # - arduino_uno
+          # - arduino_mega
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-${{ matrix.environment }}-
+            ${{ runner.os }}-pio-
+
+      - name: Build firmware
+        run: pio run -e ${{ matrix.environment }}
+
+      - name: Get firmware info
+        id: firmware
+        run: |
+          FIRMWARE_PATH=$(find .pio/build/${{ matrix.environment }} -name "firmware.*" | head -1)
+          if [ -n "$FIRMWARE_PATH" ]; then
+            FIRMWARE_SIZE=$(stat -c%s "$FIRMWARE_PATH" 2>/dev/null || stat -f%z "$FIRMWARE_PATH")
+            echo "path=$FIRMWARE_PATH" >> $GITHUB_OUTPUT
+            echo "size=$FIRMWARE_SIZE" >> $GITHUB_OUTPUT
+            echo "Firmware: $FIRMWARE_PATH ($FIRMWARE_SIZE bytes)"
+          fi
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.environment }}
+          path: |
+            .pio/build/${{ matrix.environment }}/firmware.*
+            .pio/build/${{ matrix.environment }}/*.bin
+            .pio/build/${{ matrix.environment }}/*.hex
+            .pio/build/${{ matrix.environment }}/*.elf
+          retention-days: 14
+          if-no-files-found: ignore
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-test-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-test-
+            ${{ runner.os }}-pio-
+
+      # Run native unit tests (runs on host, not embedded)
+      - name: Run unit tests
+        run: pio test -e native --verbose
+        continue-on-error: true
+
+      # Optional: Run tests on specific embedded environment
+      # Requires QEMU or actual hardware
+      # - name: Run embedded tests
+      #   run: pio test -e esp32dev --verbose
+
+  # Memory usage analysis
+  size-report:
+    name: Size Report
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build with size analysis
+        run: |
+          pio run -e esp32dev 2>&1 | tee build_output.txt
+
+          # Extract size info
+          grep -A 10 "RAM:" build_output.txt > size_report.txt || true
+          grep -A 10 "Flash:" build_output.txt >> size_report.txt || true
+
+      - name: Comment PR with size report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let sizeReport = '';
+
+            try {
+              sizeReport = fs.readFileSync('size_report.txt', 'utf8');
+            } catch {
+              sizeReport = 'Size report not available';
+            }
+
+            const body = `## 📊 Firmware Size Report
+
+            \`\`\`
+            ${sizeReport}
+            \`\`\`
+
+            <details>
+            <summary>Memory Usage Tips</summary>
+
+            - **RAM**: Keep static RAM usage below 80% to leave room for stack
+            - **Flash**: Most ESP32 boards have 4MB flash (some have 16MB)
+            - Consider using \`PROGMEM\` for constant strings on AVR
+            - Use \`--size-report\` flag for detailed breakdown
+
+            </details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Optional: OTA update build
+  ota-build:
+    name: OTA Update Build
+    runs-on: ubuntu-latest
+    needs: build
+    if: false # Enable for OTA firmware builds
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build OTA firmware
+        run: |
+          # Build with OTA-specific flags
+          pio run -e esp32dev_ota
+
+      - name: Generate OTA manifest
+        run: |
+          VERSION=$(grep "version" platformio.ini | head -1 | cut -d= -f2 | tr -d ' ')
+          FIRMWARE_MD5=$(md5sum .pio/build/esp32dev_ota/firmware.bin | cut -d' ' -f1)
+
+          cat > ota_manifest.json <<EOF
+          {
+            "version": "$VERSION",
+            "firmware": "firmware.bin",
+            "md5": "$FIRMWARE_MD5",
+            "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Upload OTA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ota-firmware
+          path: |
+            .pio/build/esp32dev_ota/firmware.bin
+            ota_manifest.json
+          retention-days: 30

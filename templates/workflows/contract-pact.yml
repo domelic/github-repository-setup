@@ -1,0 +1,297 @@
+# Pact Contract Testing Workflow
+#
+# Consumer-driven contract testing with Pact.
+# Ensures API compatibility between services without integration tests.
+#
+# Features:
+#   - Consumer contract generation
+#   - Provider contract verification
+#   - Pact Broker integration (or Pactflow)
+#   - Can-I-Deploy safety check before release
+#   - Webhook triggers for provider changes
+#   - Branch-aware versioning
+#
+# Required secrets:
+#   - PACT_BROKER_URL: Pact Broker base URL
+#   - PACT_BROKER_TOKEN: API token (or use PACT_BROKER_USERNAME/PASSWORD)
+
+name: Contract Tests (Pact)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+  PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+  # Application info
+  PACTICIPANT: 'your-service-name'
+  PACT_CLI_VERSION: '1.92.0'
+
+jobs:
+  # Consumer workflow: Generate and publish contracts
+  consumer-tests:
+    name: Consumer Contract Tests
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip pact]') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Run consumer Pact tests
+      - name: Run consumer tests
+        run: npm run test:pact:consumer
+        env:
+          PACT_LOG_LEVEL: info
+
+      # Publish contracts to Pact Broker
+      - name: Publish contracts to Pact Broker
+        if: github.event_name == 'push'
+        run: |
+          npx @pact-foundation/pact-cli publish ./pacts \
+            --consumer-app-version="${{ github.sha }}" \
+            --branch="${{ github.ref_name }}" \
+            --tag="${{ github.ref_name }}" \
+            --broker-base-url="${{ env.PACT_BROKER_BASE_URL }}" \
+            --broker-token="${{ env.PACT_BROKER_TOKEN }}"
+
+      - name: Upload Pact files
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact-contracts
+          path: pacts/
+          retention-days: 7
+
+  # Provider workflow: Verify contracts
+  provider-verification:
+    name: Provider Verification
+    runs-on: ubuntu-latest
+    # Only run on provider repo or when triggered by webhook
+    if: false # Enable in provider repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Start provider for verification
+      - name: Start provider service
+        run: |
+          npm run start:test &
+          sleep 10
+        env:
+          PORT: 3000
+
+      # Verify all consumer contracts
+      - name: Verify provider contracts
+        run: npm run test:pact:provider
+        env:
+          PACT_BROKER_BASE_URL: ${{ env.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ env.PACT_BROKER_TOKEN }}
+          PACT_PROVIDER_VERSION: ${{ github.sha }}
+          PACT_PROVIDER_BRANCH: ${{ github.ref_name }}
+          PACT_PUBLISH_VERIFICATION_RESULTS: 'true'
+          # Verify contracts for specific consumer versions
+          PACT_CONSUMER_VERSION_SELECTORS: '[{"mainBranch": true}, {"deployedOrReleased": true}]'
+
+      # Alternative: Use Pact CLI for verification
+      # - name: Verify with Pact CLI
+      #   run: |
+      #     npx @pact-foundation/pact-cli verify \
+      #       --provider="${{ env.PACTICIPANT }}" \
+      #       --provider-base-url="http://localhost:3000" \
+      #       --broker-base-url="${{ env.PACT_BROKER_BASE_URL }}" \
+      #       --broker-token="${{ env.PACT_BROKER_TOKEN }}" \
+      #       --provider-version-tag="${{ github.ref_name }}" \
+      #       --provider-app-version="${{ github.sha }}" \
+      #       --publish-verification-results \
+      #       --consumer-version-selectors='[{"mainBranch": true}]'
+
+  # Can-I-Deploy check before release
+  can-i-deploy:
+    name: Can I Deploy?
+    runs-on: ubuntu-latest
+    needs: [consumer-tests]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check deployment safety
+        run: |
+          docker run --rm \
+            pactfoundation/pact-cli:${{ env.PACT_CLI_VERSION }} \
+            broker can-i-deploy \
+            --pacticipant="${{ env.PACTICIPANT }}" \
+            --version="${{ github.sha }}" \
+            --to-environment="production" \
+            --broker-base-url="${{ env.PACT_BROKER_BASE_URL }}" \
+            --broker-token="${{ env.PACT_BROKER_TOKEN }}" \
+            --retry-while-unknown=30 \
+            --retry-interval=10
+
+      - name: Create deployment check summary
+        run: |
+          echo "## ✅ Safe to Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All contract dependencies verified for production deployment." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | ${{ env.PACTICIPANT }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | production |" >> $GITHUB_STEP_SUMMARY
+
+  # Record deployment in Pact Broker
+  record-deployment:
+    name: Record Deployment
+    runs-on: ubuntu-latest
+    needs: [can-i-deploy]
+    if: github.ref == 'refs/heads/main'
+    # Only run after actual deployment
+    # environment: production
+
+    steps:
+      - name: Record deployment
+        run: |
+          docker run --rm \
+            pactfoundation/pact-cli:${{ env.PACT_CLI_VERSION }} \
+            broker record-deployment \
+            --pacticipant="${{ env.PACTICIPANT }}" \
+            --version="${{ github.sha }}" \
+            --environment="production" \
+            --broker-base-url="${{ env.PACT_BROKER_BASE_URL }}" \
+            --broker-token="${{ env.PACT_BROKER_TOKEN }}"
+
+  # Webhook handler for contract_requiring_verification
+  verify-changed-contracts:
+    name: Verify Changed Contracts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'contract_requiring_verification'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start provider
+        run: |
+          npm run start:test &
+          sleep 10
+
+      - name: Verify triggered contracts
+        run: npm run test:pact:provider
+        env:
+          PACT_BROKER_BASE_URL: ${{ env.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_TOKEN: ${{ env.PACT_BROKER_TOKEN }}
+          PACT_URL: ${{ github.event.client_payload.pact_url }}
+          PACT_PROVIDER_VERSION: ${{ github.sha }}
+          PACT_PUBLISH_VERIFICATION_RESULTS: 'true'
+
+# Example consumer test setup (JavaScript/TypeScript):
+#
+# // pact.consumer.spec.ts
+# import { Pact } from '@pact-foundation/pact';
+#
+# const provider = new Pact({
+#   consumer: 'frontend',
+#   provider: 'backend-api',
+#   port: 1234,
+#   log: './logs/pact.log',
+#   dir: './pacts',
+# });
+#
+# describe('User API', () => {
+#   beforeAll(() => provider.setup());
+#   afterAll(() => provider.finalize());
+#
+#   it('should return user by ID', async () => {
+#     await provider.addInteraction({
+#       state: 'user with ID 1 exists',
+#       uponReceiving: 'a request for user 1',
+#       withRequest: {
+#         method: 'GET',
+#         path: '/users/1',
+#       },
+#       willRespondWith: {
+#         status: 200,
+#         body: { id: 1, name: 'John Doe' },
+#       },
+#     });
+#
+#     const response = await fetchUser(1);
+#     expect(response.name).toBe('John Doe');
+#   });
+# });
+
+# Example provider verification setup:
+#
+# // pact.provider.spec.ts
+# import { Verifier } from '@pact-foundation/pact';
+#
+# describe('Pact Verification', () => {
+#   it('validates the expectations of the consumer', async () => {
+#     const verifier = new Verifier({
+#       providerBaseUrl: 'http://localhost:3000',
+#       pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,
+#       pactBrokerToken: process.env.PACT_BROKER_TOKEN,
+#       provider: 'backend-api',
+#       publishVerificationResult: process.env.PACT_PUBLISH_VERIFICATION_RESULTS === 'true',
+#       providerVersion: process.env.PACT_PROVIDER_VERSION,
+#       consumerVersionSelectors: JSON.parse(process.env.PACT_CONSUMER_VERSION_SELECTORS || '[]'),
+#     });
+#
+#     await verifier.verifyProvider();
+#   });
+# });
+
+# Pact Broker webhook configuration for CI triggering:
+# {
+#   "description": "Trigger provider verification on contract change",
+#   "provider": { "name": "backend-api" },
+#   "events": [{ "name": "contract_requiring_verification_published" }],
+#   "request": {
+#     "method": "POST",
+#     "url": "https://api.github.com/repos/OWNER/REPO/dispatches",
+#     "headers": {
+#       "Authorization": "Bearer ${GITHUB_TOKEN}",
+#       "Accept": "application/vnd.github.v3+json"
+#     },
+#     "body": {
+#       "event_type": "contract_requiring_verification",
+#       "client_payload": {
+#         "pact_url": "${pactbroker.pactUrl}"
+#       }
+#     }
+#   }
+# }

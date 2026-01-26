@@ -1,0 +1,109 @@
+# Solidity / Smart Contract .gitignore
+# For Hardhat, Foundry, and Truffle projects
+
+# ============================================
+# Hardhat
+# ============================================
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Coverage
+coverage/
+coverage.json
+
+# Gas report
+gas-report.txt
+
+# ============================================
+# Foundry
+# ============================================
+out/
+cache_forge/
+broadcast/
+
+# Forge coverage
+lcov.info
+
+# Gas snapshots (optional - some teams track these)
+# .gas-snapshot
+
+# ============================================
+# Truffle (legacy)
+# ============================================
+build/
+
+# ============================================
+# Node.js (for Hardhat projects)
+# ============================================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================
+# Environment & Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+*.env
+
+# Private keys (NEVER commit these)
+*.pem
+*.key
+private_key.txt
+
+# ============================================
+# IDE
+# ============================================
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ============================================
+# Testing
+# ============================================
+# Slither output
+slither-report.json
+slither.db.json
+
+# Mythril
+mythril_report.json
+
+# Echidna
+echidna-corpus/
+
+# ============================================
+# Deployment
+# ============================================
+# Deployed contract addresses (optional - some track these)
+# deployments/
+
+# Foundry broadcast receipts (optional - some track these)
+# broadcast/
+
+# ============================================
+# Misc
+# ============================================
+*.log
+logs/
+tmp/
+temp/
+.cache/

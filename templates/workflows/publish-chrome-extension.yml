@@ -1,0 +1,192 @@
+name: Publish Chrome Extension
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.3)'
+        required: true
+        type: string
+
+env:
+  EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check required secrets
+        run: |
+          if [ -z "${{ secrets.CHROME_EXTENSION_ID }}" ]; then
+            echo "::error::CHROME_EXTENSION_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CHROME_CLIENT_ID }}" ]; then
+            echo "::error::CHROME_CLIENT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CHROME_CLIENT_SECRET }}" ]; then
+            echo "::error::CHROME_CLIENT_SECRET secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CHROME_REFRESH_TOKEN }}" ]; then
+            echo "::error::CHROME_REFRESH_TOKEN secret is not set"
+            exit 1
+          fi
+
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update manifest version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          jq --arg v "$VERSION" '.version = $v' manifest.json > manifest.tmp.json
+          mv manifest.tmp.json manifest.json
+          echo "Updated manifest.json version to $VERSION"
+
+      - name: Build extension
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Create zip package
+        run: |
+          cd dist
+          zip -r ../extension.zip .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-${{ steps.version.outputs.version }}
+          path: extension.zip
+          retention-days: 90
+
+  publish:
+    name: Publish to Chrome Web Store
+    runs-on: ubuntu-latest
+    needs: build
+    environment: chrome-web-store
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chrome-extension-${{ needs.build.outputs.version }}
+
+      - name: Get access token
+        id: token
+        run: |
+          RESPONSE=$(curl -s -X POST \
+            -d "client_id=${{ secrets.CHROME_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.CHROME_CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.CHROME_REFRESH_TOKEN }}" \
+            -d "grant_type=refresh_token" \
+            "https://oauth2.googleapis.com/token")
+
+          ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.access_token')
+
+          if [ "$ACCESS_TOKEN" == "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "::error::Failed to get access token"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "access_token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Upload to Chrome Web Store
+        id: upload
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+            -H "x-goog-api-version: 2" \
+            -X PUT \
+            -T extension.zip \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response: $BODY"
+          echo "HTTP Code: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Upload failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          UPLOAD_STATE=$(echo "$BODY" | jq -r '.uploadState')
+          if [ "$UPLOAD_STATE" != "SUCCESS" ]; then
+            echo "::error::Upload state: $UPLOAD_STATE"
+            echo "$BODY" | jq '.itemError'
+            exit 1
+          fi
+
+          echo "Upload successful!"
+
+      - name: Submit for review
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}/publish")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::Publish request returned HTTP $HTTP_CODE"
+            echo "Extension uploaded but may require manual publishing"
+          fi
+
+          STATUS=$(echo "$BODY" | jq -r '.status[]' 2>/dev/null || echo "UNKNOWN")
+          echo "Publish status: $STATUS"
+
+      - name: Create summary
+        run: |
+          echo "## 🚀 Chrome Web Store Publish" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.build.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Extension ID | ${{ secrets.CHROME_EXTENSION_ID }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Store Link | [View in Store](https://chrome.google.com/webstore/detail/${{ secrets.CHROME_EXTENSION_ID }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏳ The extension is now under review. It may take a few hours to be published." >> $GITHUB_STEP_SUMMARY

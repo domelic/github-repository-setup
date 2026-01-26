@@ -1,0 +1,58 @@
+# JetBrains IDE .gitignore
+# This file specifies which .idea/ files should NOT be committed.
+# Files NOT listed here (codeStyles/, inspectionProfiles/) ARE committed to share team standards.
+
+# User-specific files
+*.iml
+modules.xml
+workspace.xml
+tasks.xml
+usage.statistics.xml
+dictionaries/
+shelf/
+
+# AWS toolkit
+aws.xml
+
+# Sensitive/environment-specific
+dataSources/
+dataSources.ids
+dataSources.local.xml
+sqlDataSources.xml
+dynamic.xml
+
+# Gradle-specific
+gradle.xml
+libraries/
+
+# CMake
+cmake-build-*/
+
+# Coverage
+coverage/
+
+# Copilot chat history
+copilot/
+
+# User workspace
+.name
+contentModel.xml
+dbnavigator.xml
+httpRequests/
+
+# File-based project format
+*.iws
+
+# Sonarlint
+sonarlint/
+
+# Markdown navigator
+markdown-navigator.xml
+markdown-navigator-enh.xml
+markdown-navigator/
+
+# Miscellaneous
+misc.xml
+compiler.xml
+encodings.xml
+jarRepositories.xml

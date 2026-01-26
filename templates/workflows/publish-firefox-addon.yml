@@ -1,0 +1,194 @@
+name: Publish Firefox Add-on
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.3)'
+        required: true
+        type: string
+      channel:
+        description: 'Release channel'
+        required: true
+        type: choice
+        options:
+          - listed
+          - unlisted
+        default: listed
+
+env:
+  # Mozilla Add-ons API endpoint
+  AMO_API_URL: https://addons.mozilla.org/api/v5
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check required secrets
+        run: |
+          if [ -z "${{ secrets.FIREFOX_EXTENSION_ID }}" ]; then
+            echo "::error::FIREFOX_EXTENSION_ID secret is not set (e.g., {uuid} or addon-slug)"
+            exit 1
+          fi
+          if [ -z "${{ secrets.FIREFOX_JWT_ISSUER }}" ]; then
+            echo "::error::FIREFOX_JWT_ISSUER secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.FIREFOX_JWT_SECRET }}" ]; then
+            echo "::error::FIREFOX_JWT_SECRET secret is not set"
+            exit 1
+          fi
+
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build Firefox-specific version
+      - name: Build Firefox extension
+        run: npm run build:firefox
+        env:
+          NODE_ENV: production
+
+      # Update manifest version
+      - name: Update manifest version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MANIFEST_PATH="dist-firefox/manifest.json"
+
+          if [ -f "$MANIFEST_PATH" ]; then
+            jq --arg v "$VERSION" '.version = $v' "$MANIFEST_PATH" > manifest.tmp.json
+            mv manifest.tmp.json "$MANIFEST_PATH"
+            echo "Updated manifest.json version to $VERSION"
+          fi
+
+      # Create XPI package
+      - name: Create XPI package
+        run: |
+          cd dist-firefox
+          zip -r ../firefox-extension.xpi .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-addon-${{ steps.version.outputs.version }}
+          path: firefox-extension.xpi
+          retention-days: 90
+
+  sign-and-publish:
+    name: Sign & Publish
+    runs-on: ubuntu-latest
+    needs: build
+    environment: firefox-addons
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firefox-addon-${{ needs.build.outputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install web-ext for signing
+      - name: Install web-ext
+        run: npm install -g web-ext
+
+      # Extract XPI for web-ext
+      - name: Extract XPI
+        run: |
+          mkdir -p extension
+          unzip firefox-extension.xpi -d extension
+
+      # Sign and submit using web-ext
+      - name: Sign and submit to AMO
+        id: sign
+        run: |
+          web-ext sign \
+            --source-dir=extension \
+            --api-key="${{ secrets.FIREFOX_JWT_ISSUER }}" \
+            --api-secret="${{ secrets.FIREFOX_JWT_SECRET }}" \
+            --channel="${{ inputs.channel || 'listed' }}" \
+            --id="${{ secrets.FIREFOX_EXTENSION_ID }}" \
+            --artifacts-dir=./web-ext-artifacts \
+            --timeout=900000 \
+            --verbose
+
+          # Find the signed XPI
+          SIGNED_XPI=$(find web-ext-artifacts -name "*.xpi" | head -1)
+          if [ -n "$SIGNED_XPI" ]; then
+            echo "signed_xpi=$SIGNED_XPI" >> $GITHUB_OUTPUT
+            echo "Signed XPI: $SIGNED_XPI"
+          else
+            echo "::warning::No signed XPI found - extension may be pending review"
+          fi
+        continue-on-error: true
+
+      # Upload signed artifact
+      - name: Upload signed XPI
+        uses: actions/upload-artifact@v4
+        if: steps.sign.outputs.signed_xpi
+        with:
+          name: firefox-addon-signed-${{ needs.build.outputs.version }}
+          path: ${{ steps.sign.outputs.signed_xpi }}
+          retention-days: 90
+
+      # Attach to GitHub release
+      - name: Attach to release
+        if: github.event_name == 'release' && steps.sign.outputs.signed_xpi
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.sign.outputs.signed_xpi }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create summary
+        run: |
+          echo "## 🦊 Firefox Add-ons Publish" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.build.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Channel | ${{ inputs.channel || 'listed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Extension ID | ${{ secrets.FIREFOX_EXTENSION_ID }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.channel || 'listed' }}" == "listed" ]; then
+            echo "⏳ The add-on has been submitted for review. It may take 1-7 days to be approved." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 [View on Firefox Add-ons](https://addons.mozilla.org/addon/${{ secrets.FIREFOX_EXTENSION_ID }}/)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Unlisted add-on signed and ready for self-distribution." >> $GITHUB_STEP_SUMMARY
+          fi

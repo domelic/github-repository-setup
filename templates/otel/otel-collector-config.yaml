@@ -1,0 +1,162 @@
+# OpenTelemetry Collector Configuration
+# Receives, processes, and exports telemetry data (traces, metrics, logs)
+#
+# This is a starter configuration for the OpenTelemetry Collector.
+# Customize receivers, processors, and exporters based on your observability stack.
+#
+# Documentation: https://opentelemetry.io/docs/collector/configuration/
+
+receivers:
+  # OTLP receiver - accepts data in OTLP format
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "https://*.example.com"
+
+  # Prometheus receiver - scrape Prometheus metrics
+  # prometheus:
+  #   config:
+  #     scrape_configs:
+  #       - job_name: 'otel-collector'
+  #         scrape_interval: 10s
+  #         static_configs:
+  #           - targets: ['localhost:8888']
+
+  # Host metrics receiver - system metrics
+  # hostmetrics:
+  #   collection_interval: 30s
+  #   scrapers:
+  #     cpu:
+  #     disk:
+  #     memory:
+  #     network:
+
+processors:
+  # Batch processor - batches data before export
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter - prevents OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Resource processor - add/modify resource attributes
+  resource:
+    attributes:
+      - key: environment
+        value: ${ENVIRONMENT:-development}
+        action: upsert
+      - key: service.namespace
+        value: ${SERVICE_NAMESPACE:-default}
+        action: upsert
+
+  # Attributes processor - modify span/metric attributes
+  attributes:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+
+  # Filter processor - drop unwanted data
+  # filter:
+  #   traces:
+  #     span:
+  #       - 'attributes["http.route"] == "/health"'
+  #       - 'attributes["http.route"] == "/ready"'
+
+exporters:
+  # Debug exporter - logs to stdout (development)
+  debug:
+    verbosity: detailed
+
+  # OTLP exporter - send to another OTLP endpoint
+  otlp:
+    endpoint: ${OTLP_ENDPOINT:-localhost:4317}
+    tls:
+      insecure: ${OTLP_INSECURE:-true}
+    headers:
+      authorization: ${OTLP_AUTH_HEADER:-}
+
+  # OTLP/HTTP exporter
+  otlphttp:
+    endpoint: ${OTLP_HTTP_ENDPOINT:-http://localhost:4318}
+    headers:
+      authorization: ${OTLP_AUTH_HEADER:-}
+
+  # Jaeger exporter
+  # jaeger:
+  #   endpoint: jaeger:14250
+  #   tls:
+  #     insecure: true
+
+  # Zipkin exporter
+  # zipkin:
+  #   endpoint: http://zipkin:9411/api/v2/spans
+
+  # Prometheus exporter - expose metrics for scraping
+  # prometheus:
+  #   endpoint: 0.0.0.0:8889
+  #   namespace: otel
+  #   send_timestamps: true
+
+  # AWS X-Ray exporter
+  # awsxray:
+  #   region: us-east-1
+
+  # Datadog exporter
+  # datadog:
+  #   api:
+  #     key: ${DD_API_KEY}
+  #     site: datadoghq.com
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # zPages extension - debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # pprof extension - profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, zpages, pprof]
+
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [otlp, debug]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp, debug]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp, debug]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

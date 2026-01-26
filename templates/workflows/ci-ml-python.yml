@@ -1,0 +1,312 @@
+# ML/AI Python CI Workflow
+# CI pipeline optimized for machine learning and AI projects
+#
+# Features:
+#   - GPU runner support (self-hosted or GitHub larger runners)
+#   - Jupyter notebook validation
+#   - Model testing patterns
+#   - DVC (Data Version Control) integration
+#   - Experiment tracking hooks (MLflow/Weights & Biases)
+#   - Large file handling with Git LFS
+#
+# Prerequisites:
+#   1. Python ML project with pyproject.toml or requirements.txt
+#   2. Optional: DVC configured for data/model versioning
+#   3. Optional: Experiment tracking service configured
+#
+# Required secrets (optional, based on features used):
+#   WANDB_API_KEY - Weights & Biases API key
+#   MLFLOW_TRACKING_URI - MLflow tracking server URI
+#   MLFLOW_TRACKING_USERNAME - MLflow username
+#   MLFLOW_TRACKING_PASSWORD - MLflow password
+#   AWS_ACCESS_KEY_ID - For DVC with S3 remote
+#   AWS_SECRET_ACCESS_KEY - For DVC with S3 remote
+#
+# Customization:
+#   - Enable GPU runners by uncommenting gpu-test job
+#   - Configure DVC remote in dvc step
+#   - Add experiment tracking in train job
+
+name: CI (ML Python)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '**.ipynb'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'dvc.yaml'
+      - 'dvc.lock'
+      - '.github/workflows/ci-ml-python.yml'
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Lint and format check
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: pip install ruff mypy
+
+      - name: Run ruff linter
+        run: ruff check .
+        continue-on-error: true
+
+      - name: Run ruff formatter
+        run: ruff format --check .
+        continue-on-error: true
+
+      - name: Run type check
+        run: mypy . --ignore-missing-imports
+        continue-on-error: true
+
+  # Validate Jupyter notebooks
+  notebooks:
+    name: Validate Notebooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install nbqa nbconvert jupyter
+
+      - name: Check notebook formatting with nbqa
+        run: |
+          pip install ruff
+          nbqa ruff . --ignore=E501
+        continue-on-error: true
+
+      - name: Validate notebook structure
+        run: |
+          find . -name "*.ipynb" -not -path "./.venv/*" | while read notebook; do
+            echo "Validating $notebook"
+            jupyter nbconvert --to notebook --validate "$notebook" --stdout > /dev/null
+          done
+        continue-on-error: true
+
+      - name: Check for execution outputs (optional)
+        run: |
+          pip install nbstripout
+          # Check if notebooks have outputs that should be stripped
+          find . -name "*.ipynb" -not -path "./.venv/*" -exec nbstripout --verify {} \;
+        continue-on-error: true
+
+  # Run tests (CPU)
+  test:
+    name: Test (CPU)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" 2>/dev/null || \
+          pip install -e ".[test]" 2>/dev/null || \
+          pip install -r requirements.txt -r requirements-dev.txt 2>/dev/null || \
+          pip install -r requirements.txt 2>/dev/null || true
+
+      - name: Install test dependencies
+        run: pip install pytest pytest-cov pytest-xdist hypothesis
+
+      - name: Run tests
+        run: pytest -v --cov --cov-report=xml
+        continue-on-error: true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  # DVC pipeline (data/model versioning)
+  dvc:
+    name: DVC Pipeline
+    runs-on: ubuntu-latest
+    if: hashFiles('dvc.yaml') != ''
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install DVC
+        run: |
+          pip install dvc
+          # Install remote-specific extras as needed
+          # pip install 'dvc[s3]'  # For S3
+          # pip install 'dvc[gs]'  # For Google Cloud Storage
+          # pip install 'dvc[azure]'  # For Azure Blob Storage
+
+      - name: Configure DVC remote
+        run: |
+          # Uncomment and configure based on your remote
+          # dvc remote modify myremote --local access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # dvc remote modify myremote --local secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          echo "DVC remote configuration (update as needed)"
+
+      - name: Pull DVC data
+        run: dvc pull
+        continue-on-error: true
+
+      - name: Reproduce DVC pipeline
+        run: dvc repro
+        continue-on-error: true
+
+      - name: Check DVC status
+        run: dvc status
+
+  # Optional: GPU tests (uncomment to enable)
+  # Requires self-hosted runner with GPU or GitHub larger runners
+  # gpu-test:
+  #   name: Test (GPU)
+  #   runs-on: [self-hosted, gpu]  # Or use larger runners with GPU
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
+  #
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -e ".[dev]" || pip install -r requirements.txt
+  #
+  #     - name: Check GPU availability
+  #       run: |
+  #         python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
+  #
+  #     - name: Run GPU tests
+  #       run: pytest tests/ -v -m gpu --cov --cov-report=xml
+  #
+  #     - name: Upload coverage
+  #       uses: codecov/codecov-action@v4
+
+  # Optional: Model training smoke test
+  # train-smoke-test:
+  #   name: Training Smoke Test
+  #   runs-on: ubuntu-latest
+  #   needs: [lint, test]
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
+  #         cache: 'pip'
+  #
+  #     - name: Install dependencies
+  #       run: |
+  #         pip install -e ".[dev]" || pip install -r requirements.txt
+  #
+  #     - name: Configure experiment tracking
+  #       env:
+  #         WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+  #         MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  #       run: |
+  #         # Configure Weights & Biases
+  #         if [ -n "$WANDB_API_KEY" ]; then
+  #           wandb login --relogin
+  #         fi
+  #
+  #     - name: Run training smoke test
+  #       env:
+  #         WANDB_MODE: offline  # Use 'online' for real tracking
+  #       run: |
+  #         # Run a quick training with minimal epochs/data
+  #         python train.py --epochs 1 --smoke-test
+  #
+  #     - name: Upload model artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: model-smoke-test
+  #         path: |
+  #           models/
+  #           outputs/
+  #         retention-days: 7
+
+  # Optional: Model evaluation
+  # evaluate:
+  #   name: Model Evaluation
+  #   runs-on: ubuntu-latest
+  #   needs: [test]
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         lfs: true
+  #
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
+  #         cache: 'pip'
+  #
+  #     - name: Install dependencies
+  #       run: pip install -e ".[dev]" || pip install -r requirements.txt
+  #
+  #     - name: Download model
+  #       run: dvc pull models/
+  #
+  #     - name: Run evaluation
+  #       run: python evaluate.py
+  #
+  #     - name: Upload evaluation results
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: evaluation-results
+  #         path: results/

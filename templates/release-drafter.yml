@@ -4,6 +4,14 @@
 # This configuration controls how release notes are automatically
 # generated from merged pull requests.
 #
+# Features:
+#   - Automatic categorization based on labels
+#   - Emoji prefixes for visual clarity
+#   - Contributor acknowledgment with avatars
+#   - Breaking changes highlighting
+#   - Dependency updates collapsed
+#   - Semantic version resolution
+#
 # Documentation: https://github.com/release-drafter/release-drafter
 
 # Template for the release name
@@ -14,103 +22,154 @@ tag-template: "v$RESOLVED_VERSION"
 
 # Categories for grouping changes in release notes
 # PRs are categorized based on their labels
+# Order matters - first matching category wins
 categories:
-  - title: "Breaking Changes"
+  - title: "💥 Breaking Changes"
     labels:
       - "breaking"
       - "breaking-change"
     collapse-after: 10
 
-  - title: "New Features"
+  - title: "🚀 New Features"
     labels:
       - "feature"
       - "enhancement"
       - "feat"
     collapse-after: 10
 
-  - title: "Bug Fixes"
+  - title: "🐛 Bug Fixes"
     labels:
       - "bug"
       - "bugfix"
       - "fix"
     collapse-after: 10
 
-  - title: "Performance Improvements"
+  - title: "⚡ Performance Improvements"
     labels:
       - "performance"
       - "perf"
 
-  - title: "Documentation"
+  - title: "🔒 Security"
+    labels:
+      - "security"
+
+  - title: "📚 Documentation"
     labels:
       - "documentation"
       - "docs"
 
-  - title: "Security"
+  - title: "🧪 Tests"
     labels:
-      - "security"
+      - "test"
+      - "testing"
 
-  - title: "Dependencies"
+  - title: "♻️ Refactoring"
+    labels:
+      - "refactor"
+      - "cleanup"
+
+  - title: "📦 Dependencies"
     labels:
       - "dependencies"
       - "deps"
-    collapse-after: 5
+    collapse-after: 3
 
-  - title: "CI/CD"
+  - title: "🏗️ CI/CD"
     labels:
       - "ci"
       - "github-actions"
     collapse-after: 5
 
-  - title: "Other Changes"
+  - title: "🎨 Styling"
+    labels:
+      - "style"
+      - "ui"
+      - "ux"
+
+  - title: "🔧 Other Changes"
     labels:
       - "chore"
-      - "refactor"
-      - "style"
-      - "test"
+      - "*"
 
 # Exclude certain labels from release notes
 exclude-labels:
   - "skip-changelog"
   - "release"
+  - "no-release-notes"
+  - "wontfix"
+  - "duplicate"
+  - "invalid"
 
 # Exclude contributors (bots)
 exclude-contributors:
   - "dependabot[bot]"
   - "renovate[bot]"
   - "github-actions[bot]"
+  - "allcontributors[bot]"
+  - "semantic-release-bot"
+  - "codecov[bot]"
+  - "snyk-bot"
 
-# Auto-labeling rules based on file paths and PR title
+# Auto-labeling rules based on file paths, branch names, and PR titles
 autolabeler:
+  # Documentation changes
   - label: "documentation"
     files:
       - "*.md"
       - "docs/**/*"
+      - "*.rst"
+      - "*.txt"
     branch:
       - '/docs?\/.+/'
+    title:
+      - '/^docs(\(.+\))?:/i'
 
+  # Bug fixes
   - label: "bug"
     title:
       - '/^fix(\(.+\))?:/i'
       - '/^bugfix(\(.+\))?:/i'
+      - '/^hotfix(\(.+\))?:/i'
+    branch:
+      - '/^fix\/.+/'
+      - '/^bugfix\/.+/'
+      - '/^hotfix\/.+/'
 
+  # Features
   - label: "enhancement"
     title:
       - '/^feat(\(.+\))?:/i'
       - '/^feature(\(.+\))?:/i'
+    branch:
+      - '/^feat\/.+/'
+      - '/^feature\/.+/'
 
+  # Chores
   - label: "chore"
     title:
       - '/^chore(\(.+\))?:/i'
+      - '/^build(\(.+\))?:/i'
+    branch:
+      - '/^chore\/.+/'
 
+  # CI/CD changes
   - label: "ci"
     title:
       - '/^ci(\(.+\))?:/i'
     files:
       - ".github/**/*"
+      - ".gitlab-ci.yml"
+      - ".travis.yml"
+      - "Jenkinsfile"
+      - "azure-pipelines.yml"
+    branch:
+      - '/^ci\/.+/'
 
+  # Dependencies
   - label: "dependencies"
     title:
-      - '/^(chore\(deps\)|deps):/i'
+      - '/^(chore\(deps\)|deps|dep):/i'
+      - '/^bump /i'
     files:
       - "package.json"
       - "package-lock.json"
@@ -128,10 +187,14 @@ autolabeler:
       - "composer.json"
       - "composer.lock"
 
+  # Refactoring
   - label: "refactor"
     title:
       - '/^refactor(\(.+\))?:/i'
+    branch:
+      - '/^refactor\/.+/'
 
+  # Tests
   - label: "test"
     title:
       - '/^test(\(.+\))?:/i'
@@ -139,15 +202,39 @@ autolabeler:
       - "**/*test*/**"
       - "**/*.test.*"
       - "**/*.spec.*"
+      - "**/test/**"
+      - "**/tests/**"
+      - "**/__tests__/**"
+    branch:
+      - '/^test\/.+/'
 
+  # Performance
   - label: "performance"
     title:
       - '/^perf(\(.+\))?:/i'
+    branch:
+      - '/^perf\/.+/'
 
+  # Breaking changes
   - label: "breaking"
     title:
       - '/^.+!:/i'
       - '/BREAKING CHANGE/i'
+      - '/\[BREAKING\]/i'
+
+  # Security
+  - label: "security"
+    title:
+      - '/^security(\(.+\))?:/i'
+      - '/\[security\]/i'
+    files:
+      - "**/security/**"
+      - "SECURITY.md"
+
+  # Style
+  - label: "style"
+    title:
+      - '/^style(\(.+\))?:/i'
 
 # Version resolver - determines version bump based on labels
 version-resolver:
@@ -166,27 +253,75 @@ version-resolver:
       - "bugfix"
       - "fix"
       - "documentation"
+      - "docs"
       - "chore"
       - "dependencies"
+      - "deps"
       - "ci"
       - "refactor"
       - "performance"
+      - "perf"
+      - "style"
+      - "test"
+      - "security"
   default: patch
 
 # Template for the release body
+# Available variables:
+#   $CHANGES - Categorized list of changes
+#   $CONTRIBUTORS - List of contributors
+#   $PREVIOUS_TAG - Previous release tag
+#   $RESOLVED_VERSION - Calculated version
 template: |
-  ## What's Changed
+  ## 🎉 What's Changed
 
   $CHANGES
 
-  ## Contributors
+  ## 👥 Contributors
+
+  We'd like to thank the following people for their contributions:
 
   $CONTRIBUTORS
 
+  ---
+
   **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+  ---
+  <sub>📝 This release was automatically generated with [Release Drafter](https://github.com/release-drafter/release-drafter)</sub>
+
+# Template for individual change entries
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+
+# Template for the change title (used in $TITLE)
+change-title-escapes: '\<*_&@'
+
+# Sort direction for entries within each category
+sort-direction: ascending
+
+# Template for each contributor in the contributors section
+contributor-template: "  <a href=\"$PROFILE\"><img src=\"$AVATAR\" width=\"32\" height=\"32\" alt=\"@$AUTHOR\"/> @$AUTHOR</a>"
+
+# Limit the number of contributors shown (0 = unlimited)
+# contributors-limit: 20
 
 # Replacers for transforming PR titles
 replacers:
   # Remove conventional commit prefixes from changelog entries
-  - search: '/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?:\s*/i'
+  - search: '/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s*/i'
     replace: ""
+  # Remove scope brackets if present
+  - search: '/^\[.+\]\s*/i'
+    replace: ""
+  # Capitalize first letter
+  - search: '/^(\w)/i'
+    replace: "$1"
+
+# Filter out pull requests that should not be included
+# filter-by-commitish: true
+
+# Prerelease identifier for pre-releases
+# prerelease-identifier: "beta"
+
+# Template for generating prerelease versions
+# prerelease: true

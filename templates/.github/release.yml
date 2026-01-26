@@ -1,0 +1,118 @@
+# GitHub Release Notes Configuration
+# This file configures GitHub's native automatically generated release notes.
+# Place this file at: .github/release.yml
+#
+# Documentation: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+#
+# This is GitHub's built-in alternative to Release Drafter.
+# Choose one based on your needs:
+#   - release.yml: Simpler, native GitHub feature
+#   - release-drafter.yml: More customization, needs GitHub App/Action
+
+# Changelog configuration
+changelog:
+  # Categories group pull requests in the release notes
+  categories:
+    - title: "💥 Breaking Changes"
+      labels:
+        - "breaking"
+        - "breaking-change"
+
+    - title: "🚀 New Features"
+      labels:
+        - "feature"
+        - "enhancement"
+        - "feat"
+
+    - title: "🐛 Bug Fixes"
+      labels:
+        - "bug"
+        - "bugfix"
+        - "fix"
+
+    - title: "⚡ Performance"
+      labels:
+        - "performance"
+        - "perf"
+
+    - title: "🔒 Security"
+      labels:
+        - "security"
+
+    - title: "📚 Documentation"
+      labels:
+        - "documentation"
+        - "docs"
+
+    - title: "🧪 Tests"
+      labels:
+        - "test"
+        - "testing"
+
+    - title: "📦 Dependencies"
+      labels:
+        - "dependencies"
+        - "deps"
+
+    - title: "🏗️ CI/CD & Infrastructure"
+      labels:
+        - "ci"
+        - "infrastructure"
+        - "github-actions"
+
+    # Catch-all for unlabeled PRs
+    - title: "🔧 Other Changes"
+      labels:
+        - "*"
+
+  # Exclude PRs with these labels from the changelog
+  exclude:
+    labels:
+      - "skip-changelog"
+      - "no-release-notes"
+      - "wontfix"
+      - "duplicate"
+      - "invalid"
+
+    # Exclude PRs from these authors (typically bots)
+    authors:
+      - "dependabot"
+      - "dependabot[bot]"
+      - "renovate"
+      - "renovate[bot]"
+      - "github-actions[bot]"
+      - "allcontributors[bot]"
+      - "semantic-release-bot"
+      - "codecov[bot]"
+      - "snyk-bot"
+
+# Usage:
+#
+# When creating a release through the GitHub UI or API:
+# 1. Go to Releases → Draft a new release
+# 2. Choose a tag and target branch
+# 3. Click "Generate release notes"
+# 4. GitHub will auto-populate the body using this configuration
+#
+# Via GitHub CLI:
+#   gh release create v1.0.0 --generate-notes
+#
+# Via GitHub API:
+#   POST /repos/{owner}/{repo}/releases
+#   {
+#     "tag_name": "v1.0.0",
+#     "generate_release_notes": true
+#   }
+#
+# Comparison with Release Drafter:
+#
+# | Feature                    | release.yml | release-drafter.yml |
+# |----------------------------|-------------|---------------------|
+# | Native GitHub feature      | Yes         | No (Action)         |
+# | Auto-categorization        | Yes         | Yes                 |
+# | Custom templates           | Limited     | Extensive           |
+# | Version resolution         | No          | Yes                 |
+# | Contributor avatars        | No          | Yes                 |
+# | PR title transformation    | No          | Yes                 |
+# | Draft release accumulation | No          | Yes                 |
+# | Auto-labeling PRs          | No          | Yes                 |

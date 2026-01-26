@@ -1,0 +1,170 @@
+# Publish Docker Image to Azure Container Registry
+# Builds and pushes container images to Azure Container Registry
+#
+# Features:
+#   - OIDC authentication with Azure (recommended)
+#   - Multi-architecture builds (amd64, arm64)
+#   - Build caching with GitHub Actions cache
+#   - Image scanning with Microsoft Defender
+#
+# Required secrets:
+#   AZURE_CLIENT_ID - Azure AD application client ID
+#   AZURE_TENANT_ID - Azure AD tenant ID
+#   AZURE_SUBSCRIPTION_ID - Azure subscription ID
+#     (Alternative: AZURE_CREDENTIALS - Service principal JSON)
+#
+# Required variables:
+#   ACR_REGISTRY - ACR registry name (e.g., myregistry.azurecr.io)
+#
+# Setup:
+#   1. Create ACR: az acr create --name myregistry --sku Basic
+#   2. Configure OIDC: https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure
+#   3. Add secrets and variables to repository settings
+
+name: Publish to ACR
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'src/**'
+      - '.github/workflows/publish-docker-acr.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ACR_REGISTRY: ${{ vars.ACR_REGISTRY }}
+  IMAGE_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build-and-push:
+    name: Build and Push to ACR
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      image: ${{ steps.output.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Recommended: Use OIDC authentication
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Alternative: Use service principal
+      # - name: Azure Login (Service Principal)
+      #   uses: azure/login@v2
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_REGISTRY }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+
+      - name: Output image URI
+        id: output
+        run: |
+          IMAGE="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Image: $IMAGE"
+          echo "Digest: ${{ steps.build.outputs.digest }}"
+          echo "image=$IMAGE@${{ steps.build.outputs.digest }}" >> $GITHUB_OUTPUT
+
+  # Optional: Scan image for vulnerabilities with Microsoft Defender
+  scan:
+    name: Scan Image
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run vulnerability scan
+        run: |
+          # Get the registry name without .azurecr.io
+          REGISTRY_NAME=$(echo ${{ env.ACR_REGISTRY }} | cut -d'.' -f1)
+
+          # Trigger scan and get results
+          az acr repository show \
+            --name $REGISTRY_NAME \
+            --image ${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.digest }} \
+            --query "changeableAttributes"
+
+# Azure OIDC Setup:
+#
+# 1. Create Azure AD Application:
+#    az ad app create --display-name "GitHub Actions"
+#
+# 2. Create Service Principal:
+#    az ad sp create --id <app-id>
+#
+# 3. Create Federated Credential:
+#    az ad app federated-credential create \
+#      --id <app-id> \
+#      --parameters '{
+#        "name": "github-actions",
+#        "issuer": "https://token.actions.githubusercontent.com",
+#        "subject": "repo:OWNER/REPO:ref:refs/heads/main",
+#        "audiences": ["api://AzureADTokenExchange"]
+#      }'
+#
+# 4. Assign ACR Push role:
+#    az role assignment create \
+#      --assignee <app-id> \
+#      --role "AcrPush" \
+#      --scope /subscriptions/<subscription-id>/resourceGroups/<rg>/providers/Microsoft.ContainerRegistry/registries/<registry>
+#
+# Required Role: AcrPush (or AcrPull for read-only)

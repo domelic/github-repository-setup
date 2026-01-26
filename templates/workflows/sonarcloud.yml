@@ -1,0 +1,130 @@
+# SonarCloud Analysis Workflow
+# Perform code quality and security analysis with SonarCloud
+#
+# Features:
+#   - Code quality analysis
+#   - Coverage integration
+#   - Quality gate enforcement
+#   - PR decoration with inline comments
+#   - Security hotspot detection
+#
+# Prerequisites:
+#   1. SonarCloud account (https://sonarcloud.io)
+#   2. Project created in SonarCloud
+#   3. GitHub App installed for PR decoration
+#
+# Required secrets:
+#   SONAR_TOKEN - SonarCloud authentication token
+#
+# Setup:
+#   1. Create project at https://sonarcloud.io
+#   2. Generate token: My Account > Security > Generate Token
+#   3. Add SONAR_TOKEN to repository secrets
+#   4. Create sonar-project.properties file (see below)
+#
+# Example sonar-project.properties:
+#   sonar.projectKey=your-org_your-project
+#   sonar.organization=your-org
+#   sonar.sources=src
+#   sonar.tests=tests
+#   sonar.python.coverage.reportPaths=coverage.xml
+#   sonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate blame information
+
+      # For projects that generate coverage reports, add build steps here
+      # Example for Node.js:
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      #     cache: 'npm'
+      #
+      # - name: Install dependencies
+      #   run: npm ci
+      #
+      # - name: Run tests with coverage
+      #   run: npm test -- --coverage
+
+      # Example for Python:
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      #
+      # - name: Install dependencies
+      #   run: pip install -e ".[dev]" pytest pytest-cov
+      #
+      # - name: Run tests with coverage
+      #   run: pytest --cov --cov-report=xml
+
+      # Example for Java/Gradle:
+      # - name: Setup Java
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     java-version: '17'
+      #     distribution: 'temurin'
+      #
+      # - name: Build and test
+      #   run: ./gradlew build jacocoTestReport
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        # Optionally pass additional arguments:
+        # with:
+        #   args: >
+        #     -Dsonar.projectKey=your-org_your-project
+        #     -Dsonar.organization=your-org
+
+      # Optional: Fail if Quality Gate fails
+      # - name: Check Quality Gate
+      #   uses: SonarSource/sonarqube-quality-gate-action@master
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Optional: SonarQube (self-hosted) configuration
+  # Uncomment and modify for on-premise SonarQube
+  # sonarqube:
+  #   name: SonarQube Scan
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - name: SonarQube Scan
+  #       uses: SonarSource/sonarqube-scan-action@master
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #
+  #     - name: Check Quality Gate
+  #       uses: SonarSource/sonarqube-quality-gate-action@master
+  #       timeout-minutes: 5
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

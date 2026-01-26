@@ -1,0 +1,269 @@
+# Multi-Environment Deployment Workflow
+# Supports: staging → production promotion with approval gates
+#
+# Features:
+#   - Environment-specific secrets and variables
+#   - Manual approval gates for production
+#   - Rollback capability via workflow_dispatch
+#   - Slack/Discord notifications on deploy
+#   - Deployment verification
+#
+# Required secrets (per environment):
+#   DEPLOY_TOKEN - Deployment authentication token
+#   DEPLOY_URL - Target deployment URL
+#
+# Optional secrets:
+#   SLACK_WEBHOOK_URL - For Slack notifications
+#   DISCORD_WEBHOOK_URL - For Discord notifications
+#
+# Setup:
+#   1. Create environments in GitHub: Settings → Environments
+#   2. Add 'staging' and 'production' environments
+#   3. Configure protection rules for 'production' (required reviewers)
+#   4. Add environment-specific secrets
+
+name: Deploy Multi-Environment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - rollback
+      version:
+        description: 'Version to deploy/rollback to (leave empty for latest)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build job - runs once for both environments
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=raw,value=${{ steps.version.outputs.version }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+
+  # Deploy to staging (auto on push to main)
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment != 'production'
+    environment:
+      name: staging
+      url: ${{ vars.DEPLOY_URL }}
+
+    outputs:
+      deployment_id: ${{ steps.deploy.outputs.deployment_id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        id: deploy
+        run: |
+          echo "Deploying to staging environment..."
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image_digest }}"
+
+          # Replace with your deployment command
+          # Examples:
+          # - kubectl set image deployment/app app=$IMAGE
+          # - docker-compose pull && docker-compose up -d
+          # - aws ecs update-service --cluster staging --service app --force-new-deployment
+
+          echo "deployment_id=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying staging deployment..."
+          # Add health check verification
+          # curl -f ${{ vars.DEPLOY_URL }}/health || exit 1
+
+      - name: Notify Slack (staging)
+        if: vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": ":rocket: Deployed to staging",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":rocket: *Deployed to Staging*\n*Repository:* ${{ github.repository }}\n*Version:* `${{ needs.build.outputs.version }}`\n*URL:* ${{ vars.DEPLOY_URL }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  # Deploy to production (requires approval)
+  deploy-production:
+    name: Deploy to Production
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      (needs.deploy-staging.result == 'success' || github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for rollback
+        if: github.event.inputs.action == 'rollback'
+        run: |
+          echo "Rolling back to version: ${{ github.event.inputs.version }}"
+          # Add rollback logic here
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          echo "Deploying to production environment..."
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image_digest }}"
+
+          # Replace with your production deployment command
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying production deployment..."
+          # Add comprehensive health checks
+          # curl -f ${{ vars.DEPLOY_URL }}/health || exit 1
+          # Run smoke tests
+
+      - name: Notify Slack (production)
+        if: always() && vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && ':white_check_mark: Production deployment successful' || ':x: Production deployment failed' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ job.status == 'success' && ':white_check_mark: *Production Deployment Successful*' || ':x: *Production Deployment Failed*' }}\n*Repository:* ${{ github.repository }}\n*Version:* `${{ needs.build.outputs.version }}`\n*URL:* ${{ vars.DEPLOY_URL }}\n*Deployed by:* ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Discord (production)
+        if: always() && vars.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "${{ job.status == 'success' && 'Production Deployment Successful' || 'Production Deployment Failed' }}",
+                "color": ${{ job.status == 'success' && '3066993' || '15158332' }},
+                "fields": [
+                  {"name": "Repository", "value": "${{ github.repository }}", "inline": true},
+                  {"name": "Version", "value": "`${{ needs.build.outputs.version }}`", "inline": true},
+                  {"name": "Deployed by", "value": "${{ github.actor }}", "inline": true}
+                ]
+              }]
+            }' \
+            ${{ vars.DISCORD_WEBHOOK_URL }}
+
+# Manual rollback workflow example:
+#
+# To rollback to a specific version:
+# 1. Go to Actions → Deploy Multi-Environment → Run workflow
+# 2. Select environment: production
+# 3. Select action: rollback
+# 4. Enter version: <commit-sha-or-tag>
+#
+# Alternative: Use GitHub Deployments API
+# gh api repos/{owner}/{repo}/deployments \
+#   -f ref=<previous-sha> \
+#   -f environment=production \
+#   -f auto_merge=false

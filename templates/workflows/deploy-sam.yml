@@ -1,0 +1,266 @@
+# Deploy with AWS SAM (Serverless Application Model)
+# Builds and deploys serverless applications using AWS SAM
+#
+# Features:
+#   - SAM build and deploy pipeline
+#   - Multi-environment support
+#   - OIDC authentication
+#   - Guided and non-guided deployments
+#   - Stack validation
+#
+# Required secrets:
+#   AWS_ROLE_ARN - IAM role ARN for OIDC authentication
+#
+# Required variables:
+#   AWS_REGION - AWS region
+#   SAM_S3_BUCKET - S3 bucket for SAM artifacts
+#
+# Setup:
+#   1. Install AWS SAM CLI locally
+#   2. Initialize project: sam init
+#   3. Configure samconfig.toml
+#   4. Add secrets/variables to repository
+
+name: Deploy SAM
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - delete
+
+concurrency:
+  group: sam-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  SAM_S3_BUCKET: ${{ vars.SAM_S3_BUCKET }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    outputs:
+      artifact-path: ${{ steps.build.outputs.artifact-path }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Validate SAM template
+        run: sam validate --lint
+
+      - name: Build SAM application
+        id: build
+        run: |
+          sam build --use-container
+          echo "artifact-path=.aws-sam/build" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build
+          retention-days: 1
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ github.event.inputs.environment || 'dev' }}
+      url: ${{ steps.deploy.outputs.api-url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Determine environment
+        id: env
+        run: |
+          ENV="${{ github.event.inputs.environment || 'dev' }}"
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "stack-name=my-app-$ENV" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy SAM application
+        id: deploy
+        if: github.event.inputs.action != 'delete'
+        run: |
+          sam deploy \
+            --stack-name ${{ steps.env.outputs.stack-name }} \
+            --s3-bucket ${{ env.SAM_S3_BUCKET }} \
+            --s3-prefix ${{ steps.env.outputs.stack-name }} \
+            --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides Environment=${{ steps.env.outputs.environment }}
+
+          # Get API Gateway URL
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${{ steps.env.outputs.stack-name }} \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$API_URL" ]; then
+            echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Delete stack (if requested)
+        if: github.event.inputs.action == 'delete'
+        run: |
+          sam delete \
+            --stack-name ${{ steps.env.outputs.stack-name }} \
+            --no-prompts
+
+      - name: Show stack outputs
+        if: github.event.inputs.action != 'delete'
+        run: |
+          aws cloudformation describe-stacks \
+            --stack-name ${{ steps.env.outputs.stack-name }} \
+            --query "Stacks[0].Outputs" \
+            --output table
+
+  # PR validation
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build
+        continue-on-error: true
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create changeset
+        id: changeset
+        run: |
+          sam deploy \
+            --stack-name my-app-pr-${{ github.event.pull_request.number }} \
+            --s3-bucket ${{ env.SAM_S3_BUCKET }} \
+            --capabilities CAPABILITY_IAM \
+            --no-execute-changeset \
+            --no-fail-on-empty-changeset \
+            2>&1 | tee changeset.log
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const changeset = fs.readFileSync('changeset.log', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## SAM Changeset Preview\n\n\`\`\`\n${changeset.slice(-2000)}\n\`\`\``
+            });
+
+# Example template.yaml:
+#
+# AWSTemplateFormatVersion: '2010-09-09'
+# Transform: AWS::Serverless-2016-10-31
+# Description: My SAM Application
+#
+# Parameters:
+#   Environment:
+#     Type: String
+#     Default: dev
+#
+# Globals:
+#   Function:
+#     Timeout: 30
+#     Runtime: python3.12
+#     Environment:
+#       Variables:
+#         ENVIRONMENT: !Ref Environment
+#
+# Resources:
+#   HelloFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       Handler: app.handler
+#       CodeUri: src/
+#       Events:
+#         Api:
+#           Type: Api
+#           Properties:
+#             Path: /hello
+#             Method: get
+#
+# Outputs:
+#   ApiUrl:
+#     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
