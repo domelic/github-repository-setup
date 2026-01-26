@@ -144,7 +144,7 @@ Run the checklist to confirm everything is configured:
 
 | Topic | Documentation |
 |-------|---------------|
-| Workflow templates | [templates/workflows/README.md](../templates/workflows/README.md) |
+| Workflow templates | [templates/workflows/README.md](../../templates/workflows/README.md) |
 | Branch protection | [docs/guides/BRANCHING_STRATEGIES.md](./BRANCHING_STRATEGIES.md) |
 | Secret management | [docs/guides/SECRETS_MANAGEMENT.md](./SECRETS_MANAGEMENT.md) |
 | Database testing | [docs/architecture/DATABASE_TESTING.md](../architecture/DATABASE_TESTING.md) |
@@ -153,9 +153,9 @@ Run the checklist to confirm everything is configured:
 
 ### Get Help
 
-- **Full preset reference**: See [templates/commands/github-setup.md](../templates/commands/github-setup.md)
+- **Full preset reference**: See [templates/commands/github-setup.md](../../templates/commands/github-setup.md)
 - **Report issues**: [GitHub Discussions](https://github.com/domelic/github-repository-setup/discussions)
-- **Contribute**: [CONTRIBUTING.md](../CONTRIBUTING.md)
+- **Contribute**: [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ## Frequently Asked Questions
 

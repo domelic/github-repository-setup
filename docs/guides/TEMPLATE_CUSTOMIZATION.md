@@ -270,6 +270,6 @@ Check:
 
 ## Related Resources
 
-- [Workflow Metadata](../templates/workflows/workflow-metadata.yaml) - Full workflow documentation
-- [Presets](../templates/presets.yaml) - Preset definitions with templates
+- [Workflow Metadata](../../templates/workflows/workflow-metadata.yaml) - Full workflow documentation
+- [Presets](../../templates/presets.yaml) - Preset definitions with templates
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)

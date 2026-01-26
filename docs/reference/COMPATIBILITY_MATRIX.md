@@ -478,7 +478,7 @@ cp templates/workflows/{ci-nodejs,e2e-playwright,release-please,publish-docker,d
 
 ## See Also
 
-- [Workflow Diagrams](WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
-- [Workflow Metadata](../templates/workflows/workflow-metadata.yaml) - Full metadata index
-- [Workflow README](../templates/workflows/README.md) - Quick reference
-- [/github-setup skill](../templates/commands/github-setup.md) - Interactive setup
+- [Workflow Diagrams](../workflows/WORKFLOW_DIAGRAMS.md) - Visual dependency graphs
+- [Workflow Metadata](../../templates/workflows/workflow-metadata.yaml) - Full metadata index
+- [Workflow README](../../templates/workflows/README.md) - Quick reference
+- [/github-setup skill](../../templates/commands/github-setup.md) - Interactive setup

@@ -118,7 +118,7 @@ What's your project type?
 ### Preset Selection FAQ
 
 **Q: Can I use multiple presets?**
-A: Yes! Presets are composable. Apply them sequentially for your needs. See the [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/COMPATIBILITY_MATRIX.md) for which presets work best together and potential conflicts.
+A: Yes! Presets are composable. Apply them sequentially for your needs. See the [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/reference/COMPATIBILITY_MATRIX.md) for which presets work best together and potential conflicts.
 
 **Q: What's the difference between `python` and `ml`?**
 A: The `python` preset is for general Python projects. The `ml` preset adds GPU support, Jupyter validation, and ML-specific tooling (DVC, experiment tracking).
@@ -130,7 +130,7 @@ A: Use `security` for GitHub-native scanning (CodeQL, Trivy). Add `snyk` for add
 A: Use your primary language preset + `monorepo` for Turborepo/pnpm workspace configuration.
 
 **Q: How do I understand workflow dependencies?**
-A: See the [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/WORKFLOW_DIAGRAMS.md) for visual chains showing how workflows trigger each other (e.g., release-please → publish-npm).
+A: See the [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/workflows/WORKFLOW_DIAGRAMS.md) for visual chains showing how workflows trigger each other (e.g., release-please → publish-npm).
 
 ---
 
@@ -938,7 +938,7 @@ Features: Staging → production promotion, manual approval gates, rollback capa
 
 Features: PostgreSQL, MySQL, Redis, MongoDB service containers, database migration testing, health checks.
 
-See also: [`docs/DATABASE_TESTING.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/DATABASE_TESTING.md)
+See also: [`docs/DATABASE_TESTING.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/architecture/DATABASE_TESTING.md)
 
 ### `/github-setup serverless`
 
@@ -958,7 +958,7 @@ Features: Serverless Framework, AWS SAM, Pulumi IaC deployments with OIDC authen
 
 Features: Advanced dependency management with auto-merge, grouping, and scheduling. Alternative to Dependabot.
 
-See also: [`docs/RENOVATE_VS_DEPENDABOT.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/RENOVATE_VS_DEPENDABOT.md)
+See also: [`docs/RENOVATE_VS_DEPENDABOT.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/workflows/RENOVATE_VS_DEPENDABOT.md)
 
 ### `/github-setup observability`
 
@@ -1081,7 +1081,7 @@ Features: Unity Test Framework (Edit Mode + Play Mode), multi-platform builds, I
 
 Features: GPU runner support, Jupyter notebook validation, DVC integration, experiment tracking (MLflow/Weights & Biases).
 
-See also: [`docs/ML_PROJECTS.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/ML_PROJECTS.md)
+See also: [`docs/ML_PROJECTS.md`](https://github.com/domelic/github-repository-setup/blob/main/docs/guides/ML_PROJECTS.md)
 
 ---
 
@@ -1658,8 +1658,8 @@ Checksums manifest: `templates/checksums.json` (available in v0.1.21+)
 
 | Resource | Purpose |
 |----------|---------|
-| [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/WORKFLOW_DIAGRAMS.md) | Visual Mermaid diagrams showing workflow chains and dependencies |
-| [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/COMPATIBILITY_MATRIX.md) | Which presets work together, conflicts, and recommended stacks |
+| [Workflow Diagrams](https://github.com/domelic/github-repository-setup/blob/main/docs/workflows/WORKFLOW_DIAGRAMS.md) | Visual Mermaid diagrams showing workflow chains and dependencies |
+| [Compatibility Matrix](https://github.com/domelic/github-repository-setup/blob/main/docs/reference/COMPATIBILITY_MATRIX.md) | Which presets work together, conflicts, and recommended stacks |
 | [Workflow Metadata](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/workflow-metadata.yaml) | Structured data index for all 113 workflows |
 | [Workflow README](https://github.com/domelic/github-repository-setup/blob/main/templates/workflows/README.md) | Quick reference tables with triggers, secrets, and complexity |
 | [Template Index](https://github.com/domelic/github-repository-setup/blob/main/templates/template-index.yaml) | Unified index for all templates (configs, devcontainers, gitignores) |
@@ -1811,7 +1811,7 @@ Or edit the workflow directly.
 
 ### Full Customization Guide
 
-See [docs/TEMPLATE_CUSTOMIZATION.md](https://github.com/domelic/github-repository-setup/blob/main/docs/TEMPLATE_CUSTOMIZATION.md) for:
+See [docs/TEMPLATE_CUSTOMIZATION.md](https://github.com/domelic/github-repository-setup/blob/main/docs/guides/TEMPLATE_CUSTOMIZATION.md) for:
 - Detailed customization points per workflow
 - Environment-specific configurations
 - Workflow inheritance patterns

@@ -251,9 +251,9 @@ registries:
 
 ## Templates
 
-- [`dependabot.yml`](../templates/dependabot.yml) - Basic Dependabot config
-- [`dependabot-full.yml`](../templates/dependabot-full.yml) - Full Dependabot config
-- [`renovate.json`](../templates/renovate.json) - Renovate config
+- [`dependabot.yml`](../../templates/dependabot.yml) - Basic Dependabot config
+- [`dependabot-full.yml`](../../templates/dependabot-full.yml) - Full Dependabot config
+- [`renovate.json`](../../templates/renovate.json) - Renovate config
 
 ## Resources
 

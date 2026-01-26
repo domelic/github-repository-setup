@@ -614,7 +614,7 @@ flowchart TB
 
 ## See Also
 
-- [Workflow Metadata Index](../templates/workflows/workflow-metadata.yaml) - Structured data for all workflows
-- [Compatibility Matrix](COMPATIBILITY_MATRIX.md) - Preset compatibility documentation
-- [Workflow README](../templates/workflows/README.md) - Quick reference tables
+- [Workflow Metadata Index](../../templates/workflows/workflow-metadata.yaml) - Structured data for all workflows
+- [Compatibility Matrix](../reference/COMPATIBILITY_MATRIX.md) - Preset compatibility documentation
+- [Workflow README](../../templates/workflows/README.md) - Quick reference tables
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)

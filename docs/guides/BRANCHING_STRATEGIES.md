@@ -353,6 +353,6 @@ Start
 
 ## Related Resources
 
-- [CLAUDE.md](../CLAUDE.md) - Branch naming conventions
-- [CONTRIBUTING.md](../templates/CONTRIBUTING.md) - Contribution guidelines
+- [CLAUDE.md](../../CLAUDE.md) - Branch naming conventions
+- [CONTRIBUTING.md](../../templates/CONTRIBUTING.md) - Contribution guidelines
 - [Feature Flags Guide](../architecture/FEATURE_FLAGS.md) - Feature flag patterns
