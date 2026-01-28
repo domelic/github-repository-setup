@@ -83,7 +83,7 @@ jobs:
 
       - name: Create PR for changelog updates
         if: steps.prev_tag.outputs.prev_tag != ''
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update workflow changelog for ${{ needs.release-please.outputs.tag_name }}"
